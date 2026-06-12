@@ -15,7 +15,7 @@ export default function Davora() {
     // IMPORTANT: When deploying, replace 'localhost' with your actual Linux server domain/IP
     // e.g., "ws://your-linux-server-ip:8000/ws/chat"
     // For Vercel production, it must be wss:// (secure websocket)
-    ws.current = new WebSocket("ws://blatancy-barrack-spelling.ngrok-free.dev/ws/chat");
+    ws.current = new WebSocket("wss://blatancy-barrack-spelling.ngrok-free.dev/ws/chat");
 
     ws.current.onmessage = (event) => {
       const data = event.data;
