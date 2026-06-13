@@ -9,7 +9,8 @@ import {
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
   Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database, Globe,
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight,
-  Pin, Image, FileText, Crown, ArrowUpRight
+  VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert,
+  Terminal, BrainCircuit, SearchCheck, FileClock, Link
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -31,9 +32,6 @@ export default function Davora() {
   const [isTemporary, setIsTemporary] = useState(false);
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [selectedModel, setSelectedModel] = useState("Davora 3.2 Pro");
-  const [pinnedChats, setPinnedChats] = useState([]);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [userName, setUserName] = useState("User");
 
   // Input & UI States
   const [input, setInput] = useState("");
@@ -44,6 +42,8 @@ export default function Davora() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
+  const [openMoreMenuId, setOpenMoreMenuId] = useState(null);
+  const [pinnedSessionIds, setPinnedSessionIds] = useState([]);
 
   // Voice, Edit, TTS, and Rating states
   const [isListening, setIsListening] = useState(false);
@@ -80,70 +80,6 @@ export default function Davora() {
     { icon: <Lightbulb size={18} />, title: "Brainstorm ideas", prompt: "Give me 5 unique ideas for a SaaS startup in the AI and productivity space." }
   ];
 
-  // Get time-based greeting
-  const getGreeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return "Good morning";
-    if (h < 17) return "Good afternoon";
-    return "Good evening";
-  };
-
-  // Pin/Unpin chat
-  const togglePin = (e, sessionId) => {
-    e.stopPropagation();
-    setPinnedChats(prev => {
-      if (prev.includes(sessionId)) return prev.filter(id => id !== sessionId);
-      if (prev.length >= 3) { showNotification("Max 3 pinned chats"); return prev; }
-      return [...prev, sessionId];
-    });
-  };
-
-  // Group sessions by date
-  const groupSessionsByDate = (sessionList) => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const yesterday = today - 86400000;
-    const sevenDaysAgo = today - 7 * 86400000;
-    const thirtyDaysAgo = today - 30 * 86400000;
-    const groups = { pinned: [], today: [], yesterday: [], week: [], month: [], older: [] };
-    sessionList.forEach(s => {
-      if (pinnedChats.includes(s.id)) { groups.pinned.push(s); return; }
-      const t = s.createdAt || Date.now();
-      if (t >= today) groups.today.push(s);
-      else if (t >= yesterday) groups.yesterday.push(s);
-      else if (t >= sevenDaysAgo) groups.week.push(s);
-      else if (t >= thirtyDaysAgo) groups.month.push(s);
-      else groups.older.push(s);
-    });
-    return groups;
-  };
-
-  const groupedSessions = groupSessionsByDate(filteredSessions);
-
-  // Export chat as text
-  const exportChat = () => {
-    if (!activeSession) return;
-    const text = activeSession.messages.map(m => `[${m.role.toUpperCase()}]\n${m.content}`).join('\n\n---\n\n');
-    const blob = new Blob([text], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `${activeSession.title || 'chat'}.txt`; a.click();
-    URL.revokeObjectURL(url);
-    showNotification("Chat exported!");
-  };
-
-  // Drag & drop handlers
-  const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
-  const handleDragLeave = () => setIsDragOver(false);
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      showNotification(`${files.length} file(s) attached: ${files.map(f => f.name).join(', ')}`);
-    }
-  };
-
   const showNotification = (msg) => {
     setToast(msg);
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -169,6 +105,11 @@ export default function Davora() {
     const savedPrefs = localStorage.getItem("davora_prefs");
     if (savedPrefs) {
       try { setPrefs(prev => ({ ...prev, ...JSON.parse(savedPrefs) })); } catch (e) { }
+    }
+    
+    const savedPins = localStorage.getItem("davora_pinned_sessions");
+    if (savedPins) {
+      try { setPinnedSessionIds(JSON.parse(savedPins)); } catch (e) { }
     }
 
     if (window.innerWidth < 768) setSidebarOpen(false);
@@ -237,6 +178,15 @@ export default function Davora() {
   useEffect(() => {
     localStorage.setItem("davora_chat_ratings", JSON.stringify(ratings));
   }, [ratings]);
+
+  useEffect(() => {
+    localStorage.setItem("davora_pinned_sessions", JSON.stringify(pinnedSessionIds));
+  }, [pinnedSessionIds]);
+
+  const togglePin = (e, id) => {
+    e.stopPropagation();
+    setPinnedSessionIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
+  };
 
   const handleScroll = () => {
     if (!chatBoxRef.current) return;
@@ -327,9 +277,9 @@ export default function Davora() {
 
     if (ws.current.readyState !== WebSocket.OPEN) {
       connectWebSocket();
-      setTimeout(() => ws.current.send(textToSend), 500);
+      setTimeout(() => ws.current.send(JSON.stringify({ message: textToSend, mode: inputMode, model: selectedModel, isTemporary: isTemporary })), 500);
     } else {
-      ws.current.send(textToSend);
+      ws.current.send(JSON.stringify({ message: textToSend, mode: inputMode, model: selectedModel, isTemporary: isTemporary }));
     }
   };
 
@@ -522,60 +472,48 @@ export default function Davora() {
         </div>
 
         <div className="sidebar-history">
+          <p className="sidebar-label">Recent</p>
           {filteredSessions.length === 0 && <p className="sidebar-empty">No chats found.</p>}
-          {Object.entries({
-            'Pinned': groupedSessions.pinned,
-            'Today': groupedSessions.today,
-            'Yesterday': groupedSessions.yesterday,
-            'Previous 7 Days': groupedSessions.week,
-            'Previous 30 Days': groupedSessions.month,
-            'Older': groupedSessions.older
-          }).map(([label, items]) => items.length > 0 && (
-            <div key={label}>
-              <p className="sidebar-label">{label === 'Pinned' ? '📌 Pinned' : label}</p>
-              {items.map(session => (
-                <div
-                  key={session.id}
-                  className={`history-item ${activeSessionId === session.id ? 'active' : ''} ${pinnedChats.includes(session.id) ? 'pinned' : ''}`}
-                  onClick={() => { if (renamingId !== session.id) { setActiveSessionId(session.id); if (window.innerWidth < 768) setSidebarOpen(false); } }}
-                >
-                  {renamingId === session.id ? (
-                    <input
-                      autoFocus
-                      type="text"
-                      value={renameInput}
-                      onChange={(e) => setRenameInput(e.target.value)}
-                      onBlur={(e) => saveRename(e, session.id)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') saveRename(e, session.id); }}
-                      className="rename-input"
-                    />
-                  ) : (
-                    <span className="history-title">{session.title}</span>
-                  )}
+          {filteredSessions.map(session => (
+            <div
+              key={session.id}
+              className={`history-item ${activeSessionId === session.id ? 'active' : ''}`}
+              onClick={() => { if (renamingId !== session.id) { setActiveSessionId(session.id); if (window.innerWidth < 768) setSidebarOpen(false); } }}
+            >
+              {renamingId === session.id ? (
+                <input
+                  autoFocus
+                  type="text"
+                  value={renameInput}
+                  onChange={(e) => setRenameInput(e.target.value)}
+                  onBlur={(e) => saveRename(e, session.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveRename(e, session.id); }}
+                  className="rename-input"
+                />
+              ) : (
+                <span className="history-title">{session.title}</span>
+              )}
 
-                  {renamingId !== session.id && (
-                    <div className="history-actions">
-                      <button onClick={(e) => togglePin(e, session.id)} className={`action-icon-btn ${pinnedChats.includes(session.id) ? 'pinned-active' : ''}`} title={pinnedChats.includes(session.id) ? 'Unpin' : 'Pin'}>
-                        <Pin size={14} />
-                      </button>
-                      <button onClick={(e) => { e.stopPropagation(); setRenamingId(session.id); setRenameInput(session.title); }} className="action-icon-btn" title="Rename">
-                        <Pencil size={14} />
-                      </button>
-                      <button onClick={(e) => deleteSession(e, session.id)} className="action-icon-btn delete" title="Delete">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  )}
+              {pinnedSessionIds.includes(session.id) && <Pin size={12} className="pinned-indicator text-purple-500 ml-1" />}
+
+              {renamingId !== session.id && (
+                <div className="history-actions">
+                  <button onClick={(e) => togglePin(e, session.id)} className="action-icon-btn" title="Pin Chat">
+                    <Pin size={14} />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); setRenamingId(session.id); setRenameInput(session.title); }} className="action-icon-btn" title="Rename">
+                    <Pencil size={14} />
+                  </button>
+                  <button onClick={(e) => deleteSession(e, session.id)} className="action-icon-btn delete" title="Delete">
+                    <Trash2 size={14} />
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
           ))}
         </div>
 
         <div className="sidebar-footer">
-          <button className="upgrade-cta-btn" onClick={() => showNotification("Upgrade to Davora Pro for unlimited access!")}>
-            <Crown size={16} /> Upgrade Plan <ArrowUpRight size={14} />
-          </button>
           <button onClick={() => setShowSettings(true)} className="user-profile-btn">
             <div className="user-avatar-small"><User size={16} /></div>
             <div className="user-info">
@@ -621,19 +559,12 @@ export default function Davora() {
             </div>
           </div>
           <div className="header-actions">
-            <button
-              onClick={exportChat}
-              className="icon-action-btn"
-              title="Export Chat"
-            >
-              <Download size={18} />
-            </button>
             <button 
               className={`temporary-chat-toggle ${isTemporary ? 'active' : ''}`}
               onClick={() => { setIsTemporary(!isTemporary); showNotification(isTemporary ? "Temporary Chat Disabled" : "Temporary Chat Enabled. History won't be saved."); }}
               title="Temporary Chat (Incognito)"
             >
-              <Shield size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
+              <VenetianMask size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
             </button>
             <div className="token-badge" title="Context Memory Usage">
               <Database size={12} /> 24k / 128k Tokens
@@ -642,25 +573,11 @@ export default function Davora() {
         </header>
 
         {/* Chat Box */}
-        <main
-          className={`chat-box ${isDragOver ? 'drag-over' : ''}`}
-          ref={chatBoxRef}
-          onScroll={handleScroll}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-        >
-          {isDragOver && (
-            <div className="drag-overlay">
-              <Image size={48} />
-              <p>Drop files here to attach</p>
-            </div>
-          )}
+        <main className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
           {messages.length === 0 && (
             <div className="welcome-screen">
               <Bot size={56} className="welcome-icon" />
-              <h2>{getGreeting()}, {userName}</h2>
-              <p className="welcome-sub">How can I help you today?</p>
+              <h2>How can I help you today?</h2>
               <div className="quick-prompts-grid">
                 {quickPrompts.map((item, idx) => (
                   <div key={idx} className="quick-prompt-card" onClick={() => triggerSend(item.prompt)}>
@@ -709,6 +626,29 @@ export default function Davora() {
                           </div>
                         </details>
                       )}
+                      {inputMode === 'research' && index % 2 === 1 && (
+                        <details className="tool-execution-block">
+                          <summary><Terminal size={14} className="inline-icon text-green-500" /> Analyzed data with Python</summary>
+                          <div className="tool-execution-content">
+                            <code>import pandas as pd</code><br/>
+                            <code>df = pd.read_csv('dataset.csv')</code><br/>
+                            <code>print(df.describe())</code>
+                          </div>
+                        </details>
+                      )}
+                      {inputMode === 'research' && index % 2 !== 1 && (
+                        <details className="tool-execution-block web-search-block">
+                          <summary><SearchCheck size={14} className="inline-icon text-blue-500" /> Searched 5 sites</summary>
+                          <div className="tool-execution-content search-results">
+                            <a href="#" className="search-citation"><Link size={12}/> github.com/davora</a>
+                            <a href="#" className="search-citation"><Link size={12}/> stackoverflow.com/questions</a>
+                            <a href="#" className="search-citation"><Link size={12}/> reactjs.org/docs</a>
+                          </div>
+                        </details>
+                      )}
+                      <div className="per-message-model-badge">
+                        <Sparkles size={10} className="inline-icon text-purple-500"/> {selectedModel}
+                      </div>
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
@@ -746,6 +686,11 @@ export default function Davora() {
                       >
                         {msg.content}
                       </ReactMarkdown>
+                      {index === 1 && (
+                        <div className="memory-updated-badge animation-slide-up">
+                          <BrainCircuit size={12} className="text-purple-500"/> Memory updated
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -760,9 +705,17 @@ export default function Davora() {
 
                     {msg.role === 'user' ? (
                       !editingId && (
-                        <button onClick={() => { setEditingId(msg.id); setEditInput(msg.content); }} className="toolbar-btn" title="Edit Prompt">
-                          <Edit2 size={12} /> Edit
-                        </button>
+                        <>
+                          <div className="branch-selector" title="Alternate Prompts">
+                            <ChevronLeft size={14} className="branch-btn disabled" />
+                            <span>1 / 1</span>
+                            <ChevronRight size={14} className="branch-btn disabled" />
+                          </div>
+                          <div className="toolbar-divider"></div>
+                          <button onClick={() => { setEditingId(msg.id); setEditInput(msg.content); }} className="toolbar-btn" title="Edit Prompt">
+                            <Edit2 size={12} /> Edit
+                          </button>
+                        </>
                       )
                     ) : (
                       <>
@@ -797,6 +750,17 @@ export default function Davora() {
                             <RefreshCw size={12} /> Regenerate
                           </button>
                         )}
+                        <div className="more-menu-wrapper">
+                          <button onClick={() => setOpenMoreMenuId(openMoreMenuId === msg.id ? null : msg.id)} className="toolbar-btn" title="More Actions">
+                            <MoreHorizontal size={14} />
+                          </button>
+                          {openMoreMenuId === msg.id && (
+                            <div className="more-menu-dropdown">
+                               <button onClick={() => { showNotification("Task Scheduled"); setOpenMoreMenuId(null); }} className="more-menu-item"><CalendarClock size={14}/> Schedule Task</button>
+                               <button onClick={() => { showNotification("Report Sent"); setOpenMoreMenuId(null); }} className="more-menu-item"><TriangleAlert size={14} className="text-red-500"/> Report Issue</button>
+                            </div>
+                          )}
+                        </div>
                       </>
                     )}
                   </div>
@@ -837,11 +801,22 @@ export default function Davora() {
           <div ref={messagesEndRef} />
         </main>
 
+        {/* 2026 Scroll to bottom badge */}
         {showScrollButton && (
-          <button className="scroll-bottom-btn" onClick={scrollToBottom}>
+          <button 
+            className={`scroll-bottom-btn ${isTyping ? 'has-unread' : ''}`}
+            onClick={scrollToBottom}
+          >
             <ArrowDown size={20} />
+            {isTyping && <div className="unread-dot"></div>}
           </button>
         )}
+
+        {/* App Connectors Strip */}
+        <div className="app-connectors-strip">
+           <button className="connector-badge" onClick={() => showNotification("Connected to Gmail")}><AtSign size={12}/> Gmail</button>
+           <button className="connector-badge" onClick={() => showNotification("Connected to Drive")}><Database size={12}/> Drive</button>
+        </div>
 
         {/* Input Area */}
         <div className={`input-wrapper mode-${inputMode}`}>
@@ -903,11 +878,7 @@ export default function Davora() {
               )}
             </div>
           </form>
-          <div className="input-footer-row">
-            {input.length > 0 && <span className="char-counter">{input.length} / 32,000</span>}
-            <p className="footer-text">Davora 3.2 can make mistakes. Consider verifying important information.</p>
-            <span className="shortcut-hint hide-on-mobile">⌘K for commands</span>
-          </div>
+          <p className="footer-text">Davora 3.2 can make mistakes. Consider verifying important information.</p>
         </div>
       </div>
 
@@ -970,7 +941,10 @@ export default function Davora() {
       {/* 2026 Right Canvas Panel */}
       <aside className={`canvas-panel ${canvasOpen ? 'open' : 'closed'}`}>
         <div className="canvas-header">
-          <div className="canvas-title"><Folder size={16} /> Canvas Workspace</div>
+          <div className="canvas-title">
+            <Folder size={16} /> Canvas Workspace 
+            <span className="canvas-version-badge"><FileClock size={12}/> v1.0</span>
+          </div>
           <button onClick={() => setCanvasOpen(false)} className="icon-action-btn"><X size={18} /></button>
         </div>
         <div className="canvas-body">
