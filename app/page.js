@@ -23,7 +23,10 @@ export default function Davora() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [renamingId, setRenamingId] = useState(null);
+  const [renamingId, setRenamingId] = useState(null);
   const [renameInput, setRenameInput] = useState("");
+  const [canvasOpen, setCanvasOpen] = useState(false);
+  const [showCmdPalette, setShowCmdPalette] = useState(false);
 
   // Input & UI States
   const [input, setInput] = useState("");
@@ -132,6 +135,21 @@ export default function Davora() {
     }, 2000);
     return () => clearInterval(interval);
   }, [isTyping]);
+
+  // 2026 Command Palette Keybind (Ctrl+K / Cmd+K)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowCmdPalette(prev => !prev);
+      }
+      if (e.key === 'Escape') {
+        setShowCmdPalette(false);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   useEffect(() => { activeSessionIdRef.current = activeSessionId; }, [activeSessionId]);
   
@@ -494,6 +512,11 @@ export default function Davora() {
               <div className="model-badge">Davora 3.2 <ChevronDown size={12} /></div>
             </div>
           </div>
+          <div className="header-actions">
+            <div className="token-badge" title="Context Memory Usage">
+               <Database size={12}/> 24k / 128k Tokens
+            </div>
+          </div>
         </header>
 
         {/* Chat Box */}
@@ -540,6 +563,16 @@ export default function Davora() {
                     )
                   ) : (
                     <div className="markdown-body">
+                      {inputMode === 'deep' && (
+                        <details className="reasoning-path">
+                          <summary><Activity size={14} className="inline-icon"/> Analyzed 14 context paths</summary>
+                          <div className="reasoning-content">
+                            <p className="reasoning-step">1. Parsed user intent from previous turns.</p>
+                            <p className="reasoning-step">2. Retrieved semantic memory chunks.</p>
+                            <p className="reasoning-step">3. Synthesized optimal reasoning chain.</p>
+                          </div>
+                        </details>
+                      )}
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
@@ -610,7 +643,7 @@ export default function Davora() {
                         <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${ratings[msg.id] === 'down' ? 'text-red-500' : ''}`} title="Bad response">
                           <ThumbsDown size={14} />
                         </button>
-                        <button onClick={() => showNotification("Saved to Canvas Notes")} className="toolbar-btn" title="Save to Canvas">
+                        <button onClick={() => setCanvasOpen(true)} className="toolbar-btn" title="Open in Canvas">
                           <Bookmark size={14} />
                         </button>
                         <button onClick={() => showNotification("Share link coming soon!")} className="toolbar-btn" title="Share message">
@@ -671,7 +704,7 @@ export default function Davora() {
               <Paperclip size={20} />
             </button>
             
-            <div className="textarea-container">
+            <div className={`textarea-container ${isListening ? 'hidden' : ''}`}>
               <TextareaAutosize
                 ref={inputRef}
                 minRows={1}
@@ -679,11 +712,22 @@ export default function Davora() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={isListening ? "Listening... Speak now" : `Message Davora...`}
+                placeholder="Message Davora..."
                 disabled={isTyping}
                 className="auto-resize-textarea"
               />
             </div>
+
+            {isListening && (
+              <div className="voice-visualizer">
+                 <div className="voice-bar"></div>
+                 <div className="voice-bar"></div>
+                 <div className="voice-bar"></div>
+                 <div className="voice-bar"></div>
+                 <div className="voice-bar"></div>
+                 <span className="voice-text">Listening...</span>
+              </div>
+            )}
             
             <div className="input-right-actions">
               <button 
@@ -765,6 +809,53 @@ export default function Davora() {
           </div>
         </div>
       )}
+
+      {/* 2026 Right Canvas Panel */}
+      <aside className={`canvas-panel ${canvasOpen ? 'open' : 'closed'}`}>
+        <div className="canvas-header">
+          <div className="canvas-title"><Folder size={16}/> Canvas Workspace</div>
+          <button onClick={() => setCanvasOpen(false)} className="icon-action-btn"><X size={18}/></button>
+        </div>
+        <div className="canvas-body">
+          <div className="canvas-empty-state">
+            <Bookmark size={32} className="text-secondary mb-4" />
+            <h3>No Artifacts Saved</h3>
+            <p>Click the bookmark icon on any AI message to save it to your persistent Canvas workspace.</p>
+          </div>
+        </div>
+      </aside>
+
+      {/* 2026 Command Palette (Omnibar) */}
+      {showCmdPalette && (
+        <div className="cmd-palette-overlay" onClick={() => setShowCmdPalette(false)}>
+          <div className="cmd-palette-content" onClick={e => e.stopPropagation()}>
+            <div className="cmd-header">
+              <Search size={18} className="text-secondary" />
+              <input autoFocus type="text" placeholder="Search chats or type a command..." className="cmd-input" />
+              <div className="cmd-badge">ESC</div>
+            </div>
+            <div className="cmd-body">
+              <p className="cmd-label">Quick Actions</p>
+              <button className="cmd-item" onClick={() => { startNewChat(); setShowCmdPalette(false); }}>
+                <PlusCircle size={16}/> New Chat
+              </button>
+              <button className="cmd-item" onClick={() => { setInputMode('deep'); setShowCmdPalette(false); }}>
+                <Activity size={16}/> Switch to Deep Think Mode
+              </button>
+              <button className="cmd-item" onClick={() => { setShowSettings(true); setShowCmdPalette(false); }}>
+                <Settings size={16}/> Open Settings
+              </button>
+              <p className="cmd-label">Recent Chats</p>
+              {filteredSessions.slice(0, 3).map(session => (
+                <button key={session.id} className="cmd-item" onClick={() => { setActiveSessionId(session.id); setShowCmdPalette(false); }}>
+                  <MessageSquare size={16}/> {session.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
