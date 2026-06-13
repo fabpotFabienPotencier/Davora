@@ -7,7 +7,7 @@ import {
   Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
-  Search, Pencil, Share
+  Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -392,6 +392,15 @@ export default function Davora() {
           </button>
         </div>
 
+        <div className="sidebar-nav-group">
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Canvas Notes workspace opening...")}>
+            <Folder size={16}/> My Canvas Notes
+          </button>
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Agent marketplace opening...")}>
+            <Compass size={16}/> Explore Agents
+          </button>
+        </div>
+
         <div className="sidebar-search-container">
           <Search size={14} className="search-icon" />
           <input 
@@ -584,6 +593,9 @@ export default function Davora() {
                         <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${ratings[msg.id] === 'down' ? 'text-red-500' : ''}`} title="Bad response">
                           <ThumbsDown size={14} />
                         </button>
+                        <button onClick={() => showNotification("Saved to Canvas Notes")} className="toolbar-btn" title="Save to Canvas">
+                          <Bookmark size={14} />
+                        </button>
                         <button onClick={() => showNotification("Share link coming soon!")} className="toolbar-btn" title="Share message">
                           <Share size={14} />
                         </button>
@@ -689,6 +701,15 @@ export default function Davora() {
                   onChange={(e) => setPrefs({...prefs, customInstructions: e.target.value})}
                   placeholder="e.g. I am a software developer. Always give concise answers."
                 />
+              </div>
+
+              <div className="setting-group-row">
+                <button onClick={() => showNotification("Opening Memory settings...")} className="sidebar-nav-btn outline-btn">
+                  <Database size={16}/> Manage Memory
+                </button>
+                <button onClick={() => showNotification("Checking active sessions...")} className="sidebar-nav-btn outline-btn">
+                  <Activity size={16}/> Active Sessions
+                </button>
               </div>
 
               <div className="setting-group">
