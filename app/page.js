@@ -7,7 +7,8 @@ import {
   Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
-  Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database, Globe
+  Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database, Globe,
+  Shield, FolderKanban
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -26,6 +27,9 @@ export default function Davora() {
   const [renameInput, setRenameInput] = useState("");
   const [canvasOpen, setCanvasOpen] = useState(false);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
+  const [isTemporary, setIsTemporary] = useState(false);
+  const [showModelPicker, setShowModelPicker] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("Davora 3.2 Pro");
 
   // Input & UI States
   const [input, setInput] = useState("");
@@ -427,6 +431,9 @@ export default function Davora() {
         </div>
 
         <div className="sidebar-nav-group">
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Projects opening...")}>
+            <FolderKanban size={16} /> My Projects
+          </button>
           <button className="sidebar-nav-btn" onClick={() => showNotification("Canvas Notes workspace opening...")}>
             <Folder size={16} /> My Canvas Notes
           </button>
@@ -504,12 +511,38 @@ export default function Davora() {
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="icon-action-btn toggle-sidebar-btn" title="Toggle Sidebar">
               {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
             </button>
-            <div className="model-selector">
-              <h1>Davora</h1>
-              <div className="model-badge">Davora 3.2 <ChevronDown size={12} /></div>
+            <div className="model-selector-wrapper" onClick={() => setShowModelPicker(!showModelPicker)}>
+              <div className="model-selector">
+                <h1>Davora</h1>
+                <div className="model-badge">{selectedModel} <ChevronDown size={12} /></div>
+              </div>
+              
+              {showModelPicker && (
+                <div className="model-dropdown">
+                  <div className="model-option" onClick={(e) => { e.stopPropagation(); setSelectedModel("Davora Instant"); setShowModelPicker(false); showNotification("Switched to Instant Model"); }}>
+                    <Zap size={16} className="text-yellow-500" /> 
+                    <div className="model-opt-text"><strong>Davora Instant</strong><br/><span>Fastest responses, everyday tasks</span></div>
+                  </div>
+                  <div className="model-option" onClick={(e) => { e.stopPropagation(); setSelectedModel("Davora Thinking"); setShowModelPicker(false); showNotification("Switched to Thinking Model"); }}>
+                    <Activity size={16} className="text-purple-500" /> 
+                    <div className="model-opt-text"><strong>Davora Thinking</strong><br/><span>Deep reasoning for math & code</span></div>
+                  </div>
+                  <div className="model-option" onClick={(e) => { e.stopPropagation(); setSelectedModel("Davora Pro"); setShowModelPicker(false); showNotification("Switched to Pro Model"); }}>
+                    <Globe size={16} className="text-blue-500" /> 
+                    <div className="model-opt-text"><strong>Davora Pro</strong><br/><span>Flagship model with web access</span></div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="header-actions">
+            <button 
+              className={`temporary-chat-toggle ${isTemporary ? 'active' : ''}`}
+              onClick={() => { setIsTemporary(!isTemporary); showNotification(isTemporary ? "Temporary Chat Disabled" : "Temporary Chat Enabled. History won't be saved."); }}
+              title="Temporary Chat (Incognito)"
+            >
+              <Shield size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
+            </button>
             <div className="token-badge" title="Context Memory Usage">
               <Database size={12} /> 24k / 128k Tokens
             </div>
