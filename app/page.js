@@ -7,7 +7,7 @@ import {
   Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
-  Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database
+  Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database, Globe
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -28,6 +28,8 @@ export default function Davora() {
   // Input & UI States
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [inputMode, setInputMode] = useState("instant");
+  const [thinkingText, setThinkingText] = useState("Thinking...");
   const [copiedId, setCopiedId] = useState(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [toast, setToast] = useState(null);
@@ -115,6 +117,21 @@ export default function Davora() {
       }
     }
   }, []);
+
+  // 2026 Dynamic Thinking States
+  useEffect(() => {
+    if (!isTyping) {
+      setThinkingText("Thinking...");
+      return;
+    }
+    const states = ["Analyzing context...", "Searching memory...", "Synthesizing response...", "Drafting..."];
+    let i = 0;
+    const interval = setInterval(() => {
+      i = (i + 1) % states.length;
+      setThinkingText(states[i]);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [isTyping]);
 
   useEffect(() => { activeSessionIdRef.current = activeSessionId; }, [activeSessionId]);
   
@@ -613,14 +630,20 @@ export default function Davora() {
             </div>
           ))}
           
-          {isTyping && (
+           {isTyping && (
             <div className="message-row row-ai">
                <div className="avatar avatar-ai"><Bot size={20} /></div>
                <div className="message-bubble-wrapper wrapper-ai">
                  <div className="message-bubble bubble-ai typing-indicator">
-                   <span className="dot-typing"></span>
-                   <span className="dot-typing"></span>
-                   <span className="dot-typing"></span>
+                   {inputMode === 'deep' ? (
+                     <span className="thinking-text-animated pulse-glow"><Activity size={14} className="inline-icon"/> {thinkingText}</span>
+                   ) : (
+                     <>
+                       <span className="dot-typing"></span>
+                       <span className="dot-typing"></span>
+                       <span className="dot-typing"></span>
+                     </>
+                   )}
                  </div>
                </div>
             </div>
@@ -635,7 +658,14 @@ export default function Davora() {
         )}
 
         {/* Input Area */}
-        <div className="input-wrapper">
+        <div className={`input-wrapper mode-${inputMode}`}>
+          
+          <div className="input-mode-selector">
+            <button onClick={() => setInputMode('instant')} className={`mode-btn ${inputMode === 'instant' ? 'active' : ''}`}><Zap size={14}/> Instant</button>
+            <button onClick={() => setInputMode('deep')} className={`mode-btn ${inputMode === 'deep' ? 'active' : ''}`}><Activity size={14}/> Deep Think</button>
+            <button onClick={() => { setInputMode('research'); showNotification("Web Search Agent coming soon"); }} className={`mode-btn ${inputMode === 'research' ? 'active' : ''}`}><Globe size={14}/> Web Research</button>
+          </div>
+
           <form className="input-area" onSubmit={sendMessage}>
             <button type="button" onClick={mockAttach} className="attach-btn" title="Attach file">
               <Paperclip size={20} />
