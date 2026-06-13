@@ -8,7 +8,8 @@ import {
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
   Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database, Globe,
-  Shield, FolderKanban
+  Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight,
+  Pin, Image, FileText, Crown, ArrowUpRight
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -30,6 +31,9 @@ export default function Davora() {
   const [isTemporary, setIsTemporary] = useState(false);
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [selectedModel, setSelectedModel] = useState("Davora 3.2 Pro");
+  const [pinnedChats, setPinnedChats] = useState([]);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [userName, setUserName] = useState("User");
 
   // Input & UI States
   const [input, setInput] = useState("");
@@ -75,6 +79,70 @@ export default function Davora() {
     { icon: <PenTool size={18} />, title: "Draft an email", prompt: "Write a professional email to my boss asking for a deadline extension due to unforeseen technical blockers." },
     { icon: <Lightbulb size={18} />, title: "Brainstorm ideas", prompt: "Give me 5 unique ideas for a SaaS startup in the AI and productivity space." }
   ];
+
+  // Get time-based greeting
+  const getGreeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return "Good morning";
+    if (h < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  // Pin/Unpin chat
+  const togglePin = (e, sessionId) => {
+    e.stopPropagation();
+    setPinnedChats(prev => {
+      if (prev.includes(sessionId)) return prev.filter(id => id !== sessionId);
+      if (prev.length >= 3) { showNotification("Max 3 pinned chats"); return prev; }
+      return [...prev, sessionId];
+    });
+  };
+
+  // Group sessions by date
+  const groupSessionsByDate = (sessionList) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const yesterday = today - 86400000;
+    const sevenDaysAgo = today - 7 * 86400000;
+    const thirtyDaysAgo = today - 30 * 86400000;
+    const groups = { pinned: [], today: [], yesterday: [], week: [], month: [], older: [] };
+    sessionList.forEach(s => {
+      if (pinnedChats.includes(s.id)) { groups.pinned.push(s); return; }
+      const t = s.createdAt || Date.now();
+      if (t >= today) groups.today.push(s);
+      else if (t >= yesterday) groups.yesterday.push(s);
+      else if (t >= sevenDaysAgo) groups.week.push(s);
+      else if (t >= thirtyDaysAgo) groups.month.push(s);
+      else groups.older.push(s);
+    });
+    return groups;
+  };
+
+  const groupedSessions = groupSessionsByDate(filteredSessions);
+
+  // Export chat as text
+  const exportChat = () => {
+    if (!activeSession) return;
+    const text = activeSession.messages.map(m => `[${m.role.toUpperCase()}]\n${m.content}`).join('\n\n---\n\n');
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${activeSession.title || 'chat'}.txt`; a.click();
+    URL.revokeObjectURL(url);
+    showNotification("Chat exported!");
+  };
+
+  // Drag & drop handlers
+  const handleDragOver = (e) => { e.preventDefault(); setIsDragOver(true); };
+  const handleDragLeave = () => setIsDragOver(false);
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      showNotification(`${files.length} file(s) attached: ${files.map(f => f.name).join(', ')}`);
+    }
+  };
 
   const showNotification = (msg) => {
     setToast(msg);
@@ -413,7 +481,7 @@ export default function Davora() {
   };
 
   return (
-    <div className={`app-layout font-size-${prefs.fontSize}`}>
+    <div className={`app-layout font-size-${prefs.fontSize} ${isTyping ? 'ambient-focus' : ''}`}>
 
       {/* Toast Notification */}
       <div className={`toast-notification ${toast ? 'show' : ''}`}>
@@ -454,43 +522,60 @@ export default function Davora() {
         </div>
 
         <div className="sidebar-history">
-          <p className="sidebar-label">Recent</p>
           {filteredSessions.length === 0 && <p className="sidebar-empty">No chats found.</p>}
-          {filteredSessions.map(session => (
-            <div
-              key={session.id}
-              className={`history-item ${activeSessionId === session.id ? 'active' : ''}`}
-              onClick={() => { if (renamingId !== session.id) { setActiveSessionId(session.id); if (window.innerWidth < 768) setSidebarOpen(false); } }}
-            >
-              {renamingId === session.id ? (
-                <input
-                  autoFocus
-                  type="text"
-                  value={renameInput}
-                  onChange={(e) => setRenameInput(e.target.value)}
-                  onBlur={(e) => saveRename(e, session.id)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') saveRename(e, session.id); }}
-                  className="rename-input"
-                />
-              ) : (
-                <span className="history-title">{session.title}</span>
-              )}
+          {Object.entries({
+            'Pinned': groupedSessions.pinned,
+            'Today': groupedSessions.today,
+            'Yesterday': groupedSessions.yesterday,
+            'Previous 7 Days': groupedSessions.week,
+            'Previous 30 Days': groupedSessions.month,
+            'Older': groupedSessions.older
+          }).map(([label, items]) => items.length > 0 && (
+            <div key={label}>
+              <p className="sidebar-label">{label === 'Pinned' ? '📌 Pinned' : label}</p>
+              {items.map(session => (
+                <div
+                  key={session.id}
+                  className={`history-item ${activeSessionId === session.id ? 'active' : ''} ${pinnedChats.includes(session.id) ? 'pinned' : ''}`}
+                  onClick={() => { if (renamingId !== session.id) { setActiveSessionId(session.id); if (window.innerWidth < 768) setSidebarOpen(false); } }}
+                >
+                  {renamingId === session.id ? (
+                    <input
+                      autoFocus
+                      type="text"
+                      value={renameInput}
+                      onChange={(e) => setRenameInput(e.target.value)}
+                      onBlur={(e) => saveRename(e, session.id)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') saveRename(e, session.id); }}
+                      className="rename-input"
+                    />
+                  ) : (
+                    <span className="history-title">{session.title}</span>
+                  )}
 
-              {renamingId !== session.id && (
-                <div className="history-actions">
-                  <button onClick={(e) => { e.stopPropagation(); setRenamingId(session.id); setRenameInput(session.title); }} className="action-icon-btn" title="Rename">
-                    <Pencil size={14} />
-                  </button>
-                  <button onClick={(e) => deleteSession(e, session.id)} className="action-icon-btn delete" title="Delete">
-                    <Trash2 size={14} />
-                  </button>
+                  {renamingId !== session.id && (
+                    <div className="history-actions">
+                      <button onClick={(e) => togglePin(e, session.id)} className={`action-icon-btn ${pinnedChats.includes(session.id) ? 'pinned-active' : ''}`} title={pinnedChats.includes(session.id) ? 'Unpin' : 'Pin'}>
+                        <Pin size={14} />
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); setRenamingId(session.id); setRenameInput(session.title); }} className="action-icon-btn" title="Rename">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={(e) => deleteSession(e, session.id)} className="action-icon-btn delete" title="Delete">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
           ))}
         </div>
 
         <div className="sidebar-footer">
+          <button className="upgrade-cta-btn" onClick={() => showNotification("Upgrade to Davora Pro for unlimited access!")}>
+            <Crown size={16} /> Upgrade Plan <ArrowUpRight size={14} />
+          </button>
           <button onClick={() => setShowSettings(true)} className="user-profile-btn">
             <div className="user-avatar-small"><User size={16} /></div>
             <div className="user-info">
@@ -536,6 +621,13 @@ export default function Davora() {
             </div>
           </div>
           <div className="header-actions">
+            <button
+              onClick={exportChat}
+              className="icon-action-btn"
+              title="Export Chat"
+            >
+              <Download size={18} />
+            </button>
             <button 
               className={`temporary-chat-toggle ${isTemporary ? 'active' : ''}`}
               onClick={() => { setIsTemporary(!isTemporary); showNotification(isTemporary ? "Temporary Chat Disabled" : "Temporary Chat Enabled. History won't be saved."); }}
@@ -550,11 +642,25 @@ export default function Davora() {
         </header>
 
         {/* Chat Box */}
-        <main className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
+        <main
+          className={`chat-box ${isDragOver ? 'drag-over' : ''}`}
+          ref={chatBoxRef}
+          onScroll={handleScroll}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {isDragOver && (
+            <div className="drag-overlay">
+              <Image size={48} />
+              <p>Drop files here to attach</p>
+            </div>
+          )}
           {messages.length === 0 && (
             <div className="welcome-screen">
               <Bot size={56} className="welcome-icon" />
-              <h2>How can I help you today?</h2>
+              <h2>{getGreeting()}, {userName}</h2>
+              <p className="welcome-sub">How can I help you today?</p>
               <div className="quick-prompts-grid">
                 {quickPrompts.map((item, idx) => (
                   <div key={idx} className="quick-prompt-card" onClick={() => triggerSend(item.prompt)}>
@@ -660,6 +766,12 @@ export default function Davora() {
                       )
                     ) : (
                       <>
+                        <div className="branch-selector" title="Alternate Generations">
+                          <ChevronLeft size={14} className="branch-btn disabled" />
+                          <span>1 / 1</span>
+                          <ChevronRight size={14} className="branch-btn disabled" />
+                        </div>
+                        <div className="toolbar-divider"></div>
                         <button onClick={() => toggleTextToSpeech(msg.content, msg.id)} className={`toolbar-btn ${speakingId === msg.id ? 'active-tts' : ''}`} title="Read Aloud">
                           {speakingId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
                         </button>
@@ -687,6 +799,17 @@ export default function Davora() {
                         )}
                       </>
                     )}
+                  </div>
+                )}
+                
+                {msg.role === 'ai' && index === messages.length - 1 && !isTyping && (
+                  <div className="predictive-actions animation-slide-up">
+                    <p className="predictive-label"><Sparkles size={12}/> Suggested Next Steps</p>
+                    <div className="predictive-btn-group">
+                      <button className="predictive-btn" onClick={() => triggerSend("Convert this to a professional email")}><PenTool size={14} /> Draft Email</button>
+                      <button className="predictive-btn" onClick={() => triggerSend("Summarize this into 3 bullet points")}><List size={14} /> Summarize</button>
+                      <button className="predictive-btn" onClick={() => setCanvasOpen(true)}><Folder size={14} /> Save to Canvas</button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -780,7 +903,11 @@ export default function Davora() {
               )}
             </div>
           </form>
-          <p className="footer-text">Davora 3.2 can make mistakes. Consider verifying important information.</p>
+          <div className="input-footer-row">
+            {input.length > 0 && <span className="char-counter">{input.length} / 32,000</span>}
+            <p className="footer-text">Davora 3.2 can make mistakes. Consider verifying important information.</p>
+            <span className="shortcut-hint hide-on-mobile">⌘K for commands</span>
+          </div>
         </div>
       </div>
 
