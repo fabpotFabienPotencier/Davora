@@ -7,7 +7,7 @@ import {
   Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
-  Search, Pencil
+  Search, Pencil, Share
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -583,6 +583,9 @@ export default function Davora() {
                         </button>
                         <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${ratings[msg.id] === 'down' ? 'text-red-500' : ''}`} title="Bad response">
                           <ThumbsDown size={14} />
+                        </button>
+                        <button onClick={() => showNotification("Share link coming soon!")} className="toolbar-btn" title="Share message">
+                          <Share size={14} />
                         </button>
                         <div className="toolbar-divider"></div>
                         {index === messages.length - 1 && (
