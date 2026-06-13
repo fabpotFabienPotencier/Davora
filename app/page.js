@@ -1,11 +1,17 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, User, Bot, Loader2, Copy, Check, PlusCircle } from "lucide-react";
+import { 
+  Send, User, Bot, Loader2, Copy, Check, 
+  PlusCircle, Download, Square, ArrowDown,
+  Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, Clock,
+  ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
+  Settings, Sun, Moon, X
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { vscDarkPlus, vs } from "react-syntax-highlighter/dist/esm/styles/prism";
 import TextareaAutosize from "react-textarea-autosize";
 
 export default function Davora() {
@@ -13,20 +19,106 @@ export default function Davora() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  
+  // Voice, Edit, TTS, and Rating states
+  const [isListening, setIsListening] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editInput, setEditInput] = useState("");
+  const [speakingId, setSpeakingId] = useState(null);
+  const [ratings, setRatings] = useState({});
+
+  // Settings & Preferences
+  const [showSettings, setShowSettings] = useState(false);
+  const [prefs, setPrefs] = useState({
+    theme: 'dark',
+    fontSize: 'medium', // small, medium, large
+    sendOnEnter: true
+  });
+
   const messagesEndRef = useRef(null);
+  const chatBoxRef = useRef(null);
   const ws = useRef(null);
   const inputRef = useRef(null);
+  
+  const recognitionRef = useRef(null);
+  const synthRef = useRef(null);
 
-  // Focus input on load
+  const quickPrompts = [
+    { icon: <Zap size={18}/>, title: "Explain a complex topic", prompt: "Explain quantum computing in simple terms to a 10 year old." },
+    { icon: <Code size={18}/>, title: "Write a React component", prompt: "Write a React component for a beautiful glassmorphic button using TailwindCSS." },
+    { icon: <PenTool size={18}/>, title: "Draft an email", prompt: "Write a professional email to my boss asking for a deadline extension due to unforeseen technical blockers." },
+    { icon: <Lightbulb size={18}/>, title: "Brainstorm ideas", prompt: "Give me 5 unique ideas for a SaaS startup in the AI and productivity space." }
+  ];
+
+  // Initialization
   useEffect(() => {
+    // Load Chat History
+    const saved = localStorage.getItem("davora_chat_history");
+    if (saved) {
+      try { setMessages(JSON.parse(saved)); } catch (e) {}
+    }
+    const savedRatings = localStorage.getItem("davora_chat_ratings");
+    if (savedRatings) {
+      try { setRatings(JSON.parse(savedRatings)); } catch (e) {}
+    }
+    // Load Preferences
+    const savedPrefs = localStorage.getItem("davora_prefs");
+    if (savedPrefs) {
+      try { 
+        const parsed = JSON.parse(savedPrefs);
+        setPrefs(parsed);
+      } catch (e) {}
+    }
+
     if (inputRef.current) inputRef.current.focus();
+    
+    // Init APIs
+    if (typeof window !== "undefined") {
+      synthRef.current = window.speechSynthesis;
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.onresult = (event) => {
+          let transcript = "";
+          for (let i = event.resultIndex; i < event.results.length; i++) transcript += event.results[i][0].transcript;
+          setInput(transcript);
+        };
+        recognitionRef.current.onerror = () => setIsListening(false);
+        recognitionRef.current.onend = () => setIsListening(false);
+      }
+    }
   }, []);
 
-  // Connect to WebSocket on mount
+  // Sync Preferences to DOM & LocalStorage
   useEffect(() => {
-    // IMPORTANT: Make sure this URL matches your active ngrok tunnel!
-    ws.current = new WebSocket("wss://blatancy-barrack-spelling.ngrok-free.dev/ws/chat");
+    localStorage.setItem("davora_prefs", JSON.stringify(prefs));
+    if (prefs.theme === 'light') {
+      document.body.classList.add('light-theme');
+    } else {
+      document.body.classList.remove('light-theme');
+    }
+  }, [prefs]);
 
+  useEffect(() => {
+    if (messages.length > 0) localStorage.setItem("davora_chat_history", JSON.stringify(messages));
+    else localStorage.removeItem("davora_chat_history");
+  }, [messages]);
+
+  useEffect(() => {
+    localStorage.setItem("davora_chat_ratings", JSON.stringify(ratings));
+  }, [ratings]);
+
+  const handleScroll = () => {
+    if (!chatBoxRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = chatBoxRef.current;
+    setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
+  };
+
+  const connectWebSocket = () => {
+    ws.current = new WebSocket("wss://blatancy-barrack-spelling.ngrok-free.dev/ws/chat");
     ws.current.onmessage = (event) => {
       const data = event.data;
       if (data === "[DONE]") {
@@ -34,57 +126,164 @@ export default function Davora() {
         setTimeout(() => inputRef.current?.focus(), 100);
         return;
       }
-
       setMessages((prev) => {
         const newMessages = [...prev];
         const lastMsg = newMessages[newMessages.length - 1];
-        if (lastMsg && lastMsg.role === "ai") {
+        if (lastMsg && lastMsg.role === "ai" && lastMsg.isStreaming) {
           lastMsg.content += data;
         } else {
-          newMessages.push({ id: Date.now(), role: "ai", content: data });
+          newMessages.push({ 
+            id: Date.now(), role: "ai", content: data, isStreaming: true,
+            timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+          });
         }
         return newMessages;
       });
     };
-
-    return () => {
-      if (ws.current) ws.current.close();
-    };
-  }, []);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    ws.current.onclose = () => setMessages(prev => prev.map(m => ({...m, isStreaming: false})));
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping]);
+    connectWebSocket();
+    return () => {
+      if (ws.current) ws.current.close();
+      if (synthRef.current) synthRef.current.cancel();
+    };
+  }, []);
+
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+  useEffect(() => {
+    if (!showScrollButton) scrollToBottom();
+  }, [messages, isTyping, showScrollButton]);
+
+  const triggerSend = (customText = null) => {
+    const textToSend = customText !== null ? customText : input.trim();
+    if (!textToSend || !ws.current || isTyping) return;
+
+    if (synthRef.current) synthRef.current.cancel();
+    setSpeakingId(null);
+
+    setMessages((prev) => [...prev, { 
+      id: Date.now(), role: "user", content: textToSend,
+      timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+    }]);
+    
+    setInput("");
+    setIsTyping(true);
+    setEditingId(null);
+    setIsListening(false);
+
+    if (ws.current.readyState !== WebSocket.OPEN) {
+      connectWebSocket();
+      setTimeout(() => ws.current.send(textToSend), 500);
+    } else {
+      ws.current.send(textToSend);
+    }
+  };
 
   const sendMessage = (e) => {
     if (e) e.preventDefault();
-    if (!input.trim() || !ws.current || isTyping) return;
+    triggerSend();
+  };
 
-    const userMessage = input.trim();
-    setMessages((prev) => [...prev, { id: Date.now(), role: "user", content: userMessage }]);
-    setInput("");
+  const regenerateResponse = () => {
+    if (isTyping || messages.length < 2) return;
+    const lastUserMsgIndex = messages.map(m => m.role).lastIndexOf('user');
+    if (lastUserMsgIndex === -1) return;
+    
+    const lastUserMsg = messages[lastUserMsgIndex].content;
+    setMessages(prev => prev.slice(0, lastUserMsgIndex + 1));
     setIsTyping(true);
+    
+    if (synthRef.current) synthRef.current.cancel();
+    setSpeakingId(null);
 
-    // Send to backend via WebSocket
-    ws.current.send(userMessage);
+    if (ws.current.readyState !== WebSocket.OPEN) {
+      connectWebSocket();
+      setTimeout(() => ws.current.send(lastUserMsg), 500);
+    } else {
+      ws.current.send(lastUserMsg);
+    }
+  };
+
+  const submitEdit = (id) => {
+    if (!editInput.trim() || isTyping) return;
+    const msgIndex = messages.findIndex(m => m.id === id);
+    if (msgIndex === -1) return;
+    const slicedMessages = messages.slice(0, msgIndex);
+    setMessages(slicedMessages);
+    triggerSend(editInput.trim());
+  };
+
+  const stopGenerating = () => {
+    if (ws.current) {
+      ws.current.close();
+      setIsTyping(false);
+      setMessages(prev => prev.map(m => ({...m, isStreaming: false})));
+      setTimeout(() => connectWebSocket(), 500);
+    }
   };
 
   const handleKeyDown = (e) => {
-    // Submit on Enter (without Shift)
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
+    if (prefs.sendOnEnter) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    } else {
+      // Send on Shift+Enter if setting is toggled
+      if (e.key === "Enter" && e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
     }
+  };
+
+  const toggleVoice = () => {
+    if (!recognitionRef.current) return alert("Your browser does not support voice input.");
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      setInput("");
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  const toggleTextToSpeech = (text, id) => {
+    if (!synthRef.current) return;
+    if (speakingId === id) {
+      synthRef.current.cancel();
+      setSpeakingId(null);
+    } else {
+      synthRef.current.cancel();
+      const cleanText = text.replace(/[*#`_~]/g, '');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.onend = () => setSpeakingId(null);
+      utterance.onerror = () => setSpeakingId(null);
+      const voices = synthRef.current.getVoices();
+      const goodVoice = voices.find(v => v.lang.includes('en-') && (v.name.includes('Google') || v.name.includes('Natural')));
+      if (goodVoice) utterance.voice = goodVoice;
+      setSpeakingId(id);
+      synthRef.current.speak(utterance);
+    }
+  };
+
+  const handleRate = (id, rating) => {
+    setRatings(prev => ({ ...prev, [id]: prev[id] === rating ? null : rating }));
   };
 
   const clearChat = () => {
     if (isTyping) return;
-    setMessages([]);
-    setTimeout(() => inputRef.current?.focus(), 100);
+    if (window.confirm("Are you sure you want to clear the entire chat?")) {
+      setMessages([]);
+      localStorage.removeItem("davora_chat_history");
+      setRatings({});
+      if (synthRef.current) synthRef.current.cancel();
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
   };
 
   const copyToClipboard = (text, id) => {
@@ -93,29 +292,115 @@ export default function Davora() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const exportChat = () => {
+    let textContent = "Davora Chat Export\n\n";
+    messages.forEach(m => {
+      textContent += `[${m.role === 'user' ? 'You' : 'Davora'}] - ${m.timestamp || ''}:\n${m.content}\n\n-----------------\n\n`;
+    });
+    const blob = new Blob([textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Davora-Chat-${new Date().toISOString().slice(0,10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const printChat = () => {
+    window.print();
+  };
+
   return (
-    <div className="chat-container">
+    <div className={`chat-container font-size-${prefs.fontSize}`}>
+      
+      {/* Settings Modal Overlay */}
+      {showSettings && (
+        <div className="modal-overlay" onClick={() => setShowSettings(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Settings</h2>
+              <button className="icon-action-btn" onClick={() => setShowSettings(false)}><X size={20}/></button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="setting-group">
+                <label>Theme</label>
+                <div className="toggle-btns">
+                  <button onClick={() => setPrefs({...prefs, theme: 'light'})} className={prefs.theme === 'light' ? 'active' : ''}><Sun size={16}/> Light</button>
+                  <button onClick={() => setPrefs({...prefs, theme: 'dark'})} className={prefs.theme === 'dark' ? 'active' : ''}><Moon size={16}/> Dark</button>
+                </div>
+              </div>
+
+              <div className="setting-group">
+                <label>Font Size</label>
+                <div className="toggle-btns">
+                  <button onClick={() => setPrefs({...prefs, fontSize: 'small'})} className={prefs.fontSize === 'small' ? 'active' : ''}>Small</button>
+                  <button onClick={() => setPrefs({...prefs, fontSize: 'medium'})} className={prefs.fontSize === 'medium' ? 'active' : ''}>Medium</button>
+                  <button onClick={() => setPrefs({...prefs, fontSize: 'large'})} className={prefs.fontSize === 'large' ? 'active' : ''}>Large</button>
+                </div>
+              </div>
+
+              <div className="setting-group">
+                <label>Send Message Behavior</label>
+                <div className="toggle-btns">
+                  <button onClick={() => setPrefs({...prefs, sendOnEnter: true})} className={prefs.sendOnEnter ? 'active' : ''}>Enter</button>
+                  <button onClick={() => setPrefs({...prefs, sendOnEnter: false})} className={!prefs.sendOnEnter ? 'active' : ''}>Shift + Enter</button>
+                </div>
+                <p className="setting-hint">Choose which key combination sends the message.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="header">
-        <div className="logo">
+        <div className="logo-section">
           <Bot size={28} className="logo-icon" />
-          <h1>Davora</h1>
+          <div className="model-selector">
+            <h1>Davora</h1>
+            <div className="model-badge">
+              Davora 3.2 <ChevronDown size={12} />
+            </div>
+          </div>
         </div>
         <div className="header-actions">
-           <button onClick={clearChat} className="new-chat-btn" disabled={isTyping} title="New Chat">
+           <button onClick={() => setShowSettings(true)} className="icon-action-btn hide-on-mobile" title="Settings">
+             <Settings size={18} />
+             <span className="hide-on-mobile">Settings</span>
+           </button>
+           <button onClick={printChat} className="icon-action-btn hide-on-mobile" disabled={messages.length === 0} title="Print / Save to PDF">
+             <Printer size={18} />
+             <span className="hide-on-mobile">Print</span>
+           </button>
+           <button onClick={exportChat} className="icon-action-btn" disabled={messages.length === 0} title="Export Chat text">
+             <Download size={18} />
+             <span className="hide-on-mobile">Export</span>
+           </button>
+           <button onClick={clearChat} className="icon-action-btn" disabled={isTyping || messages.length === 0} title="New Chat">
              <PlusCircle size={18} />
-             <span>New Chat</span>
+             <span className="hide-on-mobile">New Chat</span>
            </button>
         </div>
       </header>
 
       {/* Chat Area */}
-      <main className="chat-box">
+      <main className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
         {messages.length === 0 && (
           <div className="welcome-screen">
-            <Bot size={48} className="welcome-icon" />
+            <Bot size={56} className="welcome-icon" />
             <h2>Welcome to Davora</h2>
-            <p>I am highly intelligent, fast, and ready to help. What is on your mind?</p>
+            <p>I am highly intelligent, fast, and ready to help.</p>
+            
+            {/* Quick Prompts Grid */}
+            <div className="quick-prompts-grid">
+              {quickPrompts.map((item, idx) => (
+                <div key={idx} className="quick-prompt-card" onClick={() => triggerSend(item.prompt)}>
+                  <div className="quick-prompt-icon">{item.icon}</div>
+                  <div className="quick-prompt-text">{item.title}</div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -124,61 +409,108 @@ export default function Davora() {
             <div className={`avatar ${msg.role === 'user' ? 'avatar-user' : 'avatar-ai'}`}>
               {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
             </div>
-            <div className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
-              
-              {msg.role === 'user' ? (
-                <p className="user-text">{msg.content}</p>
-              ) : (
-                <div className="markdown-body">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      code({ node, inline, className, children, ...props }) {
-                        const match = /language-(\w+)/.exec(className || '');
-                        return !inline && match ? (
-                          <div className="code-block-wrapper">
-                            <div className="code-header">
-                              <span className="code-lang">{match[1]}</span>
-                              <button 
-                                onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), `${msg.id}-${match[1]}`)}
-                                className="copy-code-btn"
+            
+            <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
+              <div className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
+                
+                {msg.role === 'user' ? (
+                  editingId === msg.id ? (
+                    <div className="edit-mode-box">
+                      <TextareaAutosize 
+                        value={editInput}
+                        onChange={(e) => setEditInput(e.target.value)}
+                        className="edit-textarea"
+                      />
+                      <div className="edit-actions">
+                        <button onClick={() => setEditingId(null)} className="edit-cancel">Cancel</button>
+                        <button onClick={() => submitEdit(msg.id)} className="edit-save">Resubmit Prompt</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="user-text">{msg.content}</p>
+                  )
+                ) : (
+                  <div className="markdown-body">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        code({ node, inline, className, children, ...props }) {
+                          const match = /language-(\w+)/.exec(className || '');
+                          return !inline && match ? (
+                            <div className="code-block-wrapper">
+                              <div className="code-header">
+                                <span className="code-lang">{match[1]}</span>
+                                <button 
+                                  onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), `${msg.id}-${match[1]}`)}
+                                  className="copy-code-btn"
+                                >
+                                  {copiedId === `${msg.id}-${match[1]}` ? <Check size={14} /> : <Copy size={14} />}
+                                  {copiedId === `${msg.id}-${match[1]}` ? 'Copied!' : 'Copy'}
+                                </button>
+                              </div>
+                              <SyntaxHighlighter
+                                {...props}
+                                style={prefs.theme === 'light' ? vs : vscDarkPlus}
+                                language={match[1]}
+                                PreTag="div"
+                                className="syntax-highlighter"
                               >
-                                {copiedId === `${msg.id}-${match[1]}` ? <Check size={14} /> : <Copy size={14} />}
-                                {copiedId === `${msg.id}-${match[1]}` ? 'Copied!' : 'Copy'}
-                              </button>
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
                             </div>
-                            <SyntaxHighlighter
-                              {...props}
-                              style={vscDarkPlus}
-                              language={match[1]}
-                              PreTag="div"
-                              className="syntax-highlighter"
-                            >
-                              {String(children).replace(/\n$/, '')}
-                            </SyntaxHighlighter>
-                          </div>
-                        ) : (
-                          <code {...props} className="inline-code">
-                            {children}
-                          </code>
-                        )
-                      }
-                    }}
-                  >
-                    {msg.content}
-                  </ReactMarkdown>
-                </div>
-              )}
+                          ) : (
+                            <code {...props} className="inline-code">
+                              {children}
+                            </code>
+                          )
+                        }
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
+              </div>
               
-              {/* Copy Full Message Button (AI Only) */}
-              {msg.role === 'ai' && !isTyping && index === messages.length - 1 && (
-                <button 
-                  onClick={() => copyToClipboard(msg.content, msg.id)} 
-                  className="copy-msg-btn"
-                  title="Copy message"
-                >
-                  {copiedId === msg.id ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                </button>
+              {/* Action Toolbar underneath messages */}
+              {!isTyping && (
+                <div className={`message-toolbar ${msg.role === 'user' ? 'toolbar-user' : 'toolbar-ai'}`}>
+                  {msg.timestamp && (
+                    <span className="msg-timestamp">
+                       <Clock size={10} /> {msg.timestamp}
+                    </span>
+                  )}
+                  
+                  {msg.role === 'user' ? (
+                    !editingId && (
+                      <button onClick={() => { setEditingId(msg.id); setEditInput(msg.content); }} className="toolbar-btn" title="Edit Prompt">
+                        <Edit2 size={12} /> Edit
+                      </button>
+                    )
+                  ) : (
+                    <>
+                      <button onClick={() => toggleTextToSpeech(msg.content, msg.id)} className={`toolbar-btn ${speakingId === msg.id ? 'active-tts' : ''}`} title="Read Aloud">
+                        {speakingId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />} 
+                      </button>
+                      <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
+                        {copiedId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />} 
+                      </button>
+                      <div className="toolbar-divider"></div>
+                      <button onClick={() => handleRate(msg.id, 'up')} className={`toolbar-btn ${ratings[msg.id] === 'up' ? 'text-green-500' : ''}`} title="Good response">
+                        <ThumbsUp size={14} />
+                      </button>
+                      <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${ratings[msg.id] === 'down' ? 'text-red-500' : ''}`} title="Bad response">
+                        <ThumbsDown size={14} />
+                      </button>
+                      <div className="toolbar-divider"></div>
+                      {index === messages.length - 1 && (
+                        <button onClick={regenerateResponse} className="toolbar-btn" title="Regenerate Response">
+                          <RefreshCw size={12} /> Regenerate
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -187,35 +519,71 @@ export default function Davora() {
         {isTyping && (
           <div className="message-row row-ai">
              <div className="avatar avatar-ai"><Bot size={20} /></div>
-             <div className="message-bubble bubble-ai typing-indicator">
-               <span className="dot-typing"></span>
-               <span className="dot-typing"></span>
-               <span className="dot-typing"></span>
+             <div className="message-bubble-wrapper wrapper-ai">
+               <div className="message-bubble bubble-ai typing-indicator">
+                 <span className="dot-typing"></span>
+                 <span className="dot-typing"></span>
+                 <span className="dot-typing"></span>
+               </div>
              </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </main>
 
+      {/* Floating Scroll to Bottom Button */}
+      {showScrollButton && (
+        <button className="scroll-bottom-btn" onClick={scrollToBottom}>
+          <ArrowDown size={20} />
+        </button>
+      )}
+
+      {/* Floating Stop Generating Button */}
+      {isTyping && (
+        <div className="stop-generating-wrapper">
+          <button className="stop-generating-btn" onClick={stopGenerating}>
+            <Square size={14} className="stop-icon" />
+            Stop generating
+          </button>
+        </div>
+      )}
+
       {/* Input Area */}
       <div className="input-wrapper">
         <form className="input-area" onSubmit={sendMessage}>
-          <TextareaAutosize
-            ref={inputRef}
-            minRows={1}
-            maxRows={6}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Message Davora... (Shift+Enter for new line)"
-            disabled={isTyping}
-            className="auto-resize-textarea"
-          />
+          <button 
+            type="button" 
+            onClick={toggleVoice} 
+            className={`mic-btn ${isListening ? 'listening' : ''}`}
+            title="Voice Input (Dictate)"
+          >
+            <Mic size={20} />
+          </button>
+          
+          <div className="textarea-container">
+            <TextareaAutosize
+              ref={inputRef}
+              minRows={1}
+              maxRows={6}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={isListening ? "Listening... Speak now" : `Message Davora... (${prefs.sendOnEnter ? 'Enter' : 'Shift+Enter'} to send)`}
+              disabled={isTyping}
+              className="auto-resize-textarea"
+            />
+            {input.trim() && (
+              <div className="word-counter">
+                {input.trim().split(/\s+/).length} words | {input.length} chars
+              </div>
+            )}
+          </div>
+          
           <button type="submit" disabled={!input.trim() || isTyping} className="send-btn">
             {isTyping ? <Loader2 className="spinner" size={20} /> : <Send size={20} />}
           </button>
         </form>
-        <p className="footer-text">Davora AI can make mistakes. Consider verifying important information.</p>
+        <p className="footer-text">Davora 3.2 can make mistakes. Consider verifying important information.</p>
       </div>
     </div>
   );
