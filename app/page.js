@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { 
-  Send, User, Bot, Loader2, Copy, Check, 
+import {
+  Send, User, Bot, Loader2, Copy, Check,
   PlusCircle, Download, Square, ArrowDown,
   Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
@@ -36,7 +36,7 @@ export default function Davora() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
-  
+
   // Voice, Edit, TTS, and Rating states
   const [isListening, setIsListening] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -66,10 +66,10 @@ export default function Davora() {
   const filteredSessions = sessions.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const quickPrompts = [
-    { icon: <Zap size={18}/>, title: "Explain a complex topic", prompt: "Explain quantum computing in simple terms to a 10 year old." },
-    { icon: <Code size={18}/>, title: "Write a React component", prompt: "Write a React component for a beautiful glassmorphic button using TailwindCSS." },
-    { icon: <PenTool size={18}/>, title: "Draft an email", prompt: "Write a professional email to my boss asking for a deadline extension due to unforeseen technical blockers." },
-    { icon: <Lightbulb size={18}/>, title: "Brainstorm ideas", prompt: "Give me 5 unique ideas for a SaaS startup in the AI and productivity space." }
+    { icon: <Zap size={18} />, title: "Explain a complex topic", prompt: "Explain quantum computing in simple terms to a 10 year old." },
+    { icon: <Code size={18} />, title: "Write a React component", prompt: "Write a React component for a beautiful glassmorphic button using TailwindCSS." },
+    { icon: <PenTool size={18} />, title: "Draft an email", prompt: "Write a professional email to my boss asking for a deadline extension due to unforeseen technical blockers." },
+    { icon: <Lightbulb size={18} />, title: "Brainstorm ideas", prompt: "Give me 5 unique ideas for a SaaS startup in the AI and productivity space." }
   ];
 
   const showNotification = (msg) => {
@@ -86,22 +86,22 @@ export default function Davora() {
         const parsed = JSON.parse(savedSessions);
         setSessions(parsed);
         if (parsed.length > 0) setActiveSessionId(parsed[0].id);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const savedRatings = localStorage.getItem("davora_chat_ratings");
     if (savedRatings) {
-      try { setRatings(JSON.parse(savedRatings)); } catch (e) {}
+      try { setRatings(JSON.parse(savedRatings)); } catch (e) { }
     }
 
     const savedPrefs = localStorage.getItem("davora_prefs");
     if (savedPrefs) {
-      try { setPrefs(prev => ({...prev, ...JSON.parse(savedPrefs)})); } catch (e) {}
+      try { setPrefs(prev => ({ ...prev, ...JSON.parse(savedPrefs) })); } catch (e) { }
     }
 
     if (window.innerWidth < 768) setSidebarOpen(false);
     if (inputRef.current) inputRef.current.focus();
-    
+
     if (typeof window !== "undefined") {
       synthRef.current = window.speechSynthesis;
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -151,7 +151,7 @@ export default function Davora() {
   }, []);
 
   useEffect(() => { activeSessionIdRef.current = activeSessionId; }, [activeSessionId]);
-  
+
   useEffect(() => {
     if (sessions.length > 0) localStorage.setItem("davora_sessions", JSON.stringify(sessions));
   }, [sessions]);
@@ -188,9 +188,9 @@ export default function Davora() {
         if (lastMsg && lastMsg.role === "ai" && lastMsg.isStreaming) {
           lastMsg.content += data;
         } else {
-          newMessages.push({ 
+          newMessages.push({
             id: Date.now(), role: "ai", content: data, isStreaming: true,
-            timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           });
         }
         return { ...session, messages: newMessages };
@@ -199,7 +199,7 @@ export default function Davora() {
     ws.current.onclose = () => {
       setSessions(prev => prev.map(session => {
         if (session.id === activeSessionIdRef.current) {
-          return { ...session, messages: session.messages.map(m => ({...m, isStreaming: false})) };
+          return { ...session, messages: session.messages.map(m => ({ ...m, isStreaming: false })) };
         }
         return session;
       }));
@@ -241,13 +241,13 @@ export default function Davora() {
       targetSessionId = createNewSession(textToSend);
     }
 
-    const newMessage = { 
+    const newMessage = {
       id: Date.now(), role: "user", content: textToSend,
-      timestamp: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     setSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newMessage] } : s));
-    
+
     setInput("");
     setIsTyping(true);
     setEditingId(null);
@@ -270,14 +270,14 @@ export default function Davora() {
     if (isTyping || messages.length < 2) return;
     const lastUserMsgIndex = messages.map(m => m.role).lastIndexOf('user');
     if (lastUserMsgIndex === -1) return;
-    
+
     const lastUserMsg = messages[lastUserMsgIndex].content;
-    
+
     setSessions(prev => prev.map(s => {
       if (s.id !== activeSessionId) return s;
       return { ...s, messages: s.messages.slice(0, lastUserMsgIndex + 1) };
     }));
-    
+
     setIsTyping(true);
     if (synthRef.current) synthRef.current.cancel();
     setSpeakingId(null);
@@ -294,7 +294,7 @@ export default function Davora() {
     if (!editInput.trim() || isTyping) return;
     const msgIndex = messages.findIndex(m => m.id === id);
     if (msgIndex === -1) return;
-    
+
     setSessions(prev => prev.map(s => {
       if (s.id !== activeSessionId) return s;
       return { ...s, messages: s.messages.slice(0, msgIndex) };
@@ -308,7 +308,7 @@ export default function Davora() {
       setIsTyping(false);
       setSessions(prev => prev.map(session => {
         if (session.id === activeSessionId) {
-          return { ...session, messages: session.messages.map(m => ({...m, isStreaming: false})) };
+          return { ...session, messages: session.messages.map(m => ({ ...m, isStreaming: false })) };
         }
         return session;
       }));
@@ -410,7 +410,7 @@ export default function Davora() {
 
   return (
     <div className={`app-layout font-size-${prefs.fontSize}`}>
-      
+
       {/* Toast Notification */}
       <div className={`toast-notification ${toast ? 'show' : ''}`}>
         {toast}
@@ -428,37 +428,35 @@ export default function Davora() {
 
         <div className="sidebar-nav-group">
           <button className="sidebar-nav-btn" onClick={() => showNotification("Canvas Notes workspace opening...")}>
-            <Folder size={16}/> My Canvas Notes
+            <Folder size={16} /> My Canvas Notes
           </button>
           <button className="sidebar-nav-btn" onClick={() => showNotification("Agent marketplace opening...")}>
-            <Compass size={16}/> Explore Agents
+            <Compass size={16} /> Explore Agents
           </button>
         </div>
 
         <div className="sidebar-search-container">
           <Search size={14} className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Search chats..." 
+          <input
+            type="text"
+            placeholder="Search chats..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="sidebar-search-input"
           />
         </div>
-        
+
         <div className="sidebar-history">
           <p className="sidebar-label">Recent</p>
           {filteredSessions.length === 0 && <p className="sidebar-empty">No chats found.</p>}
           {filteredSessions.map(session => (
-            <div 
-              key={session.id} 
+            <div
+              key={session.id}
               className={`history-item ${activeSessionId === session.id ? 'active' : ''}`}
-              onClick={() => { if(renamingId !== session.id) { setActiveSessionId(session.id); if(window.innerWidth < 768) setSidebarOpen(false); }}}
+              onClick={() => { if (renamingId !== session.id) { setActiveSessionId(session.id); if (window.innerWidth < 768) setSidebarOpen(false); } }}
             >
-              <MessageSquare size={16} className="history-icon" />
-              
               {renamingId === session.id ? (
-                <input 
+                <input
                   autoFocus
                   type="text"
                   value={renameInput}
@@ -484,7 +482,7 @@ export default function Davora() {
             </div>
           ))}
         </div>
-        
+
         <div className="sidebar-footer">
           <button onClick={() => setShowSettings(true)} className="user-profile-btn">
             <div className="user-avatar-small"><User size={16} /></div>
@@ -499,7 +497,7 @@ export default function Davora() {
 
       {/* Main Chat Area */}
       <div className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-        
+
         {/* Header */}
         <header className="header">
           <div className="logo-section">
@@ -513,7 +511,7 @@ export default function Davora() {
           </div>
           <div className="header-actions">
             <div className="token-badge" title="Context Memory Usage">
-               <Database size={12}/> 24k / 128k Tokens
+              <Database size={12} /> 24k / 128k Tokens
             </div>
           </div>
         </header>
@@ -540,14 +538,14 @@ export default function Davora() {
               <div className={`avatar ${msg.role === 'user' ? 'avatar-user' : 'avatar-ai'}`}>
                 {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
               </div>
-              
+
               <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
                 <div className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
-                  
+
                   {msg.role === 'user' ? (
                     editingId === msg.id ? (
                       <div className="edit-mode-box">
-                        <TextareaAutosize 
+                        <TextareaAutosize
                           value={editInput}
                           onChange={(e) => setEditInput(e.target.value)}
                           className="edit-textarea"
@@ -564,7 +562,7 @@ export default function Davora() {
                     <div className="markdown-body">
                       {inputMode === 'deep' && (
                         <details className="reasoning-path">
-                          <summary><Activity size={14} className="inline-icon"/> Analyzed 14 context paths</summary>
+                          <summary><Activity size={14} className="inline-icon" /> Analyzed 14 context paths</summary>
                           <div className="reasoning-content">
                             <p className="reasoning-step">1. Parsed user intent from previous turns.</p>
                             <p className="reasoning-step">2. Retrieved semantic memory chunks.</p>
@@ -581,7 +579,7 @@ export default function Davora() {
                               <div className="code-block-wrapper">
                                 <div className="code-header">
                                   <span className="code-lang">{match[1]}</span>
-                                  <button 
+                                  <button
                                     onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), `${msg.id}-${match[1]}`)}
                                     className="copy-code-btn"
                                   >
@@ -612,15 +610,15 @@ export default function Davora() {
                     </div>
                   )}
                 </div>
-                
+
                 {!isTyping && (
                   <div className={`message-toolbar ${msg.role === 'user' ? 'toolbar-user' : 'toolbar-ai'}`}>
                     {msg.timestamp && (
                       <span className="msg-timestamp">
-                         <Clock size={10} /> {msg.timestamp}
+                        <Clock size={10} /> {msg.timestamp}
                       </span>
                     )}
-                    
+
                     {msg.role === 'user' ? (
                       !editingId && (
                         <button onClick={() => { setEditingId(msg.id); setEditInput(msg.content); }} className="toolbar-btn" title="Edit Prompt">
@@ -630,10 +628,10 @@ export default function Davora() {
                     ) : (
                       <>
                         <button onClick={() => toggleTextToSpeech(msg.content, msg.id)} className={`toolbar-btn ${speakingId === msg.id ? 'active-tts' : ''}`} title="Read Aloud">
-                          {speakingId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />} 
+                          {speakingId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
                         </button>
                         <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
-                          {copiedId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />} 
+                          {copiedId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                         </button>
                         <div className="toolbar-divider"></div>
                         <button onClick={() => handleRate(msg.id, 'up')} className={`toolbar-btn ${ratings[msg.id] === 'up' ? 'text-green-500' : ''}`} title="Good response">
@@ -661,23 +659,23 @@ export default function Davora() {
               </div>
             </div>
           ))}
-          
-           {isTyping && (
+
+          {isTyping && (
             <div className="message-row row-ai">
-               <div className="avatar avatar-ai"><Bot size={20} /></div>
-               <div className="message-bubble-wrapper wrapper-ai">
-                 <div className="message-bubble bubble-ai typing-indicator">
-                   {inputMode === 'deep' ? (
-                     <span className="thinking-text-animated pulse-glow"><Activity size={14} className="inline-icon"/> {thinkingText}</span>
-                   ) : (
-                     <>
-                       <span className="dot-typing"></span>
-                       <span className="dot-typing"></span>
-                       <span className="dot-typing"></span>
-                     </>
-                   )}
-                 </div>
-               </div>
+              <div className="avatar avatar-ai"><Bot size={20} /></div>
+              <div className="message-bubble-wrapper wrapper-ai">
+                <div className="message-bubble bubble-ai typing-indicator">
+                  {inputMode === 'deep' ? (
+                    <span className="thinking-text-animated pulse-glow"><Activity size={14} className="inline-icon" /> {thinkingText}</span>
+                  ) : (
+                    <>
+                      <span className="dot-typing"></span>
+                      <span className="dot-typing"></span>
+                      <span className="dot-typing"></span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -691,18 +689,18 @@ export default function Davora() {
 
         {/* Input Area */}
         <div className={`input-wrapper mode-${inputMode}`}>
-          
+
           <div className="input-mode-selector">
-            <button onClick={() => setInputMode('instant')} className={`mode-btn ${inputMode === 'instant' ? 'active' : ''}`}><Zap size={14}/> Instant</button>
-            <button onClick={() => setInputMode('deep')} className={`mode-btn ${inputMode === 'deep' ? 'active' : ''}`}><Activity size={14}/> Deep Think</button>
-            <button onClick={() => { setInputMode('research'); showNotification("Web Search Agent coming soon"); }} className={`mode-btn ${inputMode === 'research' ? 'active' : ''}`}><Globe size={14}/> Web Research</button>
+            <button onClick={() => setInputMode('instant')} className={`mode-btn ${inputMode === 'instant' ? 'active' : ''}`}><Zap size={14} /> Instant</button>
+            <button onClick={() => setInputMode('deep')} className={`mode-btn ${inputMode === 'deep' ? 'active' : ''}`}><Activity size={14} /> Deep Think</button>
+            <button onClick={() => { setInputMode('research'); showNotification("Web Search Agent coming soon"); }} className={`mode-btn ${inputMode === 'research' ? 'active' : ''}`}><Globe size={14} /> Web Research</button>
           </div>
 
           <form className="input-area" onSubmit={sendMessage}>
             <button type="button" onClick={mockAttach} className="attach-btn" title="Attach file">
               <Paperclip size={20} />
             </button>
-            
+
             <div className={`textarea-container ${isListening ? 'hidden' : ''}`}>
               <TextareaAutosize
                 ref={inputRef}
@@ -719,19 +717,19 @@ export default function Davora() {
 
             {isListening && (
               <div className="voice-visualizer">
-                 <div className="voice-bar"></div>
-                 <div className="voice-bar"></div>
-                 <div className="voice-bar"></div>
-                 <div className="voice-bar"></div>
-                 <div className="voice-bar"></div>
-                 <span className="voice-text">Listening...</span>
+                <div className="voice-bar"></div>
+                <div className="voice-bar"></div>
+                <div className="voice-bar"></div>
+                <div className="voice-bar"></div>
+                <div className="voice-bar"></div>
+                <span className="voice-text">Listening...</span>
               </div>
             )}
-            
+
             <div className="input-right-actions">
-              <button 
-                type="button" 
-                onClick={toggleVoice} 
+              <button
+                type="button"
+                onClick={toggleVoice}
                 className={`mic-btn ${isListening ? 'listening' : ''}`}
                 title="Voice Input (Dictate)"
               >
@@ -759,50 +757,50 @@ export default function Davora() {
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Settings</h2>
-              <button className="icon-action-btn" onClick={() => setShowSettings(false)}><X size={20}/></button>
+              <button className="icon-action-btn" onClick={() => setShowSettings(false)}><X size={20} /></button>
             </div>
             <div className="modal-body">
-              
+
               {/* Custom Instructions */}
               <div className="setting-group">
                 <label>Custom Instructions</label>
                 <p className="setting-hint">What would you like Davora to know about you to provide better responses?</p>
-                <textarea 
+                <textarea
                   className="custom-instructions-input"
                   rows={3}
                   value={prefs.customInstructions}
-                  onChange={(e) => setPrefs({...prefs, customInstructions: e.target.value})}
+                  onChange={(e) => setPrefs({ ...prefs, customInstructions: e.target.value })}
                   placeholder="e.g. I am a software developer. Always give concise answers."
                 />
               </div>
 
               <div className="setting-group-row">
                 <button onClick={() => showNotification("Opening Memory settings...")} className="sidebar-nav-btn outline-btn">
-                  <Database size={16}/> Manage Memory
+                  <Database size={16} /> Manage Memory
                 </button>
                 <button onClick={() => showNotification("Checking active sessions...")} className="sidebar-nav-btn outline-btn">
-                  <Activity size={16}/> Active Sessions
+                  <Activity size={16} /> Active Sessions
                 </button>
               </div>
 
               <div className="setting-group">
                 <label>Theme</label>
                 <div className="toggle-btns">
-                  <button onClick={() => setPrefs({...prefs, theme: 'light'})} className={prefs.theme === 'light' ? 'active' : ''}><Sun size={16}/> Light</button>
-                  <button onClick={() => setPrefs({...prefs, theme: 'dark'})} className={prefs.theme === 'dark' ? 'active' : ''}><Moon size={16}/> Dark</button>
+                  <button onClick={() => setPrefs({ ...prefs, theme: 'light' })} className={prefs.theme === 'light' ? 'active' : ''}><Sun size={16} /> Light</button>
+                  <button onClick={() => setPrefs({ ...prefs, theme: 'dark' })} className={prefs.theme === 'dark' ? 'active' : ''}><Moon size={16} /> Dark</button>
                 </div>
               </div>
               <div className="setting-group">
                 <label>Font Size</label>
                 <div className="toggle-btns">
-                  <button onClick={() => setPrefs({...prefs, fontSize: 'small'})} className={prefs.fontSize === 'small' ? 'active' : ''}>Small</button>
-                  <button onClick={() => setPrefs({...prefs, fontSize: 'medium'})} className={prefs.fontSize === 'medium' ? 'active' : ''}>Medium</button>
-                  <button onClick={() => setPrefs({...prefs, fontSize: 'large'})} className={prefs.fontSize === 'large' ? 'active' : ''}>Large</button>
+                  <button onClick={() => setPrefs({ ...prefs, fontSize: 'small' })} className={prefs.fontSize === 'small' ? 'active' : ''}>Small</button>
+                  <button onClick={() => setPrefs({ ...prefs, fontSize: 'medium' })} className={prefs.fontSize === 'medium' ? 'active' : ''}>Medium</button>
+                  <button onClick={() => setPrefs({ ...prefs, fontSize: 'large' })} className={prefs.fontSize === 'large' ? 'active' : ''}>Large</button>
                 </div>
               </div>
-              
+
               <div className="setting-group danger-zone">
-                 <button onClick={clearAllChats} className="danger-btn">Delete all chats</button>
+                <button onClick={clearAllChats} className="danger-btn">Delete all chats</button>
               </div>
             </div>
           </div>
@@ -812,8 +810,8 @@ export default function Davora() {
       {/* 2026 Right Canvas Panel */}
       <aside className={`canvas-panel ${canvasOpen ? 'open' : 'closed'}`}>
         <div className="canvas-header">
-          <div className="canvas-title"><Folder size={16}/> Canvas Workspace</div>
-          <button onClick={() => setCanvasOpen(false)} className="icon-action-btn"><X size={18}/></button>
+          <div className="canvas-title"><Folder size={16} /> Canvas Workspace</div>
+          <button onClick={() => setCanvasOpen(false)} className="icon-action-btn"><X size={18} /></button>
         </div>
         <div className="canvas-body">
           <div className="canvas-empty-state">
@@ -836,18 +834,18 @@ export default function Davora() {
             <div className="cmd-body">
               <p className="cmd-label">Quick Actions</p>
               <button className="cmd-item" onClick={() => { startNewChat(); setShowCmdPalette(false); }}>
-                <PlusCircle size={16}/> New Chat
+                <PlusCircle size={16} /> New Chat
               </button>
               <button className="cmd-item" onClick={() => { setInputMode('deep'); setShowCmdPalette(false); }}>
-                <Activity size={16}/> Switch to Deep Think Mode
+                <Activity size={16} /> Switch to Deep Think Mode
               </button>
               <button className="cmd-item" onClick={() => { setShowSettings(true); setShowCmdPalette(false); }}>
-                <Settings size={16}/> Open Settings
+                <Settings size={16} /> Open Settings
               </button>
               <p className="cmd-label">Recent Chats</p>
               {filteredSessions.slice(0, 3).map(session => (
                 <button key={session.id} className="cmd-item" onClick={() => { setActiveSessionId(session.id); setShowCmdPalette(false); }}>
-                  <MessageSquare size={16}/> {session.title}
+                  <MessageSquare size={16} /> {session.title}
                 </button>
               ))}
             </div>
