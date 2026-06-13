@@ -23,7 +23,6 @@ export default function Davora() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [renamingId, setRenamingId] = useState(null);
-  const [renamingId, setRenamingId] = useState(null);
   const [renameInput, setRenameInput] = useState("");
   const [canvasOpen, setCanvasOpen] = useState(false);
   const [showCmdPalette, setShowCmdPalette] = useState(false);
