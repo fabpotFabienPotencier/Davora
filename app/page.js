@@ -212,6 +212,7 @@ export default function Davora() {
         } else {
           newMessages.push({
             id: Date.now(), role: "ai", content: data, isStreaming: true,
+            model: selectedModel,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           });
         }
@@ -304,11 +305,12 @@ export default function Davora() {
     if (synthRef.current) synthRef.current.cancel();
     setSpeakingId(null);
 
+    const jsonPayload = JSON.stringify({ message: lastUserMsg, mode: inputMode, model: selectedModel, isTemporary: isTemporary });
     if (ws.current.readyState !== WebSocket.OPEN) {
       connectWebSocket();
-      setTimeout(() => ws.current.send(lastUserMsg), 500);
+      setTimeout(() => ws.current.send(jsonPayload), 500);
     } else {
-      ws.current.send(lastUserMsg);
+      ws.current.send(jsonPayload);
     }
   };
 
@@ -616,39 +618,11 @@ export default function Davora() {
                     )
                   ) : (
                     <div className="markdown-body">
-                      {inputMode === 'deep' && (
-                        <details className="reasoning-path">
-                          <summary><Activity size={14} className="inline-icon" /> Analyzed 14 context paths</summary>
-                          <div className="reasoning-content">
-                            <p className="reasoning-step">1. Parsed user intent from previous turns.</p>
-                            <p className="reasoning-step">2. Retrieved semantic memory chunks.</p>
-                            <p className="reasoning-step">3. Synthesized optimal reasoning chain.</p>
-                          </div>
-                        </details>
+                      {msg.model && (
+                        <div className="per-message-model-badge">
+                          <Sparkles size={10} className="inline-icon text-purple-500"/> {msg.model}
+                        </div>
                       )}
-                      {inputMode === 'research' && index % 2 === 1 && (
-                        <details className="tool-execution-block">
-                          <summary><Terminal size={14} className="inline-icon text-green-500" /> Analyzed data with Python</summary>
-                          <div className="tool-execution-content">
-                            <code>import pandas as pd</code><br/>
-                            <code>df = pd.read_csv('dataset.csv')</code><br/>
-                            <code>print(df.describe())</code>
-                          </div>
-                        </details>
-                      )}
-                      {inputMode === 'research' && index % 2 !== 1 && (
-                        <details className="tool-execution-block web-search-block">
-                          <summary><SearchCheck size={14} className="inline-icon text-blue-500" /> Searched 5 sites</summary>
-                          <div className="tool-execution-content search-results">
-                            <a href="#" className="search-citation"><Link size={12}/> github.com/davora</a>
-                            <a href="#" className="search-citation"><Link size={12}/> stackoverflow.com/questions</a>
-                            <a href="#" className="search-citation"><Link size={12}/> reactjs.org/docs</a>
-                          </div>
-                        </details>
-                      )}
-                      <div className="per-message-model-badge">
-                        <Sparkles size={10} className="inline-icon text-purple-500"/> {selectedModel}
-                      </div>
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
@@ -686,11 +660,6 @@ export default function Davora() {
                       >
                         {msg.content}
                       </ReactMarkdown>
-                      {index === 1 && (
-                        <div className="memory-updated-badge animation-slide-up">
-                          <BrainCircuit size={12} className="text-purple-500"/> Memory updated
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
