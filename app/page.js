@@ -95,7 +95,15 @@ export default function Davora() {
       try {
         const parsed = JSON.parse(savedSessions);
         setSessions(parsed);
-        if (parsed.length > 0) setActiveSessionId(parsed[0].id);
+        
+        const savedActive = localStorage.getItem("davora_active_session");
+        if (savedActive === "new") {
+          setActiveSessionId(null);
+        } else if (savedActive && parsed.some(s => s.id === savedActive)) {
+          setActiveSessionId(savedActive);
+        } else if (parsed.length > 0) {
+          setActiveSessionId(parsed[0].id);
+        }
       } catch (e) { }
     }
 
@@ -179,7 +187,10 @@ export default function Davora() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => { activeSessionIdRef.current = activeSessionId; }, [activeSessionId]);
+  useEffect(() => { 
+    activeSessionIdRef.current = activeSessionId; 
+    localStorage.setItem("davora_active_session", activeSessionId || "new");
+  }, [activeSessionId]);
 
   useEffect(() => {
     // Only persist non-temporary sessions to localStorage
