@@ -278,9 +278,9 @@ export default function Davora() {
 
     if (ws.current.readyState !== WebSocket.OPEN) {
       connectWebSocket();
-      setTimeout(() => ws.current.send(JSON.stringify({ message: textToSend, mode: inputMode, model: selectedModel, isTemporary: isTemporary })), 500);
+      setTimeout(() => ws.current.send(JSON.stringify({ message: textToSend, mode: inputMode, model: selectedModel, isTemporary: isTemporary, customInstructions: prefs.customInstructions })), 500);
     } else {
-      ws.current.send(JSON.stringify({ message: textToSend, mode: inputMode, model: selectedModel, isTemporary: isTemporary }));
+      ws.current.send(JSON.stringify({ message: textToSend, mode: inputMode, model: selectedModel, isTemporary: isTemporary, customInstructions: prefs.customInstructions }));
     }
   };
 
@@ -305,7 +305,7 @@ export default function Davora() {
     if (synthRef.current) synthRef.current.cancel();
     setSpeakingId(null);
 
-    const jsonPayload = JSON.stringify({ message: lastUserMsg, mode: inputMode, model: selectedModel, isTemporary: isTemporary });
+    const jsonPayload = JSON.stringify({ message: lastUserMsg, mode: inputMode, model: selectedModel, isTemporary: isTemporary, customInstructions: prefs.customInstructions });
     if (ws.current.readyState !== WebSocket.OPEN) {
       connectWebSocket();
       setTimeout(() => ws.current.send(jsonPayload), 500);
