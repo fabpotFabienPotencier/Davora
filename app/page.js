@@ -773,7 +773,7 @@ export default function Davora() {
               </button>
               
               {showPlusMenu && (
-                <div className="plus-menu-dropdown" style={{ position: 'absolute', bottom: '100%', left: '0', marginBottom: '12px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '8px', width: '240px', display: 'flex', flexDirection: 'column', gap: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 100 }}>
+                <div className="plus-menu-dropdown" style={{ position: 'absolute', bottom: '100%', left: '0', marginBottom: '12px', background: prefs.theme === 'light' ? '#ffffff' : '#2f2f2f', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '8px', width: '240px', display: 'flex', flexDirection: 'column', gap: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 100 }}>
                   <button type="button" onClick={() => { showNotification("Attachments coming soon"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
                     <Image size={18} /> Add photo and file
                   </button>
