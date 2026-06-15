@@ -781,12 +781,6 @@ export default function Davora() {
           </button>
         )}
 
-        {/* App Connectors Strip */}
-        <div className="app-connectors-strip">
-          <button className="connector-badge" onClick={() => showNotification("Connected to Gmail")}><AtSign size={12} /> Gmail</button>
-          <button className="connector-badge" onClick={() => showNotification("Connected to Drive")}><Database size={12} /> Drive</button>
-        </div>
-
         {/* Input Area */}
         <div className={`input-wrapper mode-${inputMode}`}>
 
@@ -931,7 +925,7 @@ export default function Davora() {
           <div className="cmd-palette-content" onClick={e => e.stopPropagation()}>
             <div className="cmd-header">
               <Search size={18} className="text-secondary" />
-              <input autoFocus type="text" placeholder="Search chats or type a command..." className="cmd-input" />
+              <input autoFocus type="text" placeholder="Search chats or type a command..." className="cmd-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               <div className="cmd-badge">ESC</div>
             </div>
             <div className="cmd-body">
