@@ -106,7 +106,7 @@ export default function Davora() {
     if (savedPrefs) {
       try { setPrefs(prev => ({ ...prev, ...JSON.parse(savedPrefs) })); } catch (e) { }
     }
-    
+
     const savedPins = localStorage.getItem("davora_pinned_sessions");
     if (savedPins) {
       try { setPinnedSessionIds(JSON.parse(savedPins)); } catch (e) { }
@@ -541,27 +541,27 @@ export default function Davora() {
                 <h1>Davora</h1>
                 <div className="model-badge">{selectedModel} <ChevronDown size={12} /></div>
               </div>
-              
+
               {showModelPicker && (
                 <div className="model-dropdown">
                   <div className="model-option" onClick={(e) => { e.stopPropagation(); setSelectedModel("Davora Instant"); setShowModelPicker(false); showNotification("Switched to Instant Model"); }}>
-                    <Zap size={16} className="text-yellow-500" /> 
-                    <div className="model-opt-text"><strong>Davora Instant</strong><br/><span>Fastest responses, everyday tasks</span></div>
+                    <Zap size={16} className="text-yellow-500" />
+                    <div className="model-opt-text"><strong>Davora Instant</strong><br /><span>Fastest responses, everyday tasks</span></div>
                   </div>
                   <div className="model-option" onClick={(e) => { e.stopPropagation(); setSelectedModel("Davora Thinking"); setShowModelPicker(false); showNotification("Switched to Thinking Model"); }}>
-                    <Activity size={16} className="text-purple-500" /> 
-                    <div className="model-opt-text"><strong>Davora Thinking</strong><br/><span>Deep reasoning for math & code</span></div>
+                    <Activity size={16} className="text-purple-500" />
+                    <div className="model-opt-text"><strong>Davora Thinking</strong><br /><span>Deep reasoning for math & code</span></div>
                   </div>
                   <div className="model-option" onClick={(e) => { e.stopPropagation(); setSelectedModel("Davora Pro"); setShowModelPicker(false); showNotification("Switched to Pro Model"); }}>
-                    <Globe size={16} className="text-blue-500" /> 
-                    <div className="model-opt-text"><strong>Davora Pro</strong><br/><span>Flagship model with web access</span></div>
+                    <Globe size={16} className="text-blue-500" />
+                    <div className="model-opt-text"><strong>Davora Pro</strong><br /><span>Flagship model with web access</span></div>
                   </div>
                 </div>
               )}
             </div>
           </div>
           <div className="header-actions">
-            <button 
+            <button
               className={`temporary-chat-toggle ${isTemporary ? 'active' : ''}`}
               onClick={() => { setIsTemporary(!isTemporary); showNotification(isTemporary ? "Temporary Chat Disabled" : "Temporary Chat Enabled. History won't be saved."); }}
               title="Temporary Chat (Incognito)"
@@ -620,7 +620,7 @@ export default function Davora() {
                     <div className="markdown-body">
                       {msg.model && (
                         <div className="per-message-model-badge">
-                          <Sparkles size={10} className="inline-icon text-purple-500"/> {msg.model}
+                          <Sparkles size={10} className="inline-icon text-purple-500" /> {msg.model}
                         </div>
                       )}
                       <ReactMarkdown
@@ -725,8 +725,8 @@ export default function Davora() {
                           </button>
                           {openMoreMenuId === msg.id && (
                             <div className="more-menu-dropdown">
-                               <button onClick={() => { showNotification("Task Scheduled"); setOpenMoreMenuId(null); }} className="more-menu-item"><CalendarClock size={14}/> Schedule Task</button>
-                               <button onClick={() => { showNotification("Report Sent"); setOpenMoreMenuId(null); }} className="more-menu-item"><TriangleAlert size={14} className="text-red-500"/> Report Issue</button>
+                              <button onClick={() => { showNotification("Task Scheduled"); setOpenMoreMenuId(null); }} className="more-menu-item"><CalendarClock size={14} /> Schedule Task</button>
+                              <button onClick={() => { showNotification("Report Sent"); setOpenMoreMenuId(null); }} className="more-menu-item"><TriangleAlert size={14} className="text-red-500" /> Report Issue</button>
                             </div>
                           )}
                         </div>
@@ -734,10 +734,10 @@ export default function Davora() {
                     )}
                   </div>
                 )}
-                
+
                 {msg.role === 'ai' && index === messages.length - 1 && !isTyping && (
                   <div className="predictive-actions animation-slide-up">
-                    <p className="predictive-label"><Sparkles size={12}/> Suggested Next Steps</p>
+                    <p className="predictive-label"><Sparkles size={12} /> Suggested Next Steps</p>
                     <div className="predictive-btn-group">
                       <button className="predictive-btn" onClick={() => triggerSend("Convert this to a professional email")}><PenTool size={14} /> Draft Email</button>
                       <button className="predictive-btn" onClick={() => triggerSend("Summarize this into 3 bullet points")}><List size={14} /> Summarize</button>
@@ -772,7 +772,7 @@ export default function Davora() {
 
         {/* 2026 Scroll to bottom badge */}
         {showScrollButton && (
-          <button 
+          <button
             className={`scroll-bottom-btn ${isTyping ? 'has-unread' : ''}`}
             onClick={scrollToBottom}
           >
@@ -783,8 +783,8 @@ export default function Davora() {
 
         {/* App Connectors Strip */}
         <div className="app-connectors-strip">
-           <button className="connector-badge" onClick={() => showNotification("Connected to Gmail")}><AtSign size={12}/> Gmail</button>
-           <button className="connector-badge" onClick={() => showNotification("Connected to Drive")}><Database size={12}/> Drive</button>
+          <button className="connector-badge" onClick={() => showNotification("Connected to Gmail")}><AtSign size={12} /> Gmail</button>
+          <button className="connector-badge" onClick={() => showNotification("Connected to Drive")}><Database size={12} /> Drive</button>
         </div>
 
         {/* Input Area */}
@@ -911,8 +911,8 @@ export default function Davora() {
       <aside className={`canvas-panel ${canvasOpen ? 'open' : 'closed'}`}>
         <div className="canvas-header">
           <div className="canvas-title">
-            <Folder size={16} /> Canvas Workspace 
-            <span className="canvas-version-badge"><FileClock size={12}/> v1.0</span>
+            <Folder size={16} /> Canvas Workspace
+            <span className="canvas-version-badge"><FileClock size={12} /> v1.0</span>
           </div>
           <button onClick={() => setCanvasOpen(false)} className="icon-action-btn"><X size={18} /></button>
         </div>
