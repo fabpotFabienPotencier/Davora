@@ -139,7 +139,7 @@ export default function Davora() {
       setThinkingText("Thinking...");
       return;
     }
-    const states = ["Analyzing context...", "Searching memory...", "Synthesizing response...", "Drafting..."];
+    const states = ["Thinking...", "Generating response...", "Writing..."];
     let i = 0;
     const interval = setInterval(() => {
       i = (i + 1) % states.length;
@@ -166,7 +166,9 @@ export default function Davora() {
   useEffect(() => { activeSessionIdRef.current = activeSessionId; }, [activeSessionId]);
 
   useEffect(() => {
-    if (sessions.length > 0) localStorage.setItem("davora_sessions", JSON.stringify(sessions));
+    // Only persist non-temporary sessions to localStorage
+    const persistableSessions = sessions.filter(s => !s.isTemporary);
+    if (persistableSessions.length > 0) localStorage.setItem("davora_sessions", JSON.stringify(persistableSessions));
   }, [sessions]);
 
   useEffect(() => {
@@ -195,7 +197,8 @@ export default function Davora() {
   };
 
   const connectWebSocket = () => {
-    ws.current = new WebSocket("wss://blatancy-barrack-spelling.ngrok-free.dev/ws/chat");
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://blatancy-barrack-spelling.ngrok-free.dev/ws/chat";
+    ws.current = new WebSocket(wsUrl);
     ws.current.onmessage = (event) => {
       const data = event.data;
       if (data === "[DONE]") {
@@ -246,7 +249,7 @@ export default function Davora() {
   const createNewSession = (initialMsg) => {
     const title = initialMsg.length > 25 ? initialMsg.substring(0, 25) + "..." : initialMsg;
     const newId = Date.now().toString();
-    const newSession = { id: newId, title, messages: [] };
+    const newSession = { id: newId, title, messages: [], isTemporary };
     setSessions(prev => [newSession, ...prev]);
     setActiveSessionId(newId);
     return newId;
@@ -451,13 +454,13 @@ export default function Davora() {
         </div>
 
         <div className="sidebar-nav-group">
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Projects opening...")}>
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Projects — coming soon")}>
             <FolderKanban size={16} /> My Projects
           </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Canvas Notes workspace opening...")}>
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Canvas Notes — coming soon")}>
             <Folder size={16} /> My Canvas Notes
           </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Agent marketplace opening...")}>
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Agent Marketplace — coming soon")}>
             <Compass size={16} /> Explore Agents
           </button>
         </div>
@@ -520,7 +523,7 @@ export default function Davora() {
             <div className="user-avatar-small"><User size={16} /></div>
             <div className="user-info">
               <span className="user-name">My Account</span>
-              <span className="user-plan">Free Plan</span>
+              <span className="user-plan">Local Mode</span>
             </div>
             <Settings size={16} className="ml-auto text-secondary" />
           </button>
@@ -544,17 +547,9 @@ export default function Davora() {
 
               {showModelPicker && (
                 <div className="model-dropdown">
-                  <div className="model-option" onClick={(e) => { e.stopPropagation(); setSelectedModel("Davora Instant"); setShowModelPicker(false); showNotification("Switched to Instant Model"); }}>
-                    <Zap size={16} className="text-yellow-500" />
-                    <div className="model-opt-text"><strong>Davora Instant</strong><br /><span>Fastest responses, everyday tasks</span></div>
-                  </div>
-                  <div className="model-option" onClick={(e) => { e.stopPropagation(); setSelectedModel("Davora Thinking"); setShowModelPicker(false); showNotification("Switched to Thinking Model"); }}>
-                    <Activity size={16} className="text-purple-500" />
-                    <div className="model-opt-text"><strong>Davora Thinking</strong><br /><span>Deep reasoning for math & code</span></div>
-                  </div>
-                  <div className="model-option" onClick={(e) => { e.stopPropagation(); setSelectedModel("Davora Pro"); setShowModelPicker(false); showNotification("Switched to Pro Model"); }}>
-                    <Globe size={16} className="text-blue-500" />
-                    <div className="model-opt-text"><strong>Davora Pro</strong><br /><span>Flagship model with web access</span></div>
+                  <div className="model-option" onClick={(e) => { e.stopPropagation(); setSelectedModel("Davora 3.2 Pro"); setShowModelPicker(false); showNotification("Using Davora 3.2 Pro (llama3.2 1B)"); }}>
+                    <Sparkles size={16} className="text-purple-500" />
+                    <div className="model-opt-text"><strong>Davora 3.2 Pro</strong><br /><span>Default model — fast & capable</span></div>
                   </div>
                 </div>
               )}
@@ -568,9 +563,7 @@ export default function Davora() {
             >
               <VenetianMask size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
             </button>
-            <div className="token-badge" title="Context Memory Usage">
-              <Database size={12} /> 24k / 128k Tokens
-            </div>
+
           </div>
         </header>
 
@@ -675,12 +668,6 @@ export default function Davora() {
                     {msg.role === 'user' ? (
                       !editingId && (
                         <>
-                          <div className="branch-selector" title="Alternate Prompts">
-                            <ChevronLeft size={14} className="branch-btn disabled" />
-                            <span>1 / 1</span>
-                            <ChevronRight size={14} className="branch-btn disabled" />
-                          </div>
-                          <div className="toolbar-divider"></div>
                           <button onClick={() => { setEditingId(msg.id); setEditInput(msg.content); }} className="toolbar-btn" title="Edit Prompt">
                             <Edit2 size={12} /> Edit
                           </button>
@@ -688,12 +675,6 @@ export default function Davora() {
                       )
                     ) : (
                       <>
-                        <div className="branch-selector" title="Alternate Generations">
-                          <ChevronLeft size={14} className="branch-btn disabled" />
-                          <span>1 / 1</span>
-                          <ChevronRight size={14} className="branch-btn disabled" />
-                        </div>
-                        <div className="toolbar-divider"></div>
                         <button onClick={() => toggleTextToSpeech(msg.content, msg.id)} className={`toolbar-btn ${speakingId === msg.id ? 'active-tts' : ''}`} title="Read Aloud">
                           {speakingId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
                         </button>
@@ -725,8 +706,8 @@ export default function Davora() {
                           </button>
                           {openMoreMenuId === msg.id && (
                             <div className="more-menu-dropdown">
-                              <button onClick={() => { showNotification("Task Scheduled"); setOpenMoreMenuId(null); }} className="more-menu-item"><CalendarClock size={14} /> Schedule Task</button>
-                              <button onClick={() => { showNotification("Report Sent"); setOpenMoreMenuId(null); }} className="more-menu-item"><TriangleAlert size={14} className="text-red-500" /> Report Issue</button>
+                              <button onClick={() => { showNotification("Task scheduling — coming soon"); setOpenMoreMenuId(null); }} className="more-menu-item"><CalendarClock size={14} /> Schedule Task</button>
+                              <button onClick={() => { showNotification("Report system — coming soon"); setOpenMoreMenuId(null); }} className="more-menu-item"><TriangleAlert size={14} className="text-red-500" /> Report Issue</button>
                             </div>
                           )}
                         </div>
@@ -787,7 +768,7 @@ export default function Davora() {
           <div className="input-mode-selector">
             <button onClick={() => setInputMode('instant')} className={`mode-btn ${inputMode === 'instant' ? 'active' : ''}`}><Zap size={14} /> Instant</button>
             <button onClick={() => setInputMode('deep')} className={`mode-btn ${inputMode === 'deep' ? 'active' : ''}`}><Activity size={14} /> Deep Think</button>
-            <button onClick={() => { setInputMode('research'); showNotification("Web Search Agent coming soon"); }} className={`mode-btn ${inputMode === 'research' ? 'active' : ''}`}><Globe size={14} /> Web Research</button>
+            <button onClick={() => setInputMode('research')} className={`mode-btn ${inputMode === 'research' ? 'active' : ''}`}><Globe size={14} /> Web Research</button>
           </div>
 
           <form className="input-area" onSubmit={sendMessage}>
@@ -869,10 +850,10 @@ export default function Davora() {
               </div>
 
               <div className="setting-group-row">
-                <button onClick={() => showNotification("Opening Memory settings...")} className="sidebar-nav-btn outline-btn">
+                <button onClick={() => showNotification("Memory management — coming soon")} className="sidebar-nav-btn outline-btn">
                   <Database size={16} /> Manage Memory
                 </button>
-                <button onClick={() => showNotification("Checking active sessions...")} className="sidebar-nav-btn outline-btn">
+                <button onClick={() => showNotification("Active sessions — coming soon")} className="sidebar-nav-btn outline-btn">
                   <Activity size={16} /> Active Sessions
                 </button>
               </div>
