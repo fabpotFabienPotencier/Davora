@@ -68,6 +68,7 @@ export default function Davora() {
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
+  const plusMenuRef = useRef(null);
 
   // Derived messages for the active session
   const activeSession = sessions.find(s => s.id === activeSessionId);
@@ -162,6 +163,17 @@ export default function Davora() {
     };
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
+  // Close plus menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (plusMenuRef.current && !plusMenuRef.current.contains(event.target)) {
+        setShowPlusMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => { activeSessionIdRef.current = activeSessionId; }, [activeSessionId]);
@@ -767,7 +779,7 @@ export default function Davora() {
         <div className={`input-wrapper mode-${inputMode}`}>
           <form className="input-area" onSubmit={sendMessage}>
             
-            <div className="plus-menu-wrapper" style={{ position: 'relative' }}>
+            <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
               <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} className={`attach-btn ${showPlusMenu ? 'active' : ''}`} title="Options">
                 <Plus size={24} />
               </button>
