@@ -171,6 +171,9 @@ export default function Davora() {
       if (plusMenuRef.current && !plusMenuRef.current.contains(event.target)) {
         setShowPlusMenu(false);
       }
+      if (!event.target.closest('.more-menu-wrapper')) {
+        setOpenMoreMenuId(null);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -681,8 +684,11 @@ export default function Davora() {
                     {msg.role === 'user' ? (
                       !editingId && (
                         <>
+                          <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
+                            {copiedId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />} Copy
+                          </button>
                           <button onClick={() => { setEditingId(msg.id); setEditInput(msg.content); }} className="toolbar-btn" title="Edit Prompt">
-                            <Edit2 size={12} /> Edit
+                            <Edit2 size={14} /> Edit
                           </button>
                         </>
                       )
@@ -729,16 +735,7 @@ export default function Davora() {
                   </div>
                 )}
 
-                {msg.role === 'ai' && index === messages.length - 1 && !isTyping && (
-                  <div className="predictive-actions animation-slide-up">
-                    <p className="predictive-label"><Sparkles size={12} /> Suggested Next Steps</p>
-                    <div className="predictive-btn-group">
-                      <button className="predictive-btn" onClick={() => triggerSend("Convert this to a professional email")}><PenTool size={14} /> Draft Email</button>
-                      <button className="predictive-btn" onClick={() => triggerSend("Summarize this into 3 bullet points")}><List size={14} /> Summarize</button>
-                      <button className="predictive-btn" onClick={() => setCanvasOpen(true)}><Folder size={14} /> Save to Canvas</button>
-                    </div>
-                  </div>
-                )}
+
               </div>
             </div>
           ))}
