@@ -10,7 +10,7 @@ import {
   Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database, Globe,
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight,
   VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert,
-  Terminal, BrainCircuit, SearchCheck, FileClock, Link
+  Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -32,6 +32,7 @@ export default function Davora() {
   const [isTemporary, setIsTemporary] = useState(false);
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [selectedModel, setSelectedModel] = useState("Davora 3.2 Pro");
+  const [showPlusMenu, setShowPlusMenu] = useState(false);
 
   // Input & UI States
   const [input, setInput] = useState("");
@@ -764,17 +765,34 @@ export default function Davora() {
 
         {/* Input Area */}
         <div className={`input-wrapper mode-${inputMode}`}>
-
-          <div className="input-mode-selector">
-            <button onClick={() => setInputMode('instant')} className={`mode-btn ${inputMode === 'instant' ? 'active' : ''}`}><Zap size={14} /> Instant</button>
-            <button onClick={() => setInputMode('deep')} className={`mode-btn ${inputMode === 'deep' ? 'active' : ''}`}><Activity size={14} /> Deep Think</button>
-            <button onClick={() => setInputMode('research')} className={`mode-btn ${inputMode === 'research' ? 'active' : ''}`}><Globe size={14} /> Web Research</button>
-          </div>
-
           <form className="input-area" onSubmit={sendMessage}>
-            <button type="button" onClick={mockAttach} className="attach-btn" title="Attach file">
-              <Paperclip size={20} />
-            </button>
+            
+            <div className="plus-menu-wrapper" style={{ position: 'relative' }}>
+              <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} className={`attach-btn ${showPlusMenu ? 'active' : ''}`} title="Options">
+                <Plus size={24} />
+              </button>
+              
+              {showPlusMenu && (
+                <div className="plus-menu-dropdown" style={{ position: 'absolute', bottom: '100%', left: '0', marginBottom: '12px', background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '8px', width: '240px', display: 'flex', flexDirection: 'column', gap: '4px', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 100 }}>
+                  <button type="button" onClick={() => { showNotification("Attachments coming soon"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
+                    <Image size={18} /> Add photo and file
+                  </button>
+                  <div style={{ height: '1px', background: 'var(--border-color)', margin: '4px 0' }}></div>
+                  <button type="button" onClick={() => { setInputMode("instant"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: inputMode === 'instant' ? 'var(--bg-hover)' : 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
+                    <Zap size={18} className="text-yellow-500" /> Instant
+                  </button>
+                  <button type="button" onClick={() => { setInputMode("deep"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: inputMode === 'deep' ? 'var(--bg-hover)' : 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
+                    <Lightbulb size={18} className="text-purple-500" /> Thinking
+                  </button>
+                  <button type="button" onClick={() => { setInputMode("deep-search"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: inputMode === 'deep-search' ? 'var(--bg-hover)' : 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
+                    <Telescope size={18} className="text-blue-500" /> Deep search
+                  </button>
+                  <button type="button" onClick={() => { setInputMode("research"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: inputMode === 'research' ? 'var(--bg-hover)' : 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
+                    <Globe size={18} className="text-green-500" /> Web search
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className={`textarea-container ${isListening ? 'hidden' : ''}`}>
               <TextareaAutosize
