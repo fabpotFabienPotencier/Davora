@@ -75,12 +75,54 @@ export default function Davora() {
   const messages = activeSession ? activeSession.messages : [];
   const filteredSessions = sessions.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  const quickPrompts = [
-    { icon: <Zap size={18} />, title: "Explain a complex topic", prompt: "Explain quantum computing in simple terms to a 10 year old." },
-    { icon: <Code size={18} />, title: "Write a React component", prompt: "Write a React component for a beautiful glassmorphic button using TailwindCSS." },
-    { icon: <PenTool size={18} />, title: "Draft an email", prompt: "Write a professional email to my boss asking for a deadline extension due to unforeseen technical blockers." },
-    { icon: <Lightbulb size={18} />, title: "Brainstorm ideas", prompt: "Give me 5 unique ideas for a SaaS startup in the AI and productivity space." }
+  // Rotating suggestion pool — shows 2 random chips at a time
+  const allSuggestions = [
+    { icon: <Zap size={14} />, text: "Explain quantum computing simply" },
+    { icon: <Code size={14} />, text: "Write a Python sorting algorithm" },
+    { icon: <PenTool size={14} />, text: "Draft a professional email" },
+    { icon: <Lightbulb size={14} />, text: "Brainstorm startup ideas" },
+    { icon: <Globe size={14} />, text: "What's happening in the world today?" },
+    { icon: <Code size={14} />, text: "Build a REST API with Node.js" },
+    { icon: <PenTool size={14} />, text: "Write a cover letter for a tech job" },
+    { icon: <Lightbulb size={14} />, text: "Explain how blockchain works" },
+    { icon: <Zap size={14} />, text: "Compare React vs Vue in 2026" },
+    { icon: <Globe size={14} />, text: "Latest news in AI" },
+    { icon: <Code size={14} />, text: "Create a landing page in HTML/CSS" },
+    { icon: <Lightbulb size={14} />, text: "Give me 5 productivity tips" },
   ];
+
+  const [visibleSuggestions, setVisibleSuggestions] = useState([]);
+  const [autoSuggestion, setAutoSuggestion] = useState("");
+
+  // Rotate suggestions every 5 seconds
+  useEffect(() => {
+    const pickRandom = () => {
+      const shuffled = [...allSuggestions].sort(() => 0.5 - Math.random());
+      setVisibleSuggestions(shuffled.slice(0, 2));
+    };
+    pickRandom();
+    const interval = setInterval(pickRandom, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Autocomplete dictionary — prefix-matched suggestions as user types
+  const suggestionBank = [
+    "What is the weather in ", "Tell me about ", "How do I ",
+    "Write a Python script that ", "Explain how ", "What are the latest news in ",
+    "Give me 5 tips for ", "Compare ", "Summarize ",
+    "Help me write ", "Create a ", "What is ",
+    "How does ", "Why is ", "Can you help me with ",
+    "Draft an email to ", "Write code for ", "Translate this to ",
+    "What happened today in ", "Tell me a joke about ",
+    "Plan a trip to ", "Recommend a book about ", "How to fix ",
+  ];
+
+  useEffect(() => {
+    if (input.length < 3) { setAutoSuggestion(""); return; }
+    const lower = input.toLowerCase();
+    const match = suggestionBank.find(s => s.toLowerCase().startsWith(lower) && s.toLowerCase() !== lower);
+    setAutoSuggestion(match || "");
+  }, [input]);
 
   const showNotification = (msg) => {
     setToast(msg);
@@ -95,7 +137,7 @@ export default function Davora() {
       try {
         const parsed = JSON.parse(savedSessions);
         setSessions(parsed);
-        
+
         const savedActive = localStorage.getItem("davora_active_session");
         if (savedActive === "new") {
           setActiveSessionId(null);
@@ -187,8 +229,8 @@ export default function Davora() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => { 
-    activeSessionIdRef.current = activeSessionId; 
+  useEffect(() => {
+    activeSessionIdRef.current = activeSessionId;
     localStorage.setItem("davora_active_session", activeSessionId || "new");
   }, [activeSessionId]);
 
@@ -371,6 +413,17 @@ export default function Davora() {
   };
 
   const handleKeyDown = (e) => {
+    // Tab to accept autocomplete suggestion
+    if (e.key === "Tab" && autoSuggestion) {
+      e.preventDefault();
+      setInput(autoSuggestion);
+      setAutoSuggestion("");
+      return;
+    }
+    if (e.key === "Escape" && autoSuggestion) {
+      setAutoSuggestion("");
+      return;
+    }
     if (prefs.sendOnEnter) {
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     } else {
@@ -557,6 +610,14 @@ export default function Davora() {
         </div>
       </aside>
 
+      {/* Mobile Sidebar Overlay — tap anywhere to close */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Chat Area */}
       <div className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
 
@@ -598,14 +659,13 @@ export default function Davora() {
         <main className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
           {messages.length === 0 && (
             <div className="welcome-screen">
-              <Bot size={56} className="welcome-icon" />
-              <h2>How can I help you today?</h2>
-              <div className="quick-prompts-grid">
-                {quickPrompts.map((item, idx) => (
-                  <div key={idx} className="quick-prompt-card" onClick={() => triggerSend(item.prompt)}>
-                    <div className="quick-prompt-icon">{item.icon}</div>
-                    <div className="quick-prompt-text">{item.title}</div>
-                  </div>
+              <Bot size={48} className="welcome-icon" />
+              <h2>What can I help with?</h2>
+              <div className="suggestion-chips">
+                {visibleSuggestions.map((s, idx) => (
+                  <button key={idx} className="suggestion-chip" onClick={() => triggerSend(s.text)}>
+                    {s.icon} {s.text}
+                  </button>
                 ))}
               </div>
             </div>
@@ -786,12 +846,12 @@ export default function Davora() {
         {/* Input Area */}
         <div className={`input-wrapper mode-${inputMode}`}>
           <form className="input-area" onSubmit={sendMessage}>
-            
+
             <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
               <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} className={`attach-btn ${showPlusMenu ? 'active' : ''}`} title="Options">
                 <Plus size={24} />
               </button>
-              
+
               {showPlusMenu && (
                 <div className="plus-menu-dropdown" style={{ position: 'absolute', bottom: '100%', left: '0', marginBottom: '12px', background: prefs.theme === 'light' ? '#ffffff' : '#2f2f2f', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '8px', width: '240px', display: 'flex', flexDirection: 'column', gap: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 100 }}>
                   <button type="button" onClick={() => { showNotification("Attachments coming soon"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
@@ -814,7 +874,7 @@ export default function Davora() {
               )}
             </div>
 
-            <div className={`textarea-container ${isListening ? 'hidden' : ''}`}>
+            <div className={`textarea-container ${isListening ? 'hidden' : ''}`} style={{ position: 'relative' }}>
               <TextareaAutosize
                 ref={inputRef}
                 minRows={1}
@@ -822,10 +882,17 @@ export default function Davora() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Message Davora..."
+                placeholder="Ask anything..."
                 disabled={isTyping}
                 className="auto-resize-textarea"
               />
+              {autoSuggestion && (
+                <div className="autocomplete-ghost" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none', padding: 'inherit', overflow: 'hidden' }}>
+                  <span style={{ visibility: 'hidden', whiteSpace: 'pre' }}>{input}</span>
+                  <span style={{ color: 'var(--text-secondary)', opacity: 0.4, whiteSpace: 'pre' }}>{autoSuggestion.slice(input.length)}</span>
+                  <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.5, background: 'var(--bg-secondary)', padding: '1px 6px', borderRadius: '4px' }}>Tab</span>
+                </div>
+              )}
             </div>
 
             {isListening && (
