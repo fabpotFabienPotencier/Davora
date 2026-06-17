@@ -429,7 +429,16 @@ export default function Davora() {
 
     setSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newMessage] } : s));
 
-    const payloadObj = { message: textToSend, mode: inputMode, model: selectedModel, isTemporary: isTemporary, customInstructions: prefs.customInstructions };
+    const activeMessages = sessions.find(s => s.id === targetSessionId)?.messages || [];
+    
+    const payloadObj = { 
+      message: textToSend, 
+      history: activeMessages, // Send previous messages for context
+      mode: inputMode, 
+      model: selectedModel, 
+      isTemporary: isTemporary, 
+      customInstructions: prefs.customInstructions 
+    };
     if (attachment) {
       payloadObj.image = attachment.base64;
     }
@@ -459,6 +468,7 @@ export default function Davora() {
     if (lastUserMsgIndex === -1) return;
 
     const lastUserMsg = messages[lastUserMsgIndex].content;
+    const historyUntilNow = messages.slice(0, lastUserMsgIndex);
 
     setSessions(prev => prev.map(s => {
       if (s.id !== activeSessionId) return s;
@@ -469,7 +479,15 @@ export default function Davora() {
     if (synthRef.current) synthRef.current.cancel();
     setSpeakingId(null);
 
-    const jsonPayload = JSON.stringify({ message: lastUserMsg, mode: inputMode, model: selectedModel, isTemporary: isTemporary, customInstructions: prefs.customInstructions });
+    const jsonPayload = JSON.stringify({ 
+      message: lastUserMsg, 
+      history: historyUntilNow,
+      mode: inputMode, 
+      model: selectedModel, 
+      isTemporary: isTemporary, 
+      customInstructions: prefs.customInstructions 
+    });
+    
     if (ws.current.readyState !== WebSocket.OPEN) {
       connectWebSocket();
       setTimeout(() => ws.current.send(jsonPayload), 500);
@@ -771,6 +789,12 @@ export default function Davora() {
         </header>
 
         {/* Chat Box */}
+        {isTemporary && (
+          <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '12px', textAlign: 'center', fontSize: '0.85rem', fontWeight: '500', borderBottom: '1px solid rgba(16, 185, 129, 0.2)', width: '100%', zIndex: 10 }}>
+            <Shield size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px', marginBottom: '2px' }} />
+            Private Chat Mode Enabled. This conversation will only be stored securely for 30 days and then permanently deleted.
+          </div>
+        )}
         <main className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
           {messages.length === 0 && (
             <div className="welcome-screen">
