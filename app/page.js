@@ -23,7 +23,7 @@ export default function Davora() {
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const activeSessionIdRef = useRef(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Start closed on mobile to prevent blocking
   const [searchQuery, setSearchQuery] = useState("");
   const [renamingId, setRenamingId] = useState(null);
   const [renameInput, setRenameInput] = useState("");
@@ -96,6 +96,10 @@ export default function Davora() {
 
   // Rotate suggestions every 5 seconds
   useEffect(() => {
+    // Open sidebar automatically on desktop
+    if (window.innerWidth > 768) {
+      setSidebarOpen(true);
+    }
     const pickRandom = () => {
       const shuffled = [...allSuggestions].sort(() => 0.5 - Math.random());
       setVisibleSuggestions(shuffled.slice(0, 2));
@@ -529,9 +533,22 @@ export default function Davora() {
           <div className="flex items-center text-white" style={{ display: 'flex', gap: '8px' }}>
             <Bot size={22} />
           </div>
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Search size={18} className="hover-white" onClick={() => document.querySelector('.sidebar-search-input')?.focus()} />
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <PanelLeftClose size={18} className="hover-white" onClick={() => setSidebarOpen(false)} />
+          </div>
+        </div>
+
+        <div className="sidebar-search-wrapper" style={{ padding: '0 12px', marginBottom: '12px' }}>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Search size={14} style={{ position: 'absolute', left: '10px', color: 'var(--text-secondary)' }} />
+            <input
+              type="text"
+              placeholder="Search chats..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="sidebar-search-input"
+              style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '6px 12px 6px 32px', borderRadius: '8px', fontSize: '0.85rem', outline: 'none' }}
+            />
           </div>
         </div>
 
@@ -539,35 +556,7 @@ export default function Davora() {
           <button className="sidebar-nav-btn new-chat-btn" onClick={startNewChat} disabled={isTyping}>
             <Edit2 size={16} /> New chat
           </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Library — coming soon")}>
-            <FolderKanban size={16} /> Library
-          </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Projects — coming soon")}>
-            <Folder size={16} /> Projects
-          </button>
-          <button className="sidebar-nav-btn text-yellow-500" onClick={() => showNotification("Upgrade page coming soon")}>
-            <Sparkles size={16} /> Upgrade Plan
-          </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Apps — coming soon")}>
-            <Compass size={16} /> Apps
-          </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Codex — coming soon")}>
-            <Code size={16} /> Codex
-          </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("More options")}>
-            <MoreHorizontal size={16} /> More
-          </button>
         </div>
-
-        {/* Hidden Search Input for the icon click to focus */}
-        <input
-          type="text"
-          placeholder="Search chats..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="sidebar-search-input"
-          style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
-        />
 
         <div className="sidebar-history">
           <p className="sidebar-label">Recents</p>
@@ -644,9 +633,9 @@ export default function Davora() {
               </button>
             )}
             <div className="model-selector-wrapper" onClick={() => setShowModelPicker(!showModelPicker)}>
-              <div className="model-selector">
-                <h1>Davora</h1>
-                <div className="model-badge">{selectedModel} <ChevronDown size={14} className="text-secondary opacity-70" /></div>
+              <div className="model-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <h1 style={{ fontSize: '1.1rem', fontWeight: '600' }}>{selectedModel}</h1>
+                <ChevronDown size={14} className="text-secondary opacity-70" />
               </div>
 
               {showModelPicker && (
