@@ -545,6 +545,9 @@ export default function Davora() {
           <button className="sidebar-nav-btn" onClick={() => showNotification("Projects — coming soon")}>
             <Folder size={16} /> Projects
           </button>
+          <button className="sidebar-nav-btn text-yellow-500" onClick={() => showNotification("Upgrade page coming soon")}>
+            <Sparkles size={16} /> Upgrade Plan
+          </button>
           <button className="sidebar-nav-btn" onClick={() => showNotification("Apps — coming soon")}>
             <Compass size={16} /> Apps
           </button>
@@ -610,13 +613,14 @@ export default function Davora() {
 
         <div className="sidebar-footer">
           <button onClick={() => setShowSettings(true)} className="user-profile-btn">
-            <div className="user-avatar-small">KN</div>
+            <div className="user-avatar-small">
+              <User size={18} />
+            </div>
             <div className="user-info">
               <span className="user-name">kno</span>
-              <span className="user-plan">Free</span>
+              <span className="user-plan">Free Plan</span>
             </div>
           </button>
-          <button className="upgrade-btn" onClick={() => showNotification("Upgrade page coming soon")}>Upgrade</button>
         </div>
       </aside>
 
@@ -867,21 +871,21 @@ export default function Davora() {
               </button>
 
               {showPlusMenu && (
-                <div className="plus-menu-dropdown" style={{ position: 'absolute', bottom: '100%', left: '0', marginBottom: '12px', background: prefs.theme === 'light' ? '#ffffff' : '#2f2f2f', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '8px', width: '240px', display: 'flex', flexDirection: 'column', gap: '4px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 100 }}>
-                  <button type="button" onClick={() => { showNotification("Attachments coming soon"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
+                <div className="plus-menu-dropdown">
+                  <button type="button" className="plus-menu-item" onClick={() => { showNotification("Attachments coming soon"); setShowPlusMenu(false); }}>
                     <Image size={18} /> Add photo and file
                   </button>
-                  <div style={{ height: '1px', background: 'var(--border-color)', margin: '4px 0' }}></div>
-                  <button type="button" onClick={() => { setInputMode("instant"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: inputMode === 'instant' ? 'var(--bg-hover)' : 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
+                  <div className="plus-menu-divider"></div>
+                  <button type="button" className={`plus-menu-item ${inputMode === 'instant' ? 'active' : ''}`} onClick={() => { setInputMode("instant"); setShowPlusMenu(false); }}>
                     <Zap size={18} className="text-yellow-500" /> Instant
                   </button>
-                  <button type="button" onClick={() => { setInputMode("deep"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: inputMode === 'deep' ? 'var(--bg-hover)' : 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
+                  <button type="button" className={`plus-menu-item ${inputMode === 'deep' ? 'active' : ''}`} onClick={() => { setInputMode("deep"); setShowPlusMenu(false); }}>
                     <Lightbulb size={18} className="text-purple-500" /> Thinking
                   </button>
-                  <button type="button" onClick={() => { setInputMode("deep-search"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: inputMode === 'deep-search' ? 'var(--bg-hover)' : 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
+                  <button type="button" className={`plus-menu-item ${inputMode === 'deep-search' ? 'active' : ''}`} onClick={() => { setInputMode("deep-search"); setShowPlusMenu(false); }}>
                     <Telescope size={18} className="text-blue-500" /> Deep search
                   </button>
-                  <button type="button" onClick={() => { setInputMode("research"); setShowPlusMenu(false); }} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '10px', cursor: 'pointer', background: inputMode === 'research' ? 'var(--bg-hover)' : 'transparent', border: 'none', color: 'var(--text-primary)', textAlign: 'left', width: '100%', fontSize: '14px', fontWeight: '500' }}>
+                  <button type="button" className={`plus-menu-item ${inputMode === 'research' ? 'active' : ''}`} onClick={() => { setInputMode("research"); setShowPlusMenu(false); }}>
                     <Globe size={18} className="text-green-500" /> Web search
                   </button>
                 </div>
@@ -896,7 +900,7 @@ export default function Davora() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask anything..."
+                placeholder="Message Davora..."
                 disabled={isTyping}
                 className="auto-resize-textarea"
               />
