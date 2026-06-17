@@ -169,41 +169,34 @@ export default function Davora() {
         if (res.ok) {
           const dbSessions = await res.json();
           setSessions(dbSessions);
+          const metaRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/metadata', {
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'ngrok-skip-browser-warning': 'true'
+            }
+          });
+          if (metaRes.ok) {
+            const meta = await metaRes.json();
+            try { setPrefs(prev => ({ ...prev, ...JSON.parse(meta.prefs) })); } catch (e) { }
+            try { setCanvasArtifacts(JSON.parse(meta.canvas)); } catch (e) { }
+            try { setPinnedSessionIds(JSON.parse(meta.pins)); } catch (e) { }
+            try { setRatings(JSON.parse(meta.ratings)); } catch (e) { }
 
-          const savedActive = localStorage.getItem("davora_active_session");
-          if (savedActive === "new") {
-            setActiveSessionId(null);
-          } else if (savedActive && dbSessions.some(s => s.id === savedActive)) {
-            setActiveSessionId(savedActive);
-          } else if (dbSessions.length > 0) {
-            setActiveSessionId(dbSessions[0].id);
+            const savedActive = meta.active_session_id;
+            if (savedActive === "new") {
+              setActiveSessionId(null);
+            } else if (savedActive && dbSessions.some(s => s.id === savedActive)) {
+              setActiveSessionId(savedActive);
+            } else if (dbSessions.length > 0) {
+              setActiveSessionId(dbSessions[0].id);
+            }
           }
         }
       } catch (err) {
-        console.error("Failed to fetch sessions from DB", err);
+        console.error("Failed to fetch from DB", err);
       }
     };
     fetchSessions();
-
-    const savedRatings = localStorage.getItem("davora_chat_ratings");
-    if (savedRatings) {
-      try { setRatings(JSON.parse(savedRatings)); } catch (e) { }
-    }
-
-    const savedPrefs = localStorage.getItem("davora_prefs");
-    if (savedPrefs) {
-      try { setPrefs(prev => ({ ...prev, ...JSON.parse(savedPrefs) })); } catch (e) { }
-    }
-
-    const savedPins = localStorage.getItem("davora_pinned_sessions");
-    if (savedPins) {
-      try { setPinnedSessionIds(JSON.parse(savedPins)); } catch (e) { }
-    }
-
-    const savedCanvas = localStorage.getItem("davora_canvas");
-    if (savedCanvas) {
-      try { setCanvasArtifacts(JSON.parse(savedCanvas)); } catch (e) { }
-    }
 
     if (window.innerWidth < 768) setSidebarOpen(false);
     if (inputRef.current) inputRef.current.focus();
@@ -270,9 +263,23 @@ export default function Davora() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const syncMetadata = (updates) => {
+    const token = localStorage.getItem("davora_token");
+    if (!token) return;
+    fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/metadata', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'ngrok-skip-browser-warning': 'true'
+      },
+      body: JSON.stringify(updates)
+    }).catch(err => console.error("Meta Sync error", err));
+  };
+
   useEffect(() => {
     activeSessionIdRef.current = activeSessionId;
-    localStorage.setItem("davora_active_session", activeSessionId || "new");
+    syncMetadata({ active_session_id: activeSessionId || "new" });
   }, [activeSessionId]);
 
   useEffect(() => {
@@ -293,25 +300,25 @@ export default function Davora() {
         body: JSON.stringify(currentSession)
       }).catch(err => console.error("DB Sync error", err));
     }
-
-    // Also persist to local cache
-    const persistableSessions = sessions.filter(s => !s.isTemporary);
-    if (persistableSessions.length > 0) localStorage.setItem("davora_sessions", JSON.stringify(persistableSessions));
   }, [sessions, isTyping, activeSessionId]);
 
   useEffect(() => {
-    localStorage.setItem("davora_prefs", JSON.stringify(prefs));
+    syncMetadata({ prefs: JSON.stringify(prefs) });
     if (prefs.theme === 'light') document.body.classList.add('light-theme');
     else document.body.classList.remove('light-theme');
   }, [prefs]);
 
   useEffect(() => {
-    localStorage.setItem("davora_chat_ratings", JSON.stringify(ratings));
+    syncMetadata({ ratings: JSON.stringify(ratings) });
   }, [ratings]);
 
   useEffect(() => {
-    localStorage.setItem("davora_pinned_sessions", JSON.stringify(pinnedSessionIds));
+    syncMetadata({ pins: JSON.stringify(pinnedSessionIds) });
   }, [pinnedSessionIds]);
+
+  useEffect(() => {
+    syncMetadata({ canvas: JSON.stringify(canvasArtifacts) });
+  }, [canvasArtifacts]);
 
   const togglePin = (e, id) => {
     e.stopPropagation();
