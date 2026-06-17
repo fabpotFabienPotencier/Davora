@@ -526,38 +526,48 @@ export default function Davora() {
       {/* Sidebar for Chat History */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
-          <button onClick={startNewChat} className="new-chat-block-btn" disabled={isTyping}>
-            <Bot size={20} />
-            <span>New Chat</span>
-            <PlusCircle size={16} className="ml-auto" />
-          </button>
+          <div className="flex items-center text-white" style={{ display: 'flex', gap: '8px' }}>
+            <Bot size={22} />
+          </div>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <Search size={18} className="hover-white" onClick={() => document.querySelector('.sidebar-search-input')?.focus()} />
+            <PanelLeftClose size={18} className="hover-white" onClick={() => setSidebarOpen(false)} />
+          </div>
         </div>
 
         <div className="sidebar-nav-group">
+          <button className="sidebar-nav-btn new-chat-btn" onClick={startNewChat} disabled={isTyping}>
+            <Edit2 size={16} /> New chat
+          </button>
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Library — coming soon")}>
+            <FolderKanban size={16} /> Library
+          </button>
           <button className="sidebar-nav-btn" onClick={() => showNotification("Projects — coming soon")}>
-            <FolderKanban size={16} /> My Projects
+            <Folder size={16} /> Projects
           </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Canvas Notes — coming soon")}>
-            <Folder size={16} /> My Canvas Notes
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Apps — coming soon")}>
+            <Compass size={16} /> Apps
           </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Agent Marketplace — coming soon")}>
-            <Compass size={16} /> Explore Agents
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Codex — coming soon")}>
+            <Code size={16} /> Codex
+          </button>
+          <button className="sidebar-nav-btn" onClick={() => showNotification("More options")}>
+            <MoreHorizontal size={16} /> More
           </button>
         </div>
 
-        <div className="sidebar-search-container">
-          <Search size={14} className="search-icon" />
-          <input
-            type="text"
-            placeholder="Search chats..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="sidebar-search-input"
-          />
-        </div>
+        {/* Hidden Search Input for the icon click to focus */}
+        <input
+          type="text"
+          placeholder="Search chats..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="sidebar-search-input"
+          style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}
+        />
 
         <div className="sidebar-history">
-          <p className="sidebar-label">Recent</p>
+          <p className="sidebar-label">Recents</p>
           {filteredSessions.length === 0 && <p className="sidebar-empty">No chats found.</p>}
           {filteredSessions.map(session => (
             <div
@@ -600,13 +610,13 @@ export default function Davora() {
 
         <div className="sidebar-footer">
           <button onClick={() => setShowSettings(true)} className="user-profile-btn">
-            <div className="user-avatar-small"><User size={16} /></div>
+            <div className="user-avatar-small">KN</div>
             <div className="user-info">
-              <span className="user-name">My Account</span>
-              <span className="user-plan">Local Mode</span>
+              <span className="user-name">kno</span>
+              <span className="user-plan">Free</span>
             </div>
-            <Settings size={16} className="ml-auto text-secondary" />
           </button>
+          <button className="upgrade-btn" onClick={() => showNotification("Upgrade page coming soon")}>Upgrade</button>
         </div>
       </aside>
 
