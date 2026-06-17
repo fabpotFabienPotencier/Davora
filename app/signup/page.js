@@ -17,7 +17,7 @@ export default function Signup() {
     setError('');
 
     try {
-      const res = await fetch('http://13.53.205.187:8000/api/signup', {
+      const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -55,9 +55,9 @@ export default function Signup() {
         <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ position: 'relative' }}>
             <Mail size={18} style={{ position: 'absolute', left: '16px', top: '15px', color: 'var(--text-secondary)' }} />
-            <input 
-              type="email" 
-              placeholder="Email address" 
+            <input
+              type="email"
+              placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -66,9 +66,9 @@ export default function Signup() {
           </div>
           <div style={{ position: 'relative' }}>
             <Lock size={18} style={{ position: 'absolute', left: '16px', top: '15px', color: 'var(--text-secondary)' }} />
-            <input 
-              type="password" 
-              placeholder="Password (min 6 chars)" 
+            <input
+              type="password"
+              placeholder="Password (min 6 chars)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

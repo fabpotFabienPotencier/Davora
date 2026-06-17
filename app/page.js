@@ -152,7 +152,7 @@ export default function Davora() {
 
     const fetchSessions = async () => {
       try {
-        const res = await fetch('http://13.53.205.187:8000/api/sessions', {
+        const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.status === 401) {
@@ -163,7 +163,7 @@ export default function Davora() {
         if (res.ok) {
           const dbSessions = await res.json();
           setSessions(dbSessions);
-          
+
           const savedActive = localStorage.getItem("davora_active_session");
           if (savedActive === "new") {
             setActiveSessionId(null);
@@ -269,10 +269,10 @@ export default function Davora() {
     if (isTyping || !activeSessionId) return;
     const currentSession = sessions.find(s => s.id === activeSessionId);
     if (!currentSession || currentSession.isTemporary) return;
-    
+
     const token = localStorage.getItem("davora_token");
     if (token) {
-      fetch('http://13.53.205.187:8000/api/sessions', {
+      fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -605,7 +605,7 @@ export default function Davora() {
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <Search size={18} className="hover-white" onClick={() => {
               const el = document.querySelector('.sidebar-search-wrapper');
-              if(el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+              if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
             }} />
             <PanelLeftClose size={18} className="hover-white" onClick={() => setSidebarOpen(false)} />
           </div>
@@ -986,25 +986,25 @@ export default function Davora() {
                 </div>
               )}
               <div className={`textarea-container ${isListening ? 'hidden' : ''}`} style={{ position: 'relative' }}>
-              <TextareaAutosize
-                ref={inputRef}
-                minRows={1}
-                maxRows={6}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Message Davora..."
-                disabled={isTyping}
-                className="auto-resize-textarea"
-              />
-              {autoSuggestion && (
-                <div className="autocomplete-ghost" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none', padding: 'inherit', overflow: 'hidden' }}>
-                  <span style={{ visibility: 'hidden', whiteSpace: 'pre' }}>{input}</span>
-                  <span style={{ color: 'var(--text-secondary)', opacity: 0.4, whiteSpace: 'pre' }}>{autoSuggestion.slice(input.length)}</span>
-                  <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.5, background: 'var(--bg-secondary)', padding: '1px 6px', borderRadius: '4px' }}>Tab</span>
-                </div>
-              )}
-            </div>
+                <TextareaAutosize
+                  ref={inputRef}
+                  minRows={1}
+                  maxRows={6}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Message Davora..."
+                  disabled={isTyping}
+                  className="auto-resize-textarea"
+                />
+                {autoSuggestion && (
+                  <div className="autocomplete-ghost" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none', padding: 'inherit', overflow: 'hidden' }}>
+                    <span style={{ visibility: 'hidden', whiteSpace: 'pre' }}>{input}</span>
+                    <span style={{ color: 'var(--text-secondary)', opacity: 0.4, whiteSpace: 'pre' }}>{autoSuggestion.slice(input.length)}</span>
+                    <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.5, background: 'var(--bg-secondary)', padding: '1px 6px', borderRadius: '4px' }}>Tab</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {isListening && (
