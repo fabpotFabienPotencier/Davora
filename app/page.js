@@ -630,7 +630,7 @@ export default function Davora() {
             <div className="model-selector-wrapper" onClick={() => setShowModelPicker(!showModelPicker)}>
               <div className="model-selector">
                 <h1>Davora</h1>
-                <div className="model-badge">{selectedModel} <ChevronDown size={12} /></div>
+                <div className="model-badge">{selectedModel} <ChevronDown size={14} className="text-secondary opacity-70" /></div>
               </div>
 
               {showModelPicker && (
@@ -659,8 +659,10 @@ export default function Davora() {
         <main className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
           {messages.length === 0 && (
             <div className="welcome-screen">
-              <Bot size={48} className="welcome-icon" />
-              <h2>What can I help with?</h2>
+              <div className="welcome-icon">
+                <Bot size={32} strokeWidth={1.5} />
+              </div>
+              <h2>How can I help you today?</h2>
               <div className="suggestion-chips">
                 {visibleSuggestions.map((s, idx) => (
                   <button key={idx} className="suggestion-chip" onClick={() => triggerSend(s.text)}>
