@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Send, User, Bot, Loader2, Copy, Check,
   PlusCircle, Download, Square, ArrowDown,
@@ -19,6 +20,8 @@ import { vscDarkPlus, vs } from "react-syntax-highlighter/dist/esm/styles/prism"
 import TextareaAutosize from "react-textarea-autosize";
 
 export default function Davora() {
+  const router = useRouter();
+
   // Session Management (Sidebar)
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
@@ -62,6 +65,7 @@ export default function Davora() {
     sendOnEnter: true,
     customInstructions: ""
   });
+  const [userEmail, setUserEmail] = useState("");
 
   const messagesEndRef = useRef(null);
   const chatBoxRef = useRef(null);
@@ -136,24 +140,44 @@ export default function Davora() {
     toastTimeoutRef.current = setTimeout(() => setToast(null), 3000);
   };
 
-  // Initialization & Migrations
+  // Initialization & DB Fetching
   useEffect(() => {
-    const savedSessions = localStorage.getItem("davora_sessions");
-    if (savedSessions) {
-      try {
-        const parsed = JSON.parse(savedSessions);
-        setSessions(parsed);
-
-        const savedActive = localStorage.getItem("davora_active_session");
-        if (savedActive === "new") {
-          setActiveSessionId(null);
-        } else if (savedActive && parsed.some(s => s.id === savedActive)) {
-          setActiveSessionId(savedActive);
-        } else if (parsed.length > 0) {
-          setActiveSessionId(parsed[0].id);
-        }
-      } catch (e) { }
+    const token = localStorage.getItem("davora_token");
+    const email = localStorage.getItem("davora_email");
+    if (!token) {
+      router.push("/login");
+      return;
     }
+    setUserEmail(email || "User");
+
+    const fetchSessions = async () => {
+      try {
+        const res = await fetch('http://13.53.205.187:8000/api/sessions', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 401) {
+          localStorage.removeItem("davora_token");
+          router.push("/login");
+          return;
+        }
+        if (res.ok) {
+          const dbSessions = await res.json();
+          setSessions(dbSessions);
+          
+          const savedActive = localStorage.getItem("davora_active_session");
+          if (savedActive === "new") {
+            setActiveSessionId(null);
+          } else if (savedActive && dbSessions.some(s => s.id === savedActive)) {
+            setActiveSessionId(savedActive);
+          } else if (dbSessions.length > 0) {
+            setActiveSessionId(dbSessions[0].id);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch sessions from DB", err);
+      }
+    };
+    fetchSessions();
 
     const savedRatings = localStorage.getItem("davora_chat_ratings");
     if (savedRatings) {
@@ -241,10 +265,27 @@ export default function Davora() {
   }, [activeSessionId]);
 
   useEffect(() => {
-    // Only persist non-temporary sessions to localStorage
+    // Persist to DB when typing stops
+    if (isTyping || !activeSessionId) return;
+    const currentSession = sessions.find(s => s.id === activeSessionId);
+    if (!currentSession || currentSession.isTemporary) return;
+    
+    const token = localStorage.getItem("davora_token");
+    if (token) {
+      fetch('http://13.53.205.187:8000/api/sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(currentSession)
+      }).catch(err => console.error("DB Sync error", err));
+    }
+
+    // Also persist to local cache
     const persistableSessions = sessions.filter(s => !s.isTemporary);
     if (persistableSessions.length > 0) localStorage.setItem("davora_sessions", JSON.stringify(persistableSessions));
-  }, [sessions]);
+  }, [sessions, isTyping, activeSessionId]);
 
   useEffect(() => {
     localStorage.setItem("davora_prefs", JSON.stringify(prefs));
@@ -650,11 +691,11 @@ export default function Davora() {
         <div className="sidebar-footer">
           <button onClick={() => setShowSettings(true)} className="user-profile-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '12px', gap: '12px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '8px' }}>
             <div className="user-avatar-small" style={{ width: '32px', height: '32px', background: '#f87171', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '600' }}>
-              KN
+              {userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'}
             </div>
-            <div className="user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1 }}>
-              <span className="user-name" style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.85rem' }}>kno</span>
-              <span className="user-plan" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Free</span>
+            <div className="user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, overflow: 'hidden' }}>
+              <span className="user-name" style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.85rem', width: '100%', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{userEmail.split('@')[0] || "User"}</span>
+              <span className="user-plan" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }} onClick={(e) => { e.stopPropagation(); localStorage.clear(); router.push('/login'); }}>Log out</span>
             </div>
             <div className="upgrade-pill" style={{ background: '#2f2f2f', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: '500' }}>
               Upgrade
