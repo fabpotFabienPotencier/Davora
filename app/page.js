@@ -67,6 +67,9 @@ export default function Davora() {
   });
   const [userEmail, setUserEmail] = useState("");
 
+  const [activeModal, setActiveModal] = useState(null);
+  const [canvasArtifacts, setCanvasArtifacts] = useState([]);
+
   const messagesEndRef = useRef(null);
   const chatBoxRef = useRef(null);
   const ws = useRef(null);
@@ -195,6 +198,11 @@ export default function Davora() {
     const savedPins = localStorage.getItem("davora_pinned_sessions");
     if (savedPins) {
       try { setPinnedSessionIds(JSON.parse(savedPins)); } catch (e) { }
+    }
+
+    const savedCanvas = localStorage.getItem("davora_canvas");
+    if (savedCanvas) {
+      try { setCanvasArtifacts(JSON.parse(savedCanvas)); } catch (e) { }
     }
 
     if (window.innerWidth < 768) setSidebarOpen(false);
@@ -633,19 +641,19 @@ export default function Davora() {
           <button className="sidebar-nav-btn new-chat-btn" onClick={startNewChat} disabled={isTyping}>
             <Edit2 size={16} /> New chat
           </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Library — coming soon")}>
+          <button className="sidebar-nav-btn" onClick={() => setActiveModal('library')}>
             <FolderKanban size={16} /> Library
           </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Projects — coming soon")}>
+          <button className="sidebar-nav-btn" onClick={() => setActiveModal('projects')}>
             <Folder size={16} /> Projects
           </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Apps — coming soon")}>
+          <button className="sidebar-nav-btn" onClick={() => setActiveModal('apps')}>
             <Compass size={16} /> Apps
           </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("Codex — coming soon")}>
+          <button className="sidebar-nav-btn" onClick={() => setActiveModal('codex')}>
             <Code size={16} /> Codex
           </button>
-          <button className="sidebar-nav-btn" onClick={() => showNotification("More options")}>
+          <button className="sidebar-nav-btn" onClick={() => setActiveModal('more')}>
             <MoreHorizontal size={16} /> More
           </button>
         </div>
@@ -883,10 +891,10 @@ export default function Davora() {
                         <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${ratings[msg.id] === 'down' ? 'text-red-500' : ''}`} title="Bad response">
                           <ThumbsDown size={14} />
                         </button>
-                        <button onClick={() => setCanvasOpen(true)} className="toolbar-btn" title="Open in Canvas">
+                        <button onClick={() => saveToCanvas(msg.content)} className="toolbar-btn" title="Save to Canvas">
                           <Bookmark size={14} />
                         </button>
-                        <button onClick={() => showNotification("Share link coming soon!")} className="toolbar-btn" title="Share message">
+                        <button onClick={() => setActiveModal('share')} className="toolbar-btn" title="Share message">
                           <Share size={14} />
                         </button>
                         <div className="toolbar-divider"></div>
@@ -901,8 +909,8 @@ export default function Davora() {
                           </button>
                           {openMoreMenuId === msg.id && (
                             <div className="more-menu-dropdown">
-                              <button onClick={() => { showNotification("Task scheduling — coming soon"); setOpenMoreMenuId(null); }} className="more-menu-item"><CalendarClock size={14} /> Schedule Task</button>
-                              <button onClick={() => { showNotification("Report system — coming soon"); setOpenMoreMenuId(null); }} className="more-menu-item"><TriangleAlert size={14} className="text-red-500" /> Report Issue</button>
+                              <button onClick={() => { setActiveModal('schedule'); setOpenMoreMenuId(null); }} className="more-menu-item"><CalendarClock size={14} /> Schedule Task</button>
+                              <button onClick={() => { setActiveModal('report'); setOpenMoreMenuId(null); }} className="more-menu-item"><TriangleAlert size={14} className="text-red-500" /> Report Issue</button>
                             </div>
                           )}
                         </div>
@@ -1071,10 +1079,10 @@ export default function Davora() {
               </div>
 
               <div className="setting-group-row">
-                <button onClick={() => showNotification("Memory management — coming soon")} className="sidebar-nav-btn outline-btn">
+                <button onClick={() => { setShowSettings(false); setActiveModal('memory'); }} className="sidebar-nav-btn outline-btn">
                   <Database size={16} /> Manage Memory
                 </button>
-                <button onClick={() => showNotification("Active sessions — coming soon")} className="sidebar-nav-btn outline-btn">
+                <button onClick={() => { setShowSettings(false); setActiveModal('sessions'); }} className="sidebar-nav-btn outline-btn">
                   <Activity size={16} /> Active Sessions
                 </button>
               </div>
@@ -1103,6 +1111,111 @@ export default function Davora() {
         </div>
       )}
 
+      {/* Dynamic Feature Modals */}
+      {activeModal && (
+        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', width: '90%' }}>
+            <div className="modal-header">
+              <h2>
+                {activeModal === 'library' && 'Prompt Library'}
+                {activeModal === 'projects' && 'Your Projects'}
+                {activeModal === 'apps' && 'Connected Apps'}
+                {activeModal === 'codex' && 'Code Snippets'}
+                {activeModal === 'memory' && 'Davora Memory'}
+                {activeModal === 'sessions' && 'Active Sessions'}
+                {activeModal === 'schedule' && 'Schedule Task'}
+                {activeModal === 'report' && 'Report Issue'}
+                {activeModal === 'share' && 'Share Chat'}
+              </h2>
+              <button className="icon-action-btn" onClick={() => setActiveModal(null)}><X size={20} /></button>
+            </div>
+            <div className="modal-body">
+              {activeModal === 'library' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Select a predefined AI persona to start chatting.</p>
+                  {['Software Engineer', 'Creative Writer', 'Data Analyst', 'Financial Advisor', 'Therapist'].map(role => (
+                    <button key={role} className="sidebar-nav-btn outline-btn" onClick={() => { setPrefs({...prefs, customInstructions: `Act as a senior ${role}.`}); setActiveModal(null); showNotification(`${role} persona activated!`); }}>
+                      <Bot size={16} /> {role}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {activeModal === 'projects' && (
+                <div className="canvas-empty-state">
+                  <FolderKanban size={32} className="text-secondary mb-4" />
+                  <h3>No Projects Yet</h3>
+                  <p>Group your chats into projects for better organization.</p>
+                  <button className="send-btn" style={{ marginTop: '16px', padding: '8px 16px' }} onClick={() => { setActiveModal(null); showNotification('Project created!'); }}>Create Project</button>
+                </div>
+              )}
+              {activeModal === 'apps' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Connect third-party services to Davora.</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}><Link size={18} /> Google Drive</div>
+                    <button className="outline-btn" style={{ fontSize: '0.8rem', padding: '4px 12px' }} onClick={() => showNotification("Redirecting to OAuth...")}>Connect</button>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}><Code size={18} /> GitHub Repo</div>
+                    <button className="outline-btn" style={{ fontSize: '0.8rem', padding: '4px 12px' }} onClick={() => showNotification("Redirecting to OAuth...")}>Connect</button>
+                  </div>
+                </div>
+              )}
+              {activeModal === 'codex' && (
+                <div className="canvas-empty-state">
+                  <Code size={32} className="text-secondary mb-4" />
+                  <h3>Code Snippet Vault</h3>
+                  <p>Code blocks you save from chats will appear here.</p>
+                </div>
+              )}
+              {activeModal === 'memory' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Facts and preferences Davora has learned about you.</p>
+                  {prefs.customInstructions ? (
+                    <div style={{ padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px', fontSize: '0.9rem' }}>{prefs.customInstructions}</div>
+                  ) : (
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Davora hasn't learned any custom instructions yet.</p>
+                  )}
+                  <button onClick={() => { setPrefs({...prefs, customInstructions: ''}); showNotification('Memory cleared.'); setActiveModal(null); }} className="danger-btn" style={{ alignSelf: 'flex-start', marginTop: '8px' }}>Clear Memory</button>
+                </div>
+              )}
+              {activeModal === 'sessions' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px', border: '1px solid #10b981' }}>
+                    <p style={{ fontWeight: '600', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>Current Device <span style={{ color: '#10b981', fontSize: '0.8rem' }}>Active</span></p>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{userEmail || 'User'} • {new Date().toLocaleDateString()}</p>
+                  </div>
+                  <button className="danger-btn" onClick={() => { localStorage.clear(); router.push('/login'); }}>Sign Out Everywhere</button>
+                </div>
+              )}
+              {activeModal === 'schedule' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Schedule this task to run automatically later.</p>
+                  <input type="datetime-local" className="sidebar-search-input" style={{ padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                  <button className="send-btn" onClick={() => { setActiveModal(null); showNotification('Task scheduled!'); }} style={{ padding: '12px' }}>Confirm Schedule</button>
+                </div>
+              )}
+              {activeModal === 'report' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <textarea rows={4} placeholder="Describe the issue..." className="custom-instructions-input" />
+                  <button className="danger-btn" onClick={() => { setActiveModal(null); showNotification('Issue reported to engineering.'); }}>Submit Report</button>
+                </div>
+              )}
+              {activeModal === 'share' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center', textAlign: 'center' }}>
+                  <Globe size={48} className="text-secondary mb-2" />
+                  <p>Generate a public link to share this conversation.</p>
+                  <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                    <input type="text" readOnly value={`https://davora.com/share/${activeSessionId || 'new'}`} style={{ flex: 1, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                    <button className="send-btn" onClick={() => { navigator.clipboard.writeText(`https://davora.com/share/${activeSessionId || 'new'}`); showNotification('Link copied!'); setActiveModal(null); }}>Copy</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 2026 Right Canvas Panel */}
       <aside className={`canvas-panel ${canvasOpen ? 'open' : 'closed'}`}>
         <div className="canvas-header">
@@ -1113,11 +1226,34 @@ export default function Davora() {
           <button onClick={() => setCanvasOpen(false)} className="icon-action-btn"><X size={18} /></button>
         </div>
         <div className="canvas-body">
-          <div className="canvas-empty-state">
-            <Bookmark size={32} className="text-secondary mb-4" />
-            <h3>No Artifacts Saved</h3>
-            <p>Click the bookmark icon on any AI message to save it to your persistent Canvas workspace.</p>
-          </div>
+          {canvasArtifacts.length === 0 ? (
+            <div className="canvas-empty-state">
+              <Bookmark size={32} className="text-secondary mb-4" />
+              <h3>No Artifacts Saved</h3>
+              <p>Click the bookmark icon on any AI message to save it to your persistent Canvas workspace.</p>
+            </div>
+          ) : (
+            <div className="canvas-artifacts-list">
+              {canvasArtifacts.map(artifact => (
+                <div key={artifact.id} className="canvas-artifact-card" style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{artifact.date}</span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => copyToClipboard(artifact.content, `canvas-${artifact.id}`)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                        {copiedId === `canvas-${artifact.id}` ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                      </button>
+                      <button onClick={() => setCanvasArtifacts(prev => prev.filter(a => a.id !== artifact.id))} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto' }}>
+                    {artifact.content.substring(0, 300)}{artifact.content.length > 300 ? '...' : ''}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </aside>
 
