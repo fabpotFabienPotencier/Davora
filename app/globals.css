@@ -575,7 +575,7 @@ body {
   .chat-box { padding: 24px; }
   .input-wrapper { padding: 12px 16px; }
   .hide-on-mobile { display: none; }
-  .suggestion-chips { flex-direction: column; align-items: center; }
+  .suggestion-chips { display: flex !important; flex-direction: column !important; align-items: stretch !important; }
   .sidebar { width: 80%; max-width: 320px; position: fixed; left: 0; top: 0; z-index: 100; box-shadow: 4px 0 24px rgba(0,0,0,0.5); height: 100vh; }
   .sidebar.closed { transform: translateX(-100%); }
   .main-content.sidebar-open { width: 100vw; margin-left: 0; }

@@ -40,6 +40,7 @@ export default function Davora() {
   const [inputMode, setInputMode] = useState("instant");
   const [thinkingText, setThinkingText] = useState("Thinking...");
   const [copiedId, setCopiedId] = useState(null);
+  const [attachment, setAttachment] = useState(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
@@ -69,6 +70,7 @@ export default function Davora() {
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
   const plusMenuRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Derived messages for the active session
   const activeSession = sessions.find(s => s.id === activeSessionId);
@@ -328,35 +330,61 @@ export default function Davora() {
     return newId;
   };
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showNotification("Only images are supported right now");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAttachment({
+        file,
+        base64: event.target.result.split(',')[1],
+        url: URL.createObjectURL(file)
+      });
+      setShowPlusMenu(false);
+      inputRef.current?.focus();
+    };
+    reader.readAsDataURL(file);
+  };
+
   const triggerSend = (customText = null) => {
     const textToSend = customText !== null ? customText : input.trim();
-    if (!textToSend || !ws.current || isTyping) return;
+    if ((!textToSend && !attachment) || !ws.current || isTyping) return;
 
     if (synthRef.current) synthRef.current.cancel();
     setSpeakingId(null);
 
     let targetSessionId = activeSessionId;
     if (!targetSessionId) {
-      targetSessionId = createNewSession(textToSend);
+      targetSessionId = createNewSession(textToSend || "Image Upload");
     }
 
     const newMessage = {
-      id: Date.now(), role: "user", content: textToSend,
+      id: Date.now(), role: "user", content: textToSend, image_url: attachment?.url,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     setSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newMessage] } : s));
 
+    const payloadObj = { message: textToSend, mode: inputMode, model: selectedModel, isTemporary: isTemporary, customInstructions: prefs.customInstructions };
+    if (attachment) {
+      payloadObj.image = attachment.base64;
+    }
+
     setInput("");
+    setAttachment(null);
     setIsTyping(true);
     setEditingId(null);
     setIsListening(false);
 
     if (ws.current.readyState !== WebSocket.OPEN) {
       connectWebSocket();
-      setTimeout(() => ws.current.send(JSON.stringify({ message: textToSend, mode: inputMode, model: selectedModel, isTemporary: isTemporary, customInstructions: prefs.customInstructions })), 500);
+      setTimeout(() => ws.current.send(JSON.stringify(payloadObj)), 500);
     } else {
-      ws.current.send(JSON.stringify({ message: textToSend, mode: inputMode, model: selectedModel, isTemporary: isTemporary, customInstructions: prefs.customInstructions }));
+      ws.current.send(JSON.stringify(payloadObj));
     }
   };
 
@@ -723,7 +751,10 @@ export default function Davora() {
                         </div>
                       </div>
                     ) : (
-                      <p className="user-text">{msg.content}</p>
+                      <>
+                        {msg.image_url && <img src={msg.image_url} alt="Attached image" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', marginBottom: '12px' }} />}
+                        {msg.content && <p className="user-text">{msg.content}</p>}
+                      </>
                     )
                   ) : (
                     <div className="markdown-body">
@@ -883,9 +914,10 @@ export default function Davora() {
 
               {showPlusMenu && (
                 <div className="plus-menu-dropdown">
-                  <button type="button" className="plus-menu-item" onClick={() => { showNotification("Attachments coming soon"); setShowPlusMenu(false); }}>
-                    <Image size={18} /> Add photo and file
+                  <button type="button" className="plus-menu-item" onClick={() => fileInputRef.current?.click()}>
+                    <Image size={18} /> Add photo
                   </button>
+                  <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} />
                   <div className="plus-menu-divider"></div>
                   <button type="button" className={`plus-menu-item ${inputMode === 'instant' ? 'active' : ''}`} onClick={() => { setInputMode("instant"); setShowPlusMenu(false); }}>
                     <Zap size={18} className="text-yellow-500" /> Instant
@@ -903,7 +935,16 @@ export default function Davora() {
               )}
             </div>
 
-            <div className={`textarea-container ${isListening ? 'hidden' : ''}`} style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+              {attachment && (
+                <div className="attachment-preview" style={{ padding: '8px 16px', display: 'flex' }}>
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <img src={attachment.url} alt="Attachment" style={{ height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                    <button type="button" onClick={() => setAttachment(null)} style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--bg-secondary)', borderRadius: '50%', padding: '2px', cursor: 'pointer', border: '1px solid var(--border-color)' }}><X size={14} className="text-white" /></button>
+                  </div>
+                </div>
+              )}
+              <div className={`textarea-container ${isListening ? 'hidden' : ''}`} style={{ position: 'relative' }}>
               <TextareaAutosize
                 ref={inputRef}
                 minRows={1}
