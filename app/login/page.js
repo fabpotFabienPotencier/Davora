@@ -19,7 +19,10 @@ export default function Login() {
     try {
       const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: JSON.stringify({ email, password })
       });
 

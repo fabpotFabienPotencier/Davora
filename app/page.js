@@ -153,7 +153,10 @@ export default function Davora() {
     const fetchSessions = async () => {
       try {
         const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions', {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
+          }
         });
         if (res.status === 401) {
           localStorage.removeItem("davora_token");
@@ -276,7 +279,8 @@ export default function Davora() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true'
         },
         body: JSON.stringify(currentSession)
       }).catch(err => console.error("DB Sync error", err));
