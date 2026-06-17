@@ -529,16 +529,20 @@ export default function Davora() {
 
       {/* Sidebar for Chat History */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
-        <div className="sidebar-header">
+        <div className="sidebar-header" style={{ padding: '16px 12px 12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="flex items-center text-white" style={{ display: 'flex', gap: '8px' }}>
             <Bot size={22} />
           </div>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <Search size={18} className="hover-white" onClick={() => {
+              const el = document.querySelector('.sidebar-search-wrapper');
+              if(el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+            }} />
             <PanelLeftClose size={18} className="hover-white" onClick={() => setSidebarOpen(false)} />
           </div>
         </div>
 
-        <div className="sidebar-search-wrapper" style={{ padding: '0 12px', marginBottom: '12px' }}>
+        <div className="sidebar-search-wrapper" style={{ padding: '0 12px', marginBottom: '8px', display: 'none' }}>
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             <Search size={14} style={{ position: 'absolute', left: '10px', color: 'var(--text-secondary)' }} />
             <input
@@ -547,7 +551,7 @@ export default function Davora() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="sidebar-search-input"
-              style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '6px 12px 6px 32px', borderRadius: '8px', fontSize: '0.85rem', outline: 'none' }}
+              style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid transparent', color: 'var(--text-primary)', padding: '6px 12px 6px 32px', borderRadius: '8px', fontSize: '0.85rem', outline: 'none' }}
             />
           </div>
         </div>
@@ -555,6 +559,21 @@ export default function Davora() {
         <div className="sidebar-nav-group">
           <button className="sidebar-nav-btn new-chat-btn" onClick={startNewChat} disabled={isTyping}>
             <Edit2 size={16} /> New chat
+          </button>
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Library — coming soon")}>
+            <FolderKanban size={16} /> Library
+          </button>
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Projects — coming soon")}>
+            <Folder size={16} /> Projects
+          </button>
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Apps — coming soon")}>
+            <Compass size={16} /> Apps
+          </button>
+          <button className="sidebar-nav-btn" onClick={() => showNotification("Codex — coming soon")}>
+            <Code size={16} /> Codex
+          </button>
+          <button className="sidebar-nav-btn" onClick={() => showNotification("More options")}>
+            <MoreHorizontal size={16} /> More
           </button>
         </div>
 
@@ -601,13 +620,16 @@ export default function Davora() {
         </div>
 
         <div className="sidebar-footer">
-          <button onClick={() => setShowSettings(true)} className="user-profile-btn">
-            <div className="user-avatar-small">
-              <User size={18} />
+          <button onClick={() => setShowSettings(true)} className="user-profile-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '12px', gap: '12px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '8px' }}>
+            <div className="user-avatar-small" style={{ width: '32px', height: '32px', background: '#f87171', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '600' }}>
+              KN
             </div>
-            <div className="user-info">
-              <span className="user-name">kno</span>
-              <span className="user-plan">Free Plan</span>
+            <div className="user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1 }}>
+              <span className="user-name" style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.85rem' }}>kno</span>
+              <span className="user-plan" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Free</span>
+            </div>
+            <div className="upgrade-pill" style={{ background: '#2f2f2f', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: '500' }}>
+              Upgrade
             </div>
           </button>
         </div>
