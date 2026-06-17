@@ -964,6 +964,7 @@ export default function Davora() {
                 </div>
               )}
             </div>
+            </div>
 
             {isListening && (
               <div className="voice-visualizer">
