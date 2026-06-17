@@ -634,9 +634,11 @@ export default function Davora() {
         {/* Header */}
         <header className="header">
           <div className="logo-section">
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="icon-action-btn toggle-sidebar-btn" title="Toggle Sidebar">
-              {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
-            </button>
+            {!sidebarOpen && (
+              <button onClick={() => setSidebarOpen(true)} className="icon-action-btn toggle-sidebar-btn" title="Open Sidebar">
+                <PanelLeft size={20} />
+              </button>
+            )}
             <div className="model-selector-wrapper" onClick={() => setShowModelPicker(!showModelPicker)}>
               <div className="model-selector">
                 <h1>Davora</h1>
