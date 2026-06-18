@@ -59,11 +59,19 @@ export default function Davora() {
 
   // Settings & Preferences
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsTab, setSettingsTab] = useState('Personalization');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [prefs, setPrefs] = useState({
     theme: 'dark',
     fontSize: 'medium',
     sendOnEnter: true,
-    customInstructions: ""
+    customInstructions: "",
+    baseStyle: "Default",
+    characteristicsWarm: "Default",
+    characteristicsEnthusiastic: "Default",
+    characteristicsHeaders: "Default",
+    characteristicsEmoji: "Default",
+    fastAnswers: true
   });
   const [userEmail, setUserEmail] = useState("");
 
@@ -763,20 +771,42 @@ export default function Davora() {
           ))}
         </div>
 
-        <div className="sidebar-footer">
-          <button onClick={() => setShowSettings(true)} className="user-profile-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '12px', gap: '12px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '8px' }}>
-            <div className="user-avatar-small" style={{ width: '32px', height: '32px', background: '#f87171', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '600' }}>
-              {userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'}
-            </div>
-            <div className="user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, overflow: 'hidden' }}>
-              <span className="user-name" style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.85rem', width: '100%', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{userEmail.split('@')[0] || "User"}</span>
-              <span className="user-plan" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }} onClick={(e) => { e.stopPropagation(); localStorage.clear(); router.push('/login'); }}>Log out</span>
-            </div>
-            <div className="upgrade-pill" style={{ background: '#2f2f2f', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: '500' }}>
-              Upgrade
-            </div>
-          </button>
-        </div>
+        <div className="sidebar-footer" style={{ position: 'relative' }}>
+            {showProfileMenu && (
+              <div className="profile-popover">
+                <div className="popover-header">
+                  <div className="user-avatar-small" style={{ background: '#f87171' }}>
+                    {userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'}
+                  </div>
+                  <div className="popover-user-info">
+                    <span className="user-name">{userEmail.split('@')[0] || "User"}</span>
+                    <span className="user-plan">Free</span>
+                  </div>
+                </div>
+                <div className="popover-menu">
+                  <button className="popover-item" onClick={() => { setShowProfileMenu(false); setActiveModal('upgrade'); }}><Sparkles size={16} /> Upgrade plan</button>
+                  <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); }}><VenetianMask size={16} /> Personalization</button>
+                  <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); }}><User size={16} /> Profile</button>
+                  <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); }}><Settings size={16} /> Settings</button>
+                  <div className="popover-divider"></div>
+                  <button className="popover-item"><TriangleAlert size={16} /> Help</button>
+                  <button className="popover-item" onClick={() => { localStorage.clear(); router.push('/login'); }}><span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ChevronRight size={16} /></span> Log out</button>
+                </div>
+              </div>
+            )}
+            <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="user-profile-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '12px', gap: '12px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '8px' }}>
+              <div className="user-avatar-small" style={{ width: '32px', height: '32px', background: '#f87171', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '600' }}>
+                {userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'}
+              </div>
+              <div className="user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, overflow: 'hidden' }}>
+                <span className="user-name" style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.85rem', width: '100%', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{userEmail.split('@')[0] || "User"}</span>
+                <span className="user-plan" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Free</span>
+              </div>
+              <div className="upgrade-pill" style={{ background: '#2f2f2f', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: '500' }}>
+                Upgrade
+              </div>
+            </button>
+          </div>
       </aside>
 
       {/* Mobile Sidebar Overlay — tap anywhere to close */}
@@ -1167,7 +1197,7 @@ export default function Davora() {
                 : "Are you sure you want to delete this conversation? This will permanently remove it from the cloud database."}
             </div>
             <div className="modal-footer" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button className="outline-btn" onClick={() => setDeleteConfirm(null)}>Cancel</button>
+<button className="outline-btn" onClick={() => setDeleteConfirm(null)}>Cancel</button>
               <button className="danger-btn" onClick={executeDelete}>Yes, Delete</button>
             </div>
           </div>
@@ -1177,54 +1207,119 @@ export default function Davora() {
       {/* Settings Modal Overlay */}
       {showSettings && (
         <div className="modal-overlay" onClick={() => setShowSettings(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Settings</h2>
-              <button className="icon-action-btn" onClick={() => setShowSettings(false)}><X size={20} /></button>
+          <div className="settings-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="settings-sidebar">
+              <div className="settings-sidebar-header hide-on-desktop">
+                <button className="icon-action-btn" onClick={() => setShowSettings(false)}><X size={20} /></button>
+              </div>
+              <div className="settings-nav">
+                <button className={`settings-nav-btn ${settingsTab === 'General' ? 'active' : ''}`} onClick={() => setSettingsTab('General')}><Settings size={18} /> General</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Personalization' ? 'active' : ''}`} onClick={() => setSettingsTab('Personalization')}><VenetianMask size={18} /> Personalization</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Data controls' ? 'active' : ''}`} onClick={() => setSettingsTab('Data controls')}><Database size={18} /> Data controls</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Security' ? 'active' : ''}`} onClick={() => setSettingsTab('Security')}><Shield size={18} /> Security and login</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Account' ? 'active' : ''}`} onClick={() => setSettingsTab('Account')}><User size={18} /> Account</button>
+              </div>
             </div>
-            <div className="modal-body">
-
-              {/* Custom Instructions */}
-              <div className="setting-group">
-                <label>Custom Instructions</label>
-                <p className="setting-hint">What would you like Davora to know about you to provide better responses?</p>
-                <textarea
-                  className="custom-instructions-input"
-                  rows={3}
-                  value={prefs.customInstructions}
-                  onChange={(e) => setPrefs({ ...prefs, customInstructions: e.target.value })}
-                  placeholder="e.g. I am a software developer. Always give concise answers."
-                />
+            
+            <div className="settings-body">
+              <div className="settings-header-desktop">
+                <h2>{settingsTab}</h2>
+                <button className="icon-action-btn" onClick={() => setShowSettings(false)}><X size={20} /></button>
               </div>
 
-              <div className="setting-group-row">
-                <button onClick={() => { setShowSettings(false); setActiveModal('memory'); }} className="sidebar-nav-btn outline-btn">
-                  <Database size={16} /> Manage Memory
-                </button>
-                <button onClick={() => { setShowSettings(false); setActiveModal('sessions'); }} className="sidebar-nav-btn outline-btn">
-                  <Activity size={16} /> Active Sessions
-                </button>
-              </div>
+              {settingsTab === 'Personalization' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Base style and tone</label>
+                      <p>Set the style and tone of how Davora responds to you. This doesn't impact capabilities.</p>
+                    </div>
+                    <select className="premium-select" value={prefs.baseStyle} onChange={e => setPrefs({...prefs, baseStyle: e.target.value})}>
+                      <option value="Default">Default</option>
+                      <option value="Professional">Professional</option>
+                      <option value="Friendly">Friendly</option>
+                      <option value="Candid">Candid</option>
+                      <option value="Quirky">Quirky</option>
+                      <option value="Efficient">Efficient</option>
+                      <option value="Cynical">Cynical</option>
+                    </select>
+                  </div>
 
-              <div className="setting-group">
-                <label>Theme</label>
-                <div className="toggle-btns">
-                  <button onClick={() => setPrefs({ ...prefs, theme: 'light' })} className={prefs.theme === 'light' ? 'active' : ''}><Sun size={16} /> Light</button>
-                  <button onClick={() => setPrefs({ ...prefs, theme: 'dark' })} className={prefs.theme === 'dark' ? 'active' : ''}><Moon size={16} /> Dark</button>
+                  <div className="settings-section">
+                    <h3>Characteristics</h3>
+                    <p className="setting-hint">Choose additional customizations on top of your base style and tone.</p>
+                    
+                    <div className="settings-row nested">
+                      <label>Warm</label>
+                      <select className="premium-select" value={prefs.characteristicsWarm} onChange={e => setPrefs({...prefs, characteristicsWarm: e.target.value})}>
+                        <option value="More">More</option>
+                        <option value="Default">Default</option>
+                        <option value="Less">Less</option>
+                      </select>
+                    </div>
+                    
+                    <div className="settings-row nested">
+                      <label>Enthusiastic</label>
+                      <select className="premium-select" value={prefs.characteristicsEnthusiastic} onChange={e => setPrefs({...prefs, characteristicsEnthusiastic: e.target.value})}>
+                        <option value="More">More</option>
+                        <option value="Default">Default</option>
+                        <option value="Less">Less</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Fast answers</label>
+                      <p>Davora can sometimes use its general knowledge to give fast, in-depth answers.</p>
+                    </div>
+                    <div className="toggle-switch">
+                       <input type="checkbox" id="fast-answers-toggle" checked={prefs.fastAnswers} onChange={e => setPrefs({...prefs, fastAnswers: e.target.checked})} />
+                       <label htmlFor="fast-answers-toggle"></label>
+                    </div>
+                  </div>
+
+                  <div className="settings-section">
+                    <label>Custom instructions</label>
+                    <textarea
+                      className="custom-instructions-input premium"
+                      rows={3}
+                      value={prefs.customInstructions}
+                      onChange={(e) => setPrefs({ ...prefs, customInstructions: e.target.value })}
+                      placeholder="What would you like Davora to know about you to provide better responses?"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="setting-group">
-                <label>Font Size</label>
-                <div className="toggle-btns">
-                  <button onClick={() => setPrefs({ ...prefs, fontSize: 'small' })} className={prefs.fontSize === 'small' ? 'active' : ''}>Small</button>
-                  <button onClick={() => setPrefs({ ...prefs, fontSize: 'medium' })} className={prefs.fontSize === 'medium' ? 'active' : ''}>Medium</button>
-                  <button onClick={() => setPrefs({ ...prefs, fontSize: 'large' })} className={prefs.fontSize === 'large' ? 'active' : ''}>Large</button>
-                </div>
-              </div>
+              )}
 
-              <div className="setting-group danger-zone">
-                <button onClick={clearAllChats} className="danger-btn">Delete all chats</button>
-              </div>
+              {settingsTab === 'General' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Theme</label>
+                      <p>Customize the UI color mode.</p>
+                    </div>
+                    <select className="premium-select" value={prefs.theme} onChange={e => setPrefs({...prefs, theme: e.target.value})}>
+                      <option value="dark">Dark</option>
+                      <option value="light">Light</option>
+                    </select>
+                  </div>
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Font Size</label>
+                    </div>
+                    <div className="toggle-btns compact">
+                      <button onClick={() => setPrefs({ ...prefs, fontSize: 'small' })} className={prefs.fontSize === 'small' ? 'active' : ''}>Small</button>
+                      <button onClick={() => setPrefs({ ...prefs, fontSize: 'medium' })} className={prefs.fontSize === 'medium' ? 'active' : ''}>Medium</button>
+                      <button onClick={() => setPrefs({ ...prefs, fontSize: 'large' })} className={prefs.fontSize === 'large' ? 'active' : ''}>Large</button>
+                    </div>
+                  </div>
+                  <div className="settings-row border-top">
+                    <button onClick={clearAllChats} className="danger-btn">Delete all chats</button>
+                  </div>
+                </div>
+              )}
+              
             </div>
           </div>
         </div>
