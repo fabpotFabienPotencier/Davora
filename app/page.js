@@ -71,7 +71,12 @@ export default function Davora() {
     characteristicsEnthusiastic: "Default",
     characteristicsHeaders: "Default",
     characteristicsEmoji: "Default",
-    fastAnswers: true
+    fastAnswers: true,
+    nickname: "",
+    occupation: "",
+    aboutYou: "",
+    referenceMemories: true,
+    referenceHistory: true
   });
   const [userEmail, setUserEmail] = useState("");
 
@@ -1266,6 +1271,24 @@ export default function Davora() {
                         <option value="Less">Less</option>
                       </select>
                     </div>
+
+                    <div className="settings-row nested">
+                      <label>Headers & Lists</label>
+                      <select className="premium-select" value={prefs.characteristicsHeaders} onChange={e => setPrefs({...prefs, characteristicsHeaders: e.target.value})}>
+                        <option value="More">More</option>
+                        <option value="Default">Default</option>
+                        <option value="Less">Less</option>
+                      </select>
+                    </div>
+
+                    <div className="settings-row nested">
+                      <label>Emoji</label>
+                      <select className="premium-select" value={prefs.characteristicsEmoji} onChange={e => setPrefs({...prefs, characteristicsEmoji: e.target.value})}>
+                        <option value="More">More</option>
+                        <option value="Default">Default</option>
+                        <option value="Less">Less</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div className="settings-row border-top">
@@ -1286,8 +1309,84 @@ export default function Davora() {
                       rows={3}
                       value={prefs.customInstructions}
                       onChange={(e) => setPrefs({ ...prefs, customInstructions: e.target.value })}
-                      placeholder="What would you like Davora to know about you to provide better responses?"
+                      placeholder="Additional behavior, style, and tone preferences"
                     />
+                  </div>
+
+                  <div className="settings-section border-top" style={{ paddingTop: '24px' }}>
+                    <h3>About you</h3>
+                    
+                    <div className="settings-input-group">
+                      <label>Nickname</label>
+                      <input
+                        className="premium-input-field"
+                        type="text"
+                        value={prefs.nickname}
+                        onChange={(e) => setPrefs({ ...prefs, nickname: e.target.value })}
+                        placeholder="What should Davora call you?"
+                      />
+                    </div>
+                    
+                    <div className="settings-input-group">
+                      <label>Occupation</label>
+                      <input
+                        className="premium-input-field"
+                        type="text"
+                        value={prefs.occupation}
+                        onChange={(e) => setPrefs({ ...prefs, occupation: e.target.value })}
+                        placeholder=""
+                      />
+                    </div>
+
+                    <div className="settings-input-group">
+                      <label>More about you</label>
+                      <input
+                        className="premium-input-field"
+                        type="text"
+                        value={prefs.aboutYou}
+                        onChange={(e) => setPrefs({ ...prefs, aboutYou: e.target.value })}
+                        placeholder="Interests, values, or preferences to keep in mind"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="settings-section border-top" style={{ paddingTop: '24px' }}>
+                    <div className="settings-row" style={{ alignItems: 'center' }}>
+                      <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>Memory <span className="help-icon" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', border: '1px solid var(--text-secondary)', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>?</span></h3>
+                      <button className="manage-btn" onClick={() => { setShowSettings(false); setActiveModal('memory'); }} style={{ background: '#202123', color: 'white', border: '1px solid #3f3f3f', padding: '6px 12px', borderRadius: '16px', fontSize: '0.8rem', fontWeight: '500', cursor: 'pointer' }}>Manage</button>
+                    </div>
+
+                    <div className="settings-row border-top" style={{ paddingTop: '16px', marginTop: '16px' }}>
+                      <div className="settings-info">
+                        <label>Reference saved memories</label>
+                        <p>Let Davora save and use memories when responding.</p>
+                      </div>
+                      <div className="toggle-switch">
+                         <input type="checkbox" id="ref-mem-toggle" checked={prefs.referenceMemories} onChange={e => setPrefs({...prefs, referenceMemories: e.target.checked})} />
+                         <label htmlFor="ref-mem-toggle"></label>
+                      </div>
+                    </div>
+
+                    <div className="settings-row border-top" style={{ paddingTop: '16px' }}>
+                      <div className="settings-info">
+                        <label>Reference chat history</label>
+                        <p>Let Davora reference recent conversations when responding.</p>
+                      </div>
+                      <div className="toggle-switch">
+                         <input type="checkbox" id="ref-hist-toggle" checked={prefs.referenceHistory} onChange={e => setPrefs({...prefs, referenceHistory: e.target.checked})} />
+                         <label htmlFor="ref-hist-toggle"></label>
+                      </div>
+                    </div>
+                    
+                    <p className="setting-hint" style={{ marginTop: '12px' }}>
+                      Davora may use Memory to personalize queries to search providers, such as Bing. <a href="#" style={{ color: 'var(--text-primary)', textDecoration: 'underline' }}>Learn more</a>
+                    </p>
+                  </div>
+
+                  <div className="settings-row border-top" style={{ paddingTop: '24px' }}>
+                    <button className="settings-nav-btn" style={{ padding: 0, width: '100%', justifyContent: 'space-between', color: 'var(--text-primary)' }}>
+                       Advanced <ChevronDown size={16} />
+                    </button>
                   </div>
                 </div>
               )}
