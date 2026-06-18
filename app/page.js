@@ -69,6 +69,7 @@ export default function Davora() {
 
   const [activeModal, setActiveModal] = useState(null);
   const [canvasArtifacts, setCanvasArtifacts] = useState([]);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const messagesEndRef = useRef(null);
   const chatBoxRef = useRef(null);
@@ -588,18 +589,7 @@ export default function Davora() {
 
   const deleteSession = (e, id) => {
     e.stopPropagation();
-    if (window.confirm("Delete this chat?")) {
-      setSessions(prev => prev.filter(s => s.id !== id));
-      if (activeSessionId === id) setActiveSessionId(null);
-      showNotification("Chat deleted");
-      const token = localStorage.getItem("davora_token");
-      if (token) {
-        fetch(`https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
-        }).catch(err => console.error("Delete sync error", err));
-      }
-    }
+    setDeleteConfirm({ type: 'single', id });
   };
 
   const saveRename = (e, id) => {
@@ -640,12 +630,28 @@ export default function Davora() {
   };
 
   const clearAllChats = () => {
-    if (window.confirm("Are you sure you want to delete ALL chats? This cannot be undone.")) {
+    setDeleteConfirm({ type: 'all' });
+  };
+
+  const executeDelete = () => {
+    if (!deleteConfirm) return;
+    if (deleteConfirm.type === 'single') {
+      const id = deleteConfirm.id;
+      setSessions(prev => prev.filter(s => s.id !== id));
+      if (activeSessionId === id) setActiveSessionId(null);
+      showNotification("Chat deleted");
+      const token = localStorage.getItem("davora_token");
+      if (token) {
+        fetch(`https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
+        }).catch(err => console.error("Delete sync error", err));
+      }
+    } else if (deleteConfirm.type === 'all') {
       setSessions([]);
       setActiveSessionId(null);
       showNotification("All chats cleared");
       setShowSettings(false);
-      
       const token = localStorage.getItem("davora_token");
       if (token) {
         fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions/all', {
@@ -654,6 +660,7 @@ export default function Davora() {
         }).catch(err => console.error("Clear all sync error", err));
       }
     }
+    setDeleteConfirm(null);
   };
 
   return (
@@ -1116,6 +1123,28 @@ export default function Davora() {
           <p className="footer-text">Davora 3.2 can make mistakes. Consider verifying important information.</p>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="modal-overlay" onClick={() => setDeleteConfirm(null)}>
+          <div className="modal-content" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+              <h2 style={{ color: 'var(--error-color)' }}>
+                {deleteConfirm.type === 'all' ? 'Delete all chats?' : 'Delete this chat?'}
+              </h2>
+            </div>
+            <div className="modal-body" style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>
+              {deleteConfirm.type === 'all' 
+                ? "Are you sure you want to permanently delete every single conversation? This action cannot be undone and will wipe your database."
+                : "Are you sure you want to delete this conversation? This will permanently remove it from the cloud database."}
+            </div>
+            <div className="modal-footer" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button className="outline-btn" onClick={() => setDeleteConfirm(null)}>Cancel</button>
+              <button className="danger-btn" onClick={executeDelete}>Yes, Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings Modal Overlay */}
       {showSettings && (
