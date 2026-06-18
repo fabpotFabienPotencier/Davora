@@ -1026,8 +1026,8 @@ export default function Davora() {
         )}
 
         {/* Input Area */}
-        <div className={`input-wrapper mode-${inputMode}`}>
-          <form className="input-area" onSubmit={sendMessage}>
+        <div className={`input-wrapper mode-${inputMode} ${isTemporary ? 'mode-incognito' : ''}`}>
+          <form className="input-area" onSubmit={sendMessage} style={isTemporary ? { borderColor: 'rgba(16, 185, 129, 0.4)', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.05)' } : {}}>
 
             <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
               <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} className={`attach-btn ${showPlusMenu ? 'active' : ''}`} title="Options">
@@ -1074,7 +1074,13 @@ export default function Davora() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Message Davora..."
+                  placeholder={
+                    isTemporary ? "Message Davora (Incognito)..." :
+                    inputMode === 'deep' ? "Message Davora (Deep Think)..." :
+                    inputMode === 'deep-search' ? "Message Davora (Deep Web Search)..." :
+                    inputMode === 'research' ? "Message Davora (Web Search)..." :
+                    "Message Davora..."
+                  }
                   disabled={isTyping}
                   className="auto-resize-textarea"
                 />
