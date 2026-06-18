@@ -885,43 +885,65 @@ export default function Davora() {
                           <Sparkles size={10} className="inline-icon text-purple-500" /> {msg.model}
                         </div>
                       )}
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          code({ node, inline, className, children, ...props }) {
-                            const match = /language-(\w+)/.exec(className || '');
-                            return !inline && match ? (
-                              <div className="code-block-wrapper">
-                                <div className="code-header">
-                                  <span className="code-lang">{match[1]}</span>
-                                  <button
-                                    onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), `${msg.id}-${match[1]}`)}
-                                    className="copy-code-btn"
-                                  >
-                                    {copiedId === `${msg.id}-${match[1]}` ? <Check size={14} /> : <Copy size={14} />}
-                                    {copiedId === `${msg.id}-${match[1]}` ? 'Copied!' : 'Copy'}
-                                  </button>
-                                </div>
-                                <SyntaxHighlighter
-                                  {...props}
-                                  style={prefs.theme === 'light' ? vs : vscDarkPlus}
-                                  language={match[1]}
-                                  PreTag="div"
-                                  className="syntax-highlighter"
-                                >
-                                  {String(children).replace(/\n$/, '')}
-                                </SyntaxHighlighter>
-                              </div>
-                            ) : (
-                              <code {...props} className="inline-code">
-                                {children}
-                              </code>
-                            )
-                          }
-                        }}
-                      >
-                        {msg.content}
-                      </ReactMarkdown>
+                      {(() => {
+                        let contentToRender = msg.content || '';
+                        let thinkContent = '';
+                        const thinkMatch = contentToRender.match(/<think>([\s\S]*?)(<\/think>|$)/);
+                        if (thinkMatch) {
+                          thinkContent = thinkMatch[1].trim();
+                          contentToRender = contentToRender.replace(/<think>[\s\S]*?(<\/think>|$)/, '');
+                        }
+                        
+                        return (
+                          <>
+                            {thinkContent && (
+                              <details className="reasoning-path" open={!contentToRender.trim()}>
+                                <summary><BrainCircuit size={14} className="text-purple-400" /> Deep Think Process</summary>
+                                <div className="reasoning-content">{thinkContent}</div>
+                              </details>
+                            )}
+                            {contentToRender.trim() && (
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  code({ node, inline, className, children, ...props }) {
+                                    const match = /language-(\w+)/.exec(className || '');
+                                    return !inline && match ? (
+                                      <div className="code-block-wrapper">
+                                        <div className="code-header">
+                                          <span className="code-lang">{match[1]}</span>
+                                          <button
+                                            onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), `${msg.id}-${match[1]}`)}
+                                            className="copy-code-btn"
+                                          >
+                                            {copiedId === `${msg.id}-${match[1]}` ? <Check size={14} /> : <Copy size={14} />}
+                                            {copiedId === `${msg.id}-${match[1]}` ? 'Copied!' : 'Copy'}
+                                          </button>
+                                        </div>
+                                        <SyntaxHighlighter
+                                          {...props}
+                                          style={prefs.theme === 'light' ? vs : vscDarkPlus}
+                                          language={match[1]}
+                                          PreTag="div"
+                                          className="syntax-highlighter"
+                                        >
+                                          {String(children).replace(/\n$/, '')}
+                                        </SyntaxHighlighter>
+                                      </div>
+                                    ) : (
+                                      <code {...props} className="inline-code">
+                                        {children}
+                                      </code>
+                                    )
+                                  }
+                                }}
+                              >
+                                {contentToRender}
+                              </ReactMarkdown>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
