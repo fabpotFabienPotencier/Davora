@@ -592,13 +592,37 @@ export default function Davora() {
       setSessions(prev => prev.filter(s => s.id !== id));
       if (activeSessionId === id) setActiveSessionId(null);
       showNotification("Chat deleted");
+      const token = localStorage.getItem("davora_token");
+      if (token) {
+        fetch(`https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
+        }).catch(err => console.error("Delete sync error", err));
+      }
     }
   };
 
   const saveRename = (e, id) => {
     e.stopPropagation();
     if (renameInput.trim()) {
-      setSessions(prev => prev.map(s => s.id === id ? { ...s, title: renameInput.trim() } : s));
+      const newTitle = renameInput.trim();
+      setSessions(prev => {
+        const newSessions = prev.map(s => s.id === id ? { ...s, title: newTitle } : s);
+        
+        // Sync the renamed session directly to the DB
+        const renamedSession = newSessions.find(s => s.id === id);
+        if (renamedSession && !renamedSession.isTemporary) {
+          const token = localStorage.getItem("davora_token");
+          if (token) {
+            fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+              body: JSON.stringify(renamedSession)
+            }).catch(err => console.error("Rename sync error", err));
+          }
+        }
+        return newSessions;
+      });
       showNotification("Chat renamed");
     }
     setRenamingId(null);
@@ -619,9 +643,16 @@ export default function Davora() {
     if (window.confirm("Are you sure you want to delete ALL chats? This cannot be undone.")) {
       setSessions([]);
       setActiveSessionId(null);
-      localStorage.removeItem("davora_sessions");
       showNotification("All chats cleared");
       setShowSettings(false);
+      
+      const token = localStorage.getItem("davora_token");
+      if (token) {
+        fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions/all', {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
+        }).catch(err => console.error("Clear all sync error", err));
+      }
     }
   };
 
