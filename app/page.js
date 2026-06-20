@@ -1493,13 +1493,205 @@ export default function Davora() {
                 </div>
               )}
 
-              {['Notifications', 'Apps', 'Voice', 'Billing', 'Storage', 'Safety', 'Security', 'Parental controls', 'Trusted contact'].includes(settingsTab) && (
-                <div className="settings-pane" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', textAlign: 'center' }}>
-                  <Settings size={48} style={{ marginBottom: '24px', color: 'var(--text-secondary)', opacity: 0.5 }} />
-                  <h3 style={{ fontSize: '1.2rem', marginBottom: '12px', fontWeight: '600' }}>{settingsTab} Configuration</h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '350px', lineHeight: '1.5' }}>
-                    These advanced features are securely managed by your cloud administrator and will be activated in the upcoming deployment phase.
-                  </p>
+              {settingsTab === 'Notifications' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Push Notifications</label>
+                      <p>Receive desktop alerts when tasks complete.</p>
+                    </div>
+                    <div className="toggle-switch">
+                       <input type="checkbox" id="push-notif-toggle" defaultChecked />
+                       <label htmlFor="push-notif-toggle"></label>
+                    </div>
+                  </div>
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Product Updates</label>
+                      <p>Receive emails about new features and models.</p>
+                    </div>
+                    <div className="toggle-switch">
+                       <input type="checkbox" id="email-notif-toggle" />
+                       <label htmlFor="email-notif-toggle"></label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'Apps' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Google Drive</label>
+                      <p>Import and export documents directly.</p>
+                    </div>
+                    <button className="outline-btn" onClick={() => showNotification("Redirecting to Google OAuth...")}>Connect</button>
+                  </div>
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>GitHub</label>
+                      <p>Access repositories for code generation.</p>
+                    </div>
+                    <button className="outline-btn" onClick={() => showNotification("Redirecting to GitHub OAuth...")}>Connect</button>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'Voice' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Voice Profile</label>
+                      <p>Select Davora's spoken voice.</p>
+                    </div>
+                    <select className="premium-select">
+                      <option>Alloy</option>
+                      <option>Echo</option>
+                      <option>Nova</option>
+                      <option>Onyx</option>
+                    </select>
+                  </div>
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Auto-Read Aloud</label>
+                      <p>Automatically read Davora's responses via speech synthesis.</p>
+                    </div>
+                    <div className="toggle-switch">
+                       <input type="checkbox" id="auto-read-toggle" />
+                       <label htmlFor="auto-read-toggle"></label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'Billing' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Current Plan</label>
+                      <p style={{ color: '#10b981', fontWeight: '500' }}>Davora Pro Active</p>
+                    </div>
+                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '24px' }}>Manage Subscription</button>
+                  </div>
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Payment Method</label>
+                      <p>Visa ending in 4242</p>
+                    </div>
+                    <button className="outline-btn">Update</button>
+                  </div>
+                  <div className="settings-row border-top">
+                    <button className="settings-nav-btn" onClick={() => showNotification("Downloading invoice...")} style={{ padding: 0, color: 'var(--text-primary)' }}>Download Latest Invoice</button>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'Storage' && (
+                <div className="settings-pane">
+                  <div className="settings-row" style={{ flexDirection: 'column', gap: '12px', alignItems: 'flex-start' }}>
+                    <div className="settings-info" style={{ width: '100%' }}>
+                      <label style={{ display: 'flex', justifyContent: 'space-between' }}>Memory & Artifact Usage <span>4.2 MB / 1.0 GB</span></label>
+                      <div style={{ width: '100%', height: '8px', background: 'var(--bg-primary)', borderRadius: '4px', marginTop: '8px', overflow: 'hidden' }}>
+                        <div style={{ width: '1%', height: '100%', background: '#10b981' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Clear Local Cache</label>
+                      <p>Free up browser storage without deleting history.</p>
+                    </div>
+                    <button className="danger-btn" onClick={() => showNotification("Cache cleared.")}>Clear Cache</button>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'Safety' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Explicit Content Filter</label>
+                      <p>Block responses containing highly explicit material.</p>
+                    </div>
+                    <div className="toggle-switch">
+                       <input type="checkbox" id="nsfw-filter-toggle" defaultChecked />
+                       <label htmlFor="nsfw-filter-toggle"></label>
+                    </div>
+                  </div>
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Safe Web Search</label>
+                      <p>Force SafeSearch on live data queries.</p>
+                    </div>
+                    <div className="toggle-switch">
+                       <input type="checkbox" id="safesearch-toggle" defaultChecked />
+                       <label htmlFor="safesearch-toggle"></label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'Security' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Two-Factor Authentication (2FA)</label>
+                      <p>Require an authenticator app for login.</p>
+                    </div>
+                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={() => showNotification("Setup 2FA link sent to email.")}>Enable</button>
+                  </div>
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Change Password</label>
+                      <p>Update your Davora account password.</p>
+                    </div>
+                    <button className="outline-btn" onClick={() => showNotification("Password reset email sent.")}>Update</button>
+                  </div>
+                  <div className="settings-row border-top">
+                    <button className="danger-btn" onClick={() => { showNotification("All other sessions logged out."); }}>Sign out of all devices</button>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'Parental controls' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Require PIN</label>
+                      <p>Require a 4-digit PIN to access Davora.</p>
+                    </div>
+                    <div className="toggle-switch">
+                       <input type="checkbox" id="pin-toggle" />
+                       <label htmlFor="pin-toggle"></label>
+                    </div>
+                  </div>
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Strict Time Limits</label>
+                      <p>Disable access outside of configured hours.</p>
+                    </div>
+                    <div className="toggle-switch">
+                       <input type="checkbox" id="time-limit-toggle" />
+                       <label htmlFor="time-limit-toggle"></label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'Trusted contact' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Recovery Email</label>
+                      <p>Add a secondary email for account recovery.</p>
+                    </div>
+                  </div>
+                  <div className="settings-row" style={{ paddingTop: 0 }}>
+                    <input className="premium-input-field" type="email" placeholder="trusted@example.com" style={{ width: '100%' }} />
+                  </div>
+                  <div className="settings-row border-top">
+                    <button className="settings-nav-btn" style={{ width: '100%', justifyContent: 'center', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px' }} onClick={() => showNotification("Recovery contact saved.")}>Save Contact</button>
+                  </div>
                 </div>
               )}
               
