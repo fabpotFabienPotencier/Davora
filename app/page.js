@@ -11,7 +11,8 @@ import {
   Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database, Globe,
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight,
   VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert,
-  Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image
+  Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image,
+  Bell, Grid, CreditCard, HardDrive, Users, UserPlus
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -78,6 +79,7 @@ export default function Davora() {
     referenceMemories: true,
     referenceHistory: true
   });
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [userEmail, setUserEmail] = useState("");
 
   const [activeModal, setActiveModal] = useState(null);
@@ -1230,9 +1232,17 @@ export default function Davora() {
               </div>
               <div className="settings-nav">
                 <button className={`settings-nav-btn ${settingsTab === 'General' ? 'active' : ''}`} onClick={() => setSettingsTab('General')}><Settings size={18} /> General</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Notifications' ? 'active' : ''}`} onClick={() => setSettingsTab('Notifications')}><Bell size={18} /> Notifications</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Personalization' ? 'active' : ''}`} onClick={() => setSettingsTab('Personalization')}><VenetianMask size={18} /> Personalization</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Apps' ? 'active' : ''}`} onClick={() => setSettingsTab('Apps')}><Grid size={18} /> Apps</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Voice' ? 'active' : ''}`} onClick={() => setSettingsTab('Voice')}><Mic size={18} /> Voice</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Billing' ? 'active' : ''}`} onClick={() => setSettingsTab('Billing')}><CreditCard size={18} /> Billing</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Data controls' ? 'active' : ''}`} onClick={() => setSettingsTab('Data controls')}><Database size={18} /> Data controls</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Security' ? 'active' : ''}`} onClick={() => setSettingsTab('Security')}><Shield size={18} /> Security and login</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Storage' ? 'active' : ''}`} onClick={() => setSettingsTab('Storage')}><HardDrive size={18} /> Storage</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Safety' ? 'active' : ''}`} onClick={() => setSettingsTab('Safety')}><Shield size={18} /> Safety</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Security' ? 'active' : ''}`} onClick={() => setSettingsTab('Security')}><Settings size={18} /> Security and login</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Parental controls' ? 'active' : ''}`} onClick={() => setSettingsTab('Parental controls')}><Users size={18} /> Parental controls</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Trusted contact' ? 'active' : ''}`} onClick={() => setSettingsTab('Trusted contact')}><UserPlus size={18} /> Trusted contact</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Account' ? 'active' : ''}`} onClick={() => setSettingsTab('Account')}><User size={18} /> Account</button>
               </div>
             </div>
@@ -1394,10 +1404,22 @@ export default function Davora() {
                     </p>
                   </div>
 
-                  <div className="settings-row border-top" style={{ paddingTop: '24px' }}>
-                    <button className="settings-nav-btn" style={{ padding: 0, width: '100%', justifyContent: 'space-between', color: 'var(--text-primary)' }}>
-                       Advanced <ChevronDown size={16} />
+                  <div className="settings-row border-top" style={{ paddingTop: '24px', flexDirection: 'column', gap: '16px' }}>
+                    <button className="settings-nav-btn" onClick={() => setShowAdvancedSettings(!showAdvancedSettings)} style={{ padding: 0, width: '100%', justifyContent: 'space-between', color: 'var(--text-primary)' }}>
+                       Advanced <ChevronDown size={16} style={{ transform: showAdvancedSettings ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                     </button>
+                    {showAdvancedSettings && (
+                      <div className="settings-row" style={{ width: '100%' }}>
+                        <div className="settings-info">
+                          <label>Strict Markdown Compliance</label>
+                          <p>Force Davora to adhere strictly to raw markdown spacing and block rendering.</p>
+                        </div>
+                        <div className="toggle-switch">
+                           <input type="checkbox" id="strict-md-toggle" />
+                           <label htmlFor="strict-md-toggle"></label>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
