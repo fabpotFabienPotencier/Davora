@@ -451,7 +451,18 @@ export default function Davora() {
       mode: inputMode, 
       model: selectedModel, 
       isTemporary: isTemporary, 
-      customInstructions: prefs.customInstructions 
+      customInstructions: prefs.customInstructions,
+      baseStyle: prefs.baseStyle,
+      characteristicsWarm: prefs.characteristicsWarm,
+      characteristicsEnthusiastic: prefs.characteristicsEnthusiastic,
+      characteristicsHeaders: prefs.characteristicsHeaders,
+      characteristicsEmoji: prefs.characteristicsEmoji,
+      fastAnswers: prefs.fastAnswers,
+      nickname: prefs.nickname,
+      occupation: prefs.occupation,
+      aboutYou: prefs.aboutYou,
+      referenceMemories: prefs.referenceMemories,
+      referenceHistory: prefs.referenceHistory
     };
     if (attachment) {
       payloadObj.image = attachment.base64;
