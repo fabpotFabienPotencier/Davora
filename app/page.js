@@ -77,7 +77,8 @@ export default function Davora() {
     occupation: "",
     aboutYou: "",
     referenceMemories: true,
-    referenceHistory: true
+    referenceHistory: true,
+    strictMarkdown: false
   });
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [userEmail, setUserEmail] = useState("");
@@ -1415,7 +1416,7 @@ export default function Davora() {
                           <p>Force Davora to adhere strictly to raw markdown spacing and block rendering.</p>
                         </div>
                         <div className="toggle-switch">
-                           <input type="checkbox" id="strict-md-toggle" />
+                           <input type="checkbox" id="strict-md-toggle" checked={prefs.strictMarkdown} onChange={e => setPrefs({...prefs, strictMarkdown: e.target.checked})} />
                            <label htmlFor="strict-md-toggle"></label>
                         </div>
                       </div>
@@ -1517,12 +1518,17 @@ export default function Davora() {
               {activeModal === 'memory' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Facts and preferences Davora has learned about you.</p>
-                  {prefs.customInstructions ? (
-                    <div style={{ padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px', fontSize: '0.9rem' }}>{prefs.customInstructions}</div>
+                  {(prefs.customInstructions || prefs.nickname || prefs.occupation || prefs.aboutYou) ? (
+                    <div style={{ padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {prefs.nickname && <div><strong>Nickname:</strong> {prefs.nickname}</div>}
+                      {prefs.occupation && <div><strong>Occupation:</strong> {prefs.occupation}</div>}
+                      {prefs.aboutYou && <div><strong>About:</strong> {prefs.aboutYou}</div>}
+                      {prefs.customInstructions && <div><strong>Instructions:</strong> {prefs.customInstructions}</div>}
+                    </div>
                   ) : (
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Davora hasn't learned any custom instructions yet.</p>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Davora hasn't learned any custom memory yet.</p>
                   )}
-                  <button onClick={() => { setPrefs({...prefs, customInstructions: ''}); showNotification('Memory cleared.'); setActiveModal(null); }} className="danger-btn" style={{ alignSelf: 'flex-start', marginTop: '8px' }}>Clear Memory</button>
+                  <button onClick={() => { setPrefs({...prefs, customInstructions: '', nickname: '', occupation: '', aboutYou: ''}); showNotification('Memory cleared.'); setActiveModal(null); }} className="danger-btn" style={{ alignSelf: 'flex-start', marginTop: '8px' }}>Clear Memory</button>
                 </div>
               )}
               {activeModal === 'sessions' && (
