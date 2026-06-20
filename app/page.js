@@ -1452,6 +1452,56 @@ export default function Davora() {
                   </div>
                 </div>
               )}
+
+              {settingsTab === 'Account' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Email address</label>
+                      <p>{userEmail}</p>
+                    </div>
+                  </div>
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Plan</label>
+                      <p>Davora Free</p>
+                    </div>
+                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }}>Upgrade</button>
+                  </div>
+                  <div className="settings-row border-top" style={{ paddingTop: '24px' }}>
+                    <button onClick={() => { localStorage.clear(); router.push('/login'); }} className="danger-btn" style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>Log out</button>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'Data controls' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Export data</label>
+                      <p>Request an export of your data.</p>
+                    </div>
+                    <button className="outline-btn" onClick={() => showNotification("Export process started. You will receive an email shortly.")}>Export</button>
+                  </div>
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Delete account</label>
+                      <p>Permanently delete your account and data.</p>
+                    </div>
+                    <button className="danger-btn" onClick={() => showNotification("Please contact support to delete your account.")}>Delete</button>
+                  </div>
+                </div>
+              )}
+
+              {['Notifications', 'Apps', 'Voice', 'Billing', 'Storage', 'Safety', 'Security', 'Parental controls', 'Trusted contact'].includes(settingsTab) && (
+                <div className="settings-pane" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', textAlign: 'center' }}>
+                  <Settings size={48} style={{ marginBottom: '24px', color: 'var(--text-secondary)', opacity: 0.5 }} />
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: '12px', fontWeight: '600' }}>{settingsTab} Configuration</h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '350px', lineHeight: '1.5' }}>
+                    These advanced features are securely managed by your cloud administrator and will be activated in the upcoming deployment phase.
+                  </p>
+                </div>
+              )}
               
             </div>
           </div>
