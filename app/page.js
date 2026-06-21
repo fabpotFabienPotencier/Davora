@@ -97,12 +97,21 @@ export default function Davora() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [proPrice, setProPrice] = useState("20");
   const [subscriptionPlan, setSubscriptionPlan] = useState("Davora Free");
-  
+
   // Modals inputs
   const [projectName, setProjectName] = useState("");
   const [schedulePrompt, setSchedulePrompt] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [reportText, setReportText] = useState("");
+
+  // Security States
+  const [show2FA, setShow2FA] = useState(false);
+  const [twoFactorSecret, setTwoFactorSecret] = useState("");
+  const [twoFactorUri, setTwoFactorUri] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [showPasswordUpdate, setShowPasswordUpdate] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   const messagesEndRef = useRef(null);
   const chatBoxRef = useRef(null);
@@ -177,6 +186,42 @@ export default function Davora() {
     toastTimeoutRef.current = setTimeout(() => setToast(null), 3000);
   };
 
+  const handleUpgrade = () => {
+    if (typeof window === "undefined") return;
+    const makePayment = () => {
+      window.FlutterwaveCheckout({
+        public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY,
+        tx_ref: "tx-" + Date.now(),
+        amount: parseFloat(proPrice),
+        currency: "USD",
+        payment_options: "card, mobilemoneyghana, ussd",
+        customer: { email: userEmail, name: "Davora User" },
+        customizations: { title: "Davora Pro", description: "Premium AI Access" },
+        callback: async function (data) {
+          try {
+            await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+              body: JSON.stringify({ tx_ref: data.tx_ref, transaction_id: String(data.transaction_id) })
+            });
+            setSubscriptionPlan("Davora Pro Active");
+            showNotification("Upgraded to Davora Pro successfully!");
+          } catch (e) { showNotification("Payment verification failed."); }
+        },
+        onclose: function () { }
+      });
+    };
+
+    if (!window.FlutterwaveCheckout) {
+      const script = document.createElement("script");
+      script.src = "https://checkout.flutterwave.com/v3.js";
+      script.onload = makePayment;
+      document.body.appendChild(script);
+    } else {
+      makePayment();
+    }
+  };
+
   // Initialization & DB Fetching
   useEffect(() => {
     const token = localStorage.getItem("davora_token");
@@ -224,14 +269,14 @@ export default function Davora() {
               setActiveSessionId(dbSessions[0].id);
             }
           }
-          
+
           try {
-            const configRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' }});
+            const configRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } });
             if (configRes.ok) { const cfg = await configRes.json(); setProPrice(cfg.pro_price); }
-            
-            const subRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/subscription', { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }});
+
+            const subRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/subscription', { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' } });
             if (subRes.ok) { const sub = await subRes.json(); setSubscriptionPlan(sub.plan_name); }
-          } catch(e) {}
+          } catch (e) { }
         }
       } catch (err) {
         console.error("Failed to fetch from DB", err);
@@ -1560,7 +1605,7 @@ export default function Davora() {
                       <p>Receive desktop alerts when tasks complete.</p>
                     </div>
                     <div className="toggle-switch">
-                      <input type="checkbox" id="push-notif-toggle" checked={prefs.pushNotifications} onChange={e => setPrefs({...prefs, pushNotifications: e.target.checked})} />
+                      <input type="checkbox" id="push-notif-toggle" checked={prefs.pushNotifications} onChange={e => setPrefs({ ...prefs, pushNotifications: e.target.checked })} />
                       <label htmlFor="push-notif-toggle"></label>
                     </div>
                   </div>
@@ -1570,7 +1615,7 @@ export default function Davora() {
                       <p>Receive emails about new features and models.</p>
                     </div>
                     <div className="toggle-switch">
-                      <input type="checkbox" id="email-notif-toggle" checked={prefs.emailNotifications} onChange={e => setPrefs({...prefs, emailNotifications: e.target.checked})} />
+                      <input type="checkbox" id="email-notif-toggle" checked={prefs.emailNotifications} onChange={e => setPrefs({ ...prefs, emailNotifications: e.target.checked })} />
                       <label htmlFor="email-notif-toggle"></label>
                     </div>
                   </div>
@@ -1603,7 +1648,7 @@ export default function Davora() {
                       <label>Voice Profile</label>
                       <p>Select Davora's spoken voice.</p>
                     </div>
-                    <select className="premium-select" value={prefs.voiceProfile} onChange={e => setPrefs({...prefs, voiceProfile: e.target.value})}>
+                    <select className="premium-select" value={prefs.voiceProfile} onChange={e => setPrefs({ ...prefs, voiceProfile: e.target.value })}>
                       <option value="Alloy">Alloy</option>
                       <option value="Echo">Echo</option>
                       <option value="Nova">Nova</option>
@@ -1616,7 +1661,7 @@ export default function Davora() {
                       <p>Automatically read Davora's responses via speech synthesis.</p>
                     </div>
                     <div className="toggle-switch">
-                      <input type="checkbox" id="auto-read-toggle" checked={prefs.autoReadAloud} onChange={e => setPrefs({...prefs, autoReadAloud: e.target.checked})} />
+                      <input type="checkbox" id="auto-read-toggle" checked={prefs.autoReadAloud} onChange={e => setPrefs({ ...prefs, autoReadAloud: e.target.checked })} />
                       <label htmlFor="auto-read-toggle"></label>
                     </div>
                   </div>
@@ -1636,7 +1681,7 @@ export default function Davora() {
                       <label>Upgrade to Davora Pro</label>
                       <p>Unlock unlimited messages, priority speed, advanced models, and file uploads.</p>
                     </div>
-                    <button className="settings-nav-btn" style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', borderRadius: '24px', fontWeight: '600', border: 'none', cursor: 'pointer', width: 'auto' }} onClick={() => showNotification("Flutterwave checkout integration coming soon.")}>Upgrade — ${proPrice}/mo</button>
+                    <button className="settings-nav-btn" style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', borderRadius: '24px', fontWeight: '600', border: 'none', cursor: 'pointer', width: 'auto' }} onClick={handleUpgrade}>Upgrade — ${proPrice}/mo</button>
                   </div>
                   <div className="settings-row border-top">
                     <div className="settings-info">
@@ -1676,7 +1721,7 @@ export default function Davora() {
                       <p>Block responses containing highly explicit material.</p>
                     </div>
                     <div className="toggle-switch">
-                      <input type="checkbox" id="nsfw-filter-toggle" checked={prefs.nsfwFilter} onChange={e => setPrefs({...prefs, nsfwFilter: e.target.checked})} />
+                      <input type="checkbox" id="nsfw-filter-toggle" checked={prefs.nsfwFilter} onChange={e => setPrefs({ ...prefs, nsfwFilter: e.target.checked })} />
                       <label htmlFor="nsfw-filter-toggle"></label>
                     </div>
                   </div>
@@ -1686,7 +1731,7 @@ export default function Davora() {
                       <p>Force SafeSearch on live data queries.</p>
                     </div>
                     <div className="toggle-switch">
-                      <input type="checkbox" id="safesearch-toggle" checked={prefs.safeSearch} onChange={e => setPrefs({...prefs, safeSearch: e.target.checked})} />
+                      <input type="checkbox" id="safesearch-toggle" checked={prefs.safeSearch} onChange={e => setPrefs({ ...prefs, safeSearch: e.target.checked })} />
                       <label htmlFor="safesearch-toggle"></label>
                     </div>
                   </div>
@@ -1698,17 +1743,69 @@ export default function Davora() {
                   <div className="settings-row">
                     <div className="settings-info">
                       <label>Two-Factor Authentication (2FA)</label>
-                      <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Require an authenticator app for login. <span style={{ color: '#f59e0b', fontSize: '0.75rem', background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Coming soon</span></p>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Require an authenticator app for login.</p>
                     </div>
-                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px', opacity: 0.5, cursor: 'not-allowed' }} disabled>Enable</button>
+                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={async () => {
+                      try {
+                        const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/auth/2fa/generate', {
+                          headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` }
+                        });
+                        const data = await res.json();
+                        if (data.status === "already_enabled") { showNotification("2FA is already enabled."); return; }
+                        setTwoFactorSecret(data.secret);
+                        setTwoFactorUri(data.totp_uri);
+                        setShow2FA(true);
+                      } catch (e) { showNotification("Failed to generate 2FA"); }
+                    }}>Enable</button>
                   </div>
+
+                  {show2FA && (
+                    <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <p style={{ marginBottom: '8px' }}>1. Enter this setup key in your Authenticator app:</p>
+                      <code style={{ background: 'var(--bg-secondary)', padding: '4px 8px', borderRadius: '4px', marginBottom: '16px', userSelect: 'all' }}>{twoFactorSecret}</code>
+                      <p style={{ marginBottom: '8px' }}>2. Enter the 6-digit code generated by the app:</p>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input type="text" placeholder="123456" className="premium-input-field" value={twoFactorCode} onChange={e => setTwoFactorCode(e.target.value)} />
+                        <button className="send-btn" onClick={async () => {
+                          try {
+                            const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/auth/2fa/verify', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                              body: JSON.stringify({ code: twoFactorCode })
+                            });
+                            if (res.ok) { showNotification("2FA Successfully Enabled!"); setShow2FA(false); }
+                            else { showNotification("Invalid code."); }
+                          } catch (e) { showNotification("Error verifying code."); }
+                        }}>Verify</button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="settings-row border-top">
                     <div className="settings-info">
                       <label>Change Password</label>
-                      <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Update your Davora account password. <span style={{ color: '#f59e0b', fontSize: '0.75rem', background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Coming soon</span></p>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Update your Davora account password.</p>
                     </div>
-                    <button className="outline-btn" style={{ opacity: 0.5, cursor: 'not-allowed' }} disabled>Update</button>
+                    <button className="outline-btn" onClick={() => setShowPasswordUpdate(!showPasswordUpdate)}>Update</button>
                   </div>
+
+                  {showPasswordUpdate && (
+                    <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <input type="password" placeholder="Current Password" className="premium-input-field" style={{ marginBottom: '8px', width: '100%' }} value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
+                      <input type="password" placeholder="New Password" className="premium-input-field" style={{ marginBottom: '16px', width: '100%' }} value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                      <button className="send-btn" onClick={async () => {
+                        try {
+                          const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/auth/password/update', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                            body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
+                          });
+                          if (res.ok) { showNotification("Password updated!"); setShowPasswordUpdate(false); setCurrentPassword(""); setNewPassword(""); }
+                          else { showNotification("Failed to update password."); }
+                        } catch (e) { showNotification("Error updating password."); }
+                      }}>Save Password</button>
+                    </div>
+                  )}
                   <div className="settings-row border-top">
                     <button className="danger-btn" onClick={() => { localStorage.clear(); router.push('/login'); }}>Sign out of all devices</button>
                   </div>
@@ -1723,7 +1820,7 @@ export default function Davora() {
                       <p>Require a 4-digit PIN to access Davora.</p>
                     </div>
                     <div className="toggle-switch">
-                      <input type="checkbox" id="pin-toggle" checked={prefs.requirePin} onChange={e => setPrefs({...prefs, requirePin: e.target.checked})} />
+                      <input type="checkbox" id="pin-toggle" checked={prefs.requirePin} onChange={e => setPrefs({ ...prefs, requirePin: e.target.checked })} />
                       <label htmlFor="pin-toggle"></label>
                     </div>
                   </div>
@@ -1733,7 +1830,7 @@ export default function Davora() {
                       <p>Disable access outside of configured hours.</p>
                     </div>
                     <div className="toggle-switch">
-                      <input type="checkbox" id="time-limit-toggle" checked={prefs.strictTimeLimits} onChange={e => setPrefs({...prefs, strictTimeLimits: e.target.checked})} />
+                      <input type="checkbox" id="time-limit-toggle" checked={prefs.strictTimeLimits} onChange={e => setPrefs({ ...prefs, strictTimeLimits: e.target.checked })} />
                       <label htmlFor="time-limit-toggle"></label>
                     </div>
                   </div>
@@ -1749,7 +1846,7 @@ export default function Davora() {
                     </div>
                   </div>
                   <div className="settings-row" style={{ paddingTop: 0 }}>
-                    <input className="premium-input-field" type="email" placeholder="trusted@example.com" style={{ width: '100%' }} value={prefs.recoveryEmail} onChange={e => setPrefs({...prefs, recoveryEmail: e.target.value})} />
+                    <input className="premium-input-field" type="email" placeholder="trusted@example.com" style={{ width: '100%' }} value={prefs.recoveryEmail} onChange={e => setPrefs({ ...prefs, recoveryEmail: e.target.value })} />
                   </div>
                   <div className="settings-row border-top">
                     <button className="settings-nav-btn" style={{ width: '100%', justifyContent: 'center', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px' }} onClick={() => showNotification("Recovery contact saved.")}>Save Contact</button>
@@ -1798,7 +1895,7 @@ export default function Davora() {
                   <p>Group your chats into projects for better organization.</p>
                   <input type="text" className="sidebar-search-input" style={{ width: '100%', marginBottom: '12px', padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px' }} placeholder="Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
                   <button className="send-btn" style={{ marginTop: '0px', padding: '8px 16px' }} onClick={async () => {
-                    if(!projectName) return;
+                    if (!projectName) return;
                     try {
                       await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/projects', {
                         method: 'POST',
@@ -1808,7 +1905,7 @@ export default function Davora() {
                       setActiveModal(null);
                       setProjectName("");
                       showNotification('Project created!');
-                    } catch(e) { showNotification('Failed to create project'); }
+                    } catch (e) { showNotification('Failed to create project'); }
                   }}>Create Project</button>
                 </div>
               )}
@@ -1863,7 +1960,7 @@ export default function Davora() {
                   <input type="text" className="sidebar-search-input" style={{ padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} placeholder="Task prompt" value={schedulePrompt} onChange={e => setSchedulePrompt(e.target.value)} />
                   <input type="datetime-local" className="sidebar-search-input" style={{ padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} />
                   <button className="send-btn" onClick={async () => {
-                    if(!schedulePrompt || !scheduleTime) return;
+                    if (!schedulePrompt || !scheduleTime) return;
                     try {
                       await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/schedule', {
                         method: 'POST',
@@ -1874,7 +1971,7 @@ export default function Davora() {
                       setSchedulePrompt("");
                       setScheduleTime("");
                       showNotification('Task scheduled!');
-                    } catch(e) { showNotification('Scheduling failed'); }
+                    } catch (e) { showNotification('Scheduling failed'); }
                   }} style={{ padding: '12px' }}>Confirm Schedule</button>
                 </div>
               )}
@@ -1882,7 +1979,7 @@ export default function Davora() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <textarea rows={4} placeholder="Describe the issue..." className="custom-instructions-input" value={reportText} onChange={e => setReportText(e.target.value)} />
                   <button className="danger-btn" onClick={async () => {
-                    if(!reportText) return;
+                    if (!reportText) return;
                     try {
                       await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/report', {
                         method: 'POST',
@@ -1892,7 +1989,7 @@ export default function Davora() {
                       setActiveModal(null);
                       setReportText("");
                       showNotification('Issue reported to engineering.');
-                    } catch(e) { showNotification('Report failed'); }
+                    } catch (e) { showNotification('Report failed'); }
                   }}>Submit Report</button>
                 </div>
               )}
