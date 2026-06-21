@@ -95,6 +95,14 @@ export default function Davora() {
   const [activeModal, setActiveModal] = useState(null);
   const [canvasArtifacts, setCanvasArtifacts] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [proPrice, setProPrice] = useState("20");
+  const [subscriptionPlan, setSubscriptionPlan] = useState("Davora Free");
+  
+  // Modals inputs
+  const [projectName, setProjectName] = useState("");
+  const [schedulePrompt, setSchedulePrompt] = useState("");
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [reportText, setReportText] = useState("");
 
   const messagesEndRef = useRef(null);
   const chatBoxRef = useRef(null);
@@ -208,7 +216,6 @@ export default function Davora() {
             try { setPinnedSessionIds(JSON.parse(meta.pins)); } catch (e) { }
             try { setRatings(JSON.parse(meta.ratings)); } catch (e) { }
 
-            const savedActive = meta.active_session_id;
             if (savedActive === "new") {
               setActiveSessionId(null);
             } else if (savedActive && dbSessions.some(s => s.id === savedActive)) {
@@ -217,6 +224,14 @@ export default function Davora() {
               setActiveSessionId(dbSessions[0].id);
             }
           }
+          
+          try {
+            const configRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' }});
+            if (configRes.ok) { const cfg = await configRes.json(); setProPrice(cfg.pro_price); }
+            
+            const subRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/subscription', { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }});
+            if (subRes.ok) { const sub = await subRes.json(); setSubscriptionPlan(sub.plan_name); }
+          } catch(e) {}
         }
       } catch (err) {
         console.error("Failed to fetch from DB", err);
@@ -1508,9 +1523,9 @@ export default function Davora() {
                   <div className="settings-row border-top">
                     <div className="settings-info">
                       <label>Plan</label>
-                      <p>Davora Free</p>
+                      <p>{subscriptionPlan}</p>
                     </div>
-                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }}>Upgrade</button>
+                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={() => setSettingsTab('Billing')}>Upgrade</button>
                   </div>
                   <div className="settings-row border-top" style={{ paddingTop: '24px' }}>
                     <button onClick={() => { localStorage.clear(); router.push('/login'); }} className="danger-btn" style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>Log out</button>
@@ -1525,7 +1540,7 @@ export default function Davora() {
                       <label>Export data</label>
                       <p>Request an export of your data.</p>
                     </div>
-                    <button className="outline-btn" onClick={() => showNotification("Export process started. You will receive an email shortly.")}>Export</button>
+                    <button className="outline-btn" style={{ opacity: 0.5, cursor: 'not-allowed' }} disabled>Export</button>
                   </div>
                   <div className="settings-row border-top">
                     <div className="settings-info">
@@ -1567,16 +1582,16 @@ export default function Davora() {
                   <div className="settings-row">
                     <div className="settings-info">
                       <label>Google Drive</label>
-                      <p>Import and export documents directly.</p>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Import and export documents directly. <span style={{ color: '#f59e0b', fontSize: '0.75rem', background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Coming soon</span></p>
                     </div>
-                    <button className="outline-btn" onClick={() => showNotification("Redirecting to Google OAuth...")}>Connect</button>
+                    <button className="outline-btn" style={{ opacity: 0.5, cursor: 'not-allowed' }} disabled>Connect</button>
                   </div>
                   <div className="settings-row border-top">
                     <div className="settings-info">
                       <label>GitHub</label>
-                      <p>Access repositories for code generation.</p>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Access repositories for code generation. <span style={{ color: '#f59e0b', fontSize: '0.75rem', background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Coming soon</span></p>
                     </div>
-                    <button className="outline-btn" onClick={() => showNotification("Redirecting to GitHub OAuth...")}>Connect</button>
+                    <button className="outline-btn" style={{ opacity: 0.5, cursor: 'not-allowed' }} disabled>Connect</button>
                   </div>
                 </div>
               )}
@@ -1613,19 +1628,21 @@ export default function Davora() {
                   <div className="settings-row">
                     <div className="settings-info">
                       <label>Current Plan</label>
-                      <p style={{ color: '#10b981', fontWeight: '500' }}>Davora Pro Active</p>
+                      <p style={{ fontWeight: '500' }}>{subscriptionPlan}</p>
                     </div>
-                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '24px' }}>Manage Subscription</button>
+                  </div>
+                  <div className="settings-row border-top" style={{ flexDirection: 'column', gap: '12px', alignItems: 'flex-start' }}>
+                    <div className="settings-info">
+                      <label>Upgrade to Davora Pro</label>
+                      <p>Unlock unlimited messages, priority speed, advanced models, and file uploads.</p>
+                    </div>
+                    <button className="settings-nav-btn" style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', borderRadius: '24px', fontWeight: '600', border: 'none', cursor: 'pointer', width: 'auto' }} onClick={() => showNotification("Flutterwave checkout integration coming soon.")}>Upgrade — ${proPrice}/mo</button>
                   </div>
                   <div className="settings-row border-top">
                     <div className="settings-info">
-                      <label>Payment Method</label>
-                      <p>Visa ending in 4242</p>
+                      <label>Payment method</label>
+                      <p>No payment method on file.</p>
                     </div>
-                    <button className="outline-btn">Update</button>
-                  </div>
-                  <div className="settings-row border-top">
-                    <button className="settings-nav-btn" onClick={() => showNotification("Downloading invoice...")} style={{ padding: 0, color: 'var(--text-primary)' }}>Download Latest Invoice</button>
                   </div>
                 </div>
               )}
@@ -1634,18 +1651,19 @@ export default function Davora() {
                 <div className="settings-pane">
                   <div className="settings-row" style={{ flexDirection: 'column', gap: '12px', alignItems: 'flex-start' }}>
                     <div className="settings-info" style={{ width: '100%' }}>
-                      <label style={{ display: 'flex', justifyContent: 'space-between' }}>Memory & Artifact Usage <span>4.2 MB / 1.0 GB</span></label>
+                      <label style={{ display: 'flex', justifyContent: 'space-between' }}>Chat Storage <span>{sessions.length} conversation{sessions.length !== 1 ? 's' : ''} • {(() => { const bytes = JSON.stringify(sessions).length; return bytes > 1048576 ? (bytes / 1048576).toFixed(1) + ' MB' : (bytes / 1024).toFixed(1) + ' KB'; })()}</span></label>
                       <div style={{ width: '100%', height: '8px', background: 'var(--bg-primary)', borderRadius: '4px', marginTop: '8px', overflow: 'hidden' }}>
-                        <div style={{ width: '1%', height: '100%', background: '#10b981' }}></div>
+                        <div style={{ width: `${Math.min(Math.max((JSON.stringify(sessions).length / 1048576) * 100, 1), 100)}%`, height: '100%', background: '#10b981', borderRadius: '4px', transition: 'width 0.3s' }}></div>
                       </div>
+                      <p style={{ marginTop: '4px' }}>Based on {sessions.reduce((acc, s) => acc + s.messages.length, 0)} total messages across all conversations.</p>
                     </div>
                   </div>
                   <div className="settings-row border-top">
                     <div className="settings-info">
-                      <label>Clear Local Cache</label>
-                      <p>Free up browser storage without deleting history.</p>
+                      <label>Clear browser cache</label>
+                      <p>Removes temporary UI data. Your chats and settings remain safe in the cloud.</p>
                     </div>
-                    <button className="danger-btn" onClick={() => showNotification("Cache cleared.")}>Clear Cache</button>
+                    <button className="danger-btn" onClick={() => { if (typeof caches !== 'undefined') { caches.keys().then(names => names.forEach(name => caches.delete(name))); } showNotification("Browser cache cleared successfully."); }}>Clear Cache</button>
                   </div>
                 </div>
               )}
@@ -1680,19 +1698,19 @@ export default function Davora() {
                   <div className="settings-row">
                     <div className="settings-info">
                       <label>Two-Factor Authentication (2FA)</label>
-                      <p>Require an authenticator app for login.</p>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Require an authenticator app for login. <span style={{ color: '#f59e0b', fontSize: '0.75rem', background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Coming soon</span></p>
                     </div>
-                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={() => showNotification("Setup 2FA link sent to email.")}>Enable</button>
+                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px', opacity: 0.5, cursor: 'not-allowed' }} disabled>Enable</button>
                   </div>
                   <div className="settings-row border-top">
                     <div className="settings-info">
                       <label>Change Password</label>
-                      <p>Update your Davora account password.</p>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Update your Davora account password. <span style={{ color: '#f59e0b', fontSize: '0.75rem', background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Coming soon</span></p>
                     </div>
-                    <button className="outline-btn" onClick={() => showNotification("Password reset email sent.")}>Update</button>
+                    <button className="outline-btn" style={{ opacity: 0.5, cursor: 'not-allowed' }} disabled>Update</button>
                   </div>
                   <div className="settings-row border-top">
-                    <button className="danger-btn" onClick={() => { showNotification("All other sessions logged out."); }}>Sign out of all devices</button>
+                    <button className="danger-btn" onClick={() => { localStorage.clear(); router.push('/login'); }}>Sign out of all devices</button>
                   </div>
                 </div>
               )}
@@ -1778,19 +1796,32 @@ export default function Davora() {
                   <FolderKanban size={32} className="text-secondary mb-4" />
                   <h3>No Projects Yet</h3>
                   <p>Group your chats into projects for better organization.</p>
-                  <button className="send-btn" style={{ marginTop: '16px', padding: '8px 16px' }} onClick={() => { setActiveModal(null); showNotification('Project created!'); }}>Create Project</button>
+                  <input type="text" className="sidebar-search-input" style={{ width: '100%', marginBottom: '12px', padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px' }} placeholder="Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+                  <button className="send-btn" style={{ marginTop: '0px', padding: '8px 16px' }} onClick={async () => {
+                    if(!projectName) return;
+                    try {
+                      await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/projects', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                        body: JSON.stringify({ name: projectName })
+                      });
+                      setActiveModal(null);
+                      setProjectName("");
+                      showNotification('Project created!');
+                    } catch(e) { showNotification('Failed to create project'); }
+                  }}>Create Project</button>
                 </div>
               )}
               {activeModal === 'apps' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Connect third-party services to Davora.</p>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}><Link size={18} /> Google Drive</div>
-                    <button className="outline-btn" style={{ fontSize: '0.8rem', padding: '4px 12px' }} onClick={() => showNotification("Redirecting to OAuth...")}>Connect</button>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}><Link size={18} /> Google Drive <span style={{ color: '#f59e0b', fontSize: '0.7rem', background: 'rgba(245,158,11,0.1)', padding: '2px 6px', borderRadius: '12px' }}>Soon</span></div>
+                    <button className="outline-btn" style={{ fontSize: '0.8rem', padding: '4px 12px', opacity: 0.5, cursor: 'not-allowed' }} disabled>Connect</button>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}><Code size={18} /> GitHub Repo</div>
-                    <button className="outline-btn" style={{ fontSize: '0.8rem', padding: '4px 12px' }} onClick={() => showNotification("Redirecting to OAuth...")}>Connect</button>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}><Code size={18} /> GitHub Repo <span style={{ color: '#f59e0b', fontSize: '0.7rem', background: 'rgba(245,158,11,0.1)', padding: '2px 6px', borderRadius: '12px' }}>Soon</span></div>
+                    <button className="outline-btn" style={{ fontSize: '0.8rem', padding: '4px 12px', opacity: 0.5, cursor: 'not-allowed' }} disabled>Connect</button>
                   </div>
                 </div>
               )}
@@ -1829,14 +1860,40 @@ export default function Davora() {
               {activeModal === 'schedule' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Schedule this task to run automatically later.</p>
-                  <input type="datetime-local" className="sidebar-search-input" style={{ padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                  <button className="send-btn" onClick={() => { setActiveModal(null); showNotification('Task scheduled!'); }} style={{ padding: '12px' }}>Confirm Schedule</button>
+                  <input type="text" className="sidebar-search-input" style={{ padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} placeholder="Task prompt" value={schedulePrompt} onChange={e => setSchedulePrompt(e.target.value)} />
+                  <input type="datetime-local" className="sidebar-search-input" style={{ padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} />
+                  <button className="send-btn" onClick={async () => {
+                    if(!schedulePrompt || !scheduleTime) return;
+                    try {
+                      await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/schedule', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                        body: JSON.stringify({ prompt: schedulePrompt, scheduled_for: scheduleTime })
+                      });
+                      setActiveModal(null);
+                      setSchedulePrompt("");
+                      setScheduleTime("");
+                      showNotification('Task scheduled!');
+                    } catch(e) { showNotification('Scheduling failed'); }
+                  }} style={{ padding: '12px' }}>Confirm Schedule</button>
                 </div>
               )}
               {activeModal === 'report' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <textarea rows={4} placeholder="Describe the issue..." className="custom-instructions-input" />
-                  <button className="danger-btn" onClick={() => { setActiveModal(null); showNotification('Issue reported to engineering.'); }}>Submit Report</button>
+                  <textarea rows={4} placeholder="Describe the issue..." className="custom-instructions-input" value={reportText} onChange={e => setReportText(e.target.value)} />
+                  <button className="danger-btn" onClick={async () => {
+                    if(!reportText) return;
+                    try {
+                      await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/report', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                        body: JSON.stringify({ description: reportText })
+                      });
+                      setActiveModal(null);
+                      setReportText("");
+                      showNotification('Issue reported to engineering.');
+                    } catch(e) { showNotification('Report failed'); }
+                  }}>Submit Report</button>
                 </div>
               )}
               {activeModal === 'share' && (
