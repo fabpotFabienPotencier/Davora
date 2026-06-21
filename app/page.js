@@ -78,7 +78,16 @@ export default function Davora() {
     aboutYou: "",
     referenceMemories: true,
     referenceHistory: true,
-    strictMarkdown: false
+    strictMarkdown: false,
+    pushNotifications: true,
+    emailNotifications: false,
+    voiceProfile: "Alloy",
+    autoReadAloud: false,
+    nsfwFilter: true,
+    safeSearch: true,
+    requirePin: false,
+    strictTimeLimits: false,
+    recoveryEmail: ""
   });
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [userEmail, setUserEmail] = useState("");
@@ -173,7 +182,7 @@ export default function Davora() {
     const fetchSessions = async () => {
       try {
         const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions', {
-          headers: { 
+          headers: {
             'Authorization': `Bearer ${token}`,
             'ngrok-skip-browser-warning': 'true'
           }
@@ -187,7 +196,7 @@ export default function Davora() {
           const dbSessions = await res.json();
           setSessions(dbSessions);
           const metaRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/metadata', {
-            headers: { 
+            headers: {
               'Authorization': `Bearer ${token}`,
               'ngrok-skip-browser-warning': 'true'
             }
@@ -356,6 +365,28 @@ export default function Davora() {
       if (data === "[DONE]") {
         setIsTyping(false);
         setTimeout(() => inputRef.current?.focus(), 100);
+        // Auto-read aloud if enabled
+        if (prefs.autoReadAloud && synthRef.current) {
+          setSessions(prev => {
+            const session = prev.find(s => s.id === activeSessionIdRef.current);
+            if (session) {
+              const lastMsg = session.messages[session.messages.length - 1];
+              if (lastMsg && lastMsg.role === "ai") {
+                synthRef.current.cancel();
+                const cleanText = lastMsg.content.replace(/[*#`_~]/g, '');
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.onend = () => setSpeakingId(null);
+                utterance.onerror = () => setSpeakingId(null);
+                const voices = synthRef.current.getVoices();
+                const goodVoice = voices.find(v => v.lang.includes('en-') && (v.name.includes('Google') || v.name.includes('Natural')));
+                if (goodVoice) utterance.voice = goodVoice;
+                setSpeakingId(lastMsg.id);
+                synthRef.current.speak(utterance);
+              }
+            }
+            return prev;
+          });
+        }
         return;
       }
       setSessions((prev) => prev.map(session => {
@@ -447,13 +478,13 @@ export default function Davora() {
     setSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newMessage] } : s));
 
     const activeMessages = sessions.find(s => s.id === targetSessionId)?.messages || [];
-    
-    const payloadObj = { 
-      message: textToSend, 
-      history: activeMessages, // Send previous messages for context
-      mode: inputMode, 
-      model: selectedModel, 
-      isTemporary: isTemporary, 
+
+    const payloadObj = {
+      message: textToSend,
+      history: activeMessages,
+      mode: inputMode,
+      model: selectedModel,
+      isTemporary: isTemporary,
       customInstructions: prefs.customInstructions,
       baseStyle: prefs.baseStyle,
       characteristicsWarm: prefs.characteristicsWarm,
@@ -465,7 +496,8 @@ export default function Davora() {
       occupation: prefs.occupation,
       aboutYou: prefs.aboutYou,
       referenceMemories: prefs.referenceMemories,
-      referenceHistory: prefs.referenceHistory
+      referenceHistory: prefs.referenceHistory,
+      strictMarkdown: prefs.strictMarkdown
     };
     if (attachment) {
       payloadObj.image = attachment.base64;
@@ -507,15 +539,27 @@ export default function Davora() {
     if (synthRef.current) synthRef.current.cancel();
     setSpeakingId(null);
 
-    const jsonPayload = JSON.stringify({ 
-      message: lastUserMsg, 
+    const jsonPayload = JSON.stringify({
+      message: lastUserMsg,
       history: historyUntilNow,
-      mode: inputMode, 
-      model: selectedModel, 
-      isTemporary: isTemporary, 
-      customInstructions: prefs.customInstructions 
+      mode: inputMode,
+      model: selectedModel,
+      isTemporary: isTemporary,
+      customInstructions: prefs.customInstructions,
+      baseStyle: prefs.baseStyle,
+      characteristicsWarm: prefs.characteristicsWarm,
+      characteristicsEnthusiastic: prefs.characteristicsEnthusiastic,
+      characteristicsHeaders: prefs.characteristicsHeaders,
+      characteristicsEmoji: prefs.characteristicsEmoji,
+      fastAnswers: prefs.fastAnswers,
+      nickname: prefs.nickname,
+      occupation: prefs.occupation,
+      aboutYou: prefs.aboutYou,
+      referenceMemories: prefs.referenceMemories,
+      referenceHistory: prefs.referenceHistory,
+      strictMarkdown: prefs.strictMarkdown
     });
-    
+
     if (ws.current.readyState !== WebSocket.OPEN) {
       connectWebSocket();
       setTimeout(() => ws.current.send(jsonPayload), 500);
@@ -625,7 +669,7 @@ export default function Davora() {
       const newTitle = renameInput.trim();
       setSessions(prev => {
         const newSessions = prev.map(s => s.id === id ? { ...s, title: newTitle } : s);
-        
+
         // Sync the renamed session directly to the DB
         const renamedSession = newSessions.find(s => s.id === id);
         if (renamedSession && !renamedSession.isTemporary) {
@@ -791,41 +835,41 @@ export default function Davora() {
         </div>
 
         <div className="sidebar-footer" style={{ position: 'relative' }}>
-            {showProfileMenu && (
-              <div className="profile-popover">
-                <div className="popover-header">
-                  <div className="user-avatar-small" style={{ background: '#f87171' }}>
-                    {userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'}
-                  </div>
-                  <div className="popover-user-info">
-                    <span className="user-name">{userEmail.split('@')[0] || "User"}</span>
-                    <span className="user-plan">Free</span>
-                  </div>
+          {showProfileMenu && (
+            <div className="profile-popover">
+              <div className="popover-header">
+                <div className="user-avatar-small" style={{ background: '#f87171' }}>
+                  {userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'}
                 </div>
-                <div className="popover-menu">
-                  <button className="popover-item" onClick={() => { setShowProfileMenu(false); setActiveModal('upgrade'); }}><Sparkles size={16} /> Upgrade plan</button>
-                  <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); }}><VenetianMask size={16} /> Personalization</button>
-                  <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); }}><User size={16} /> Profile</button>
-                  <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); }}><Settings size={16} /> Settings</button>
-                  <div className="popover-divider"></div>
-                  <button className="popover-item"><TriangleAlert size={16} /> Help</button>
-                  <button className="popover-item" onClick={() => { localStorage.clear(); router.push('/login'); }}><span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ChevronRight size={16} /></span> Log out</button>
+                <div className="popover-user-info">
+                  <span className="user-name">{userEmail.split('@')[0] || "User"}</span>
+                  <span className="user-plan">Free</span>
                 </div>
               </div>
-            )}
-            <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="user-profile-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '12px', gap: '12px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '8px' }}>
-              <div className="user-avatar-small" style={{ width: '32px', height: '32px', background: '#f87171', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '600' }}>
-                {userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'}
+              <div className="popover-menu">
+                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setActiveModal('upgrade'); }}><Sparkles size={16} /> Upgrade plan</button>
+                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); }}><VenetianMask size={16} /> Personalization</button>
+                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); }}><User size={16} /> Profile</button>
+                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); }}><Settings size={16} /> Settings</button>
+                <div className="popover-divider"></div>
+                <button className="popover-item"><TriangleAlert size={16} /> Help</button>
+                <button className="popover-item" onClick={() => { localStorage.clear(); router.push('/login'); }}><span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ChevronRight size={16} /></span> Log out</button>
               </div>
-              <div className="user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, overflow: 'hidden' }}>
-                <span className="user-name" style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.85rem', width: '100%', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{userEmail.split('@')[0] || "User"}</span>
-                <span className="user-plan" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Free</span>
-              </div>
-              <div className="upgrade-pill" style={{ background: '#2f2f2f', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: '500' }}>
-                Upgrade
-              </div>
-            </button>
-          </div>
+            </div>
+          )}
+          <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="user-profile-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '12px', gap: '12px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '8px' }}>
+            <div className="user-avatar-small" style={{ width: '32px', height: '32px', background: '#f87171', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '600' }}>
+              {userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'}
+            </div>
+            <div className="user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, overflow: 'hidden' }}>
+              <span className="user-name" style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.85rem', width: '100%', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{userEmail.split('@')[0] || "User"}</span>
+              <span className="user-plan" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Free</span>
+            </div>
+            <div className="upgrade-pill" style={{ background: '#2f2f2f', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: '500' }}>
+              Upgrade
+            </div>
+          </button>
+        </div>
       </aside>
 
       {/* Mobile Sidebar Overlay — tap anywhere to close */}
@@ -942,7 +986,7 @@ export default function Davora() {
                           thinkContent = thinkMatch[1].trim();
                           contentToRender = contentToRender.replace(/<think>[\s\S]*?(<\/think>|$)/, '');
                         }
-                        
+
                         return (
                           <>
                             {thinkContent && (
@@ -1147,10 +1191,10 @@ export default function Davora() {
                   onKeyDown={handleKeyDown}
                   placeholder={
                     isTemporary ? "Message Davora (Incognito)..." :
-                    inputMode === 'deep' ? "Message Davora (Deep Think)..." :
-                    inputMode === 'deep-search' ? "Message Davora (Deep Web Search)..." :
-                    inputMode === 'research' ? "Message Davora (Web Search)..." :
-                    "Message Davora..."
+                      inputMode === 'deep' ? "Message Davora (Deep Think)..." :
+                        inputMode === 'deep-search' ? "Message Davora (Deep Web Search)..." :
+                          inputMode === 'research' ? "Message Davora (Web Search)..." :
+                            "Message Davora..."
                   }
                   disabled={isTyping}
                   className="auto-resize-textarea"
@@ -1211,12 +1255,12 @@ export default function Davora() {
               </h2>
             </div>
             <div className="modal-body" style={{ padding: '16px 24px', color: 'var(--text-secondary)' }}>
-              {deleteConfirm.type === 'all' 
+              {deleteConfirm.type === 'all'
                 ? "Are you sure you want to permanently delete every single conversation? This action cannot be undone and will wipe your database."
                 : "Are you sure you want to delete this conversation? This will permanently remove it from the cloud database."}
             </div>
             <div className="modal-footer" style={{ padding: '16px 24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-<button className="outline-btn" onClick={() => setDeleteConfirm(null)}>Cancel</button>
+              <button className="outline-btn" onClick={() => setDeleteConfirm(null)}>Cancel</button>
               <button className="danger-btn" onClick={executeDelete}>Yes, Delete</button>
             </div>
           </div>
@@ -1247,7 +1291,7 @@ export default function Davora() {
                 <button className={`settings-nav-btn ${settingsTab === 'Account' ? 'active' : ''}`} onClick={() => setSettingsTab('Account')}><User size={18} /> Account</button>
               </div>
             </div>
-            
+
             <div className="settings-body">
               <div className="settings-header-desktop">
                 <h2>{settingsTab}</h2>
@@ -1261,7 +1305,7 @@ export default function Davora() {
                       <label>Base style and tone</label>
                       <p>Set the style and tone of how Davora responds to you. This doesn't impact capabilities.</p>
                     </div>
-                    <select className="premium-select" value={prefs.baseStyle} onChange={e => setPrefs({...prefs, baseStyle: e.target.value})}>
+                    <select className="premium-select" value={prefs.baseStyle} onChange={e => setPrefs({ ...prefs, baseStyle: e.target.value })}>
                       <option value="Default">Default</option>
                       <option value="Professional">Professional</option>
                       <option value="Friendly">Friendly</option>
@@ -1275,19 +1319,19 @@ export default function Davora() {
                   <div className="settings-section">
                     <h3>Characteristics</h3>
                     <p className="setting-hint">Choose additional customizations on top of your base style and tone.</p>
-                    
+
                     <div className="settings-row nested">
                       <label>Warm</label>
-                      <select className="premium-select" value={prefs.characteristicsWarm} onChange={e => setPrefs({...prefs, characteristicsWarm: e.target.value})}>
+                      <select className="premium-select" value={prefs.characteristicsWarm} onChange={e => setPrefs({ ...prefs, characteristicsWarm: e.target.value })}>
                         <option value="More">More</option>
                         <option value="Default">Default</option>
                         <option value="Less">Less</option>
                       </select>
                     </div>
-                    
+
                     <div className="settings-row nested">
                       <label>Enthusiastic</label>
-                      <select className="premium-select" value={prefs.characteristicsEnthusiastic} onChange={e => setPrefs({...prefs, characteristicsEnthusiastic: e.target.value})}>
+                      <select className="premium-select" value={prefs.characteristicsEnthusiastic} onChange={e => setPrefs({ ...prefs, characteristicsEnthusiastic: e.target.value })}>
                         <option value="More">More</option>
                         <option value="Default">Default</option>
                         <option value="Less">Less</option>
@@ -1296,7 +1340,7 @@ export default function Davora() {
 
                     <div className="settings-row nested">
                       <label>Headers & Lists</label>
-                      <select className="premium-select" value={prefs.characteristicsHeaders} onChange={e => setPrefs({...prefs, characteristicsHeaders: e.target.value})}>
+                      <select className="premium-select" value={prefs.characteristicsHeaders} onChange={e => setPrefs({ ...prefs, characteristicsHeaders: e.target.value })}>
                         <option value="More">More</option>
                         <option value="Default">Default</option>
                         <option value="Less">Less</option>
@@ -1305,7 +1349,7 @@ export default function Davora() {
 
                     <div className="settings-row nested">
                       <label>Emoji</label>
-                      <select className="premium-select" value={prefs.characteristicsEmoji} onChange={e => setPrefs({...prefs, characteristicsEmoji: e.target.value})}>
+                      <select className="premium-select" value={prefs.characteristicsEmoji} onChange={e => setPrefs({ ...prefs, characteristicsEmoji: e.target.value })}>
                         <option value="More">More</option>
                         <option value="Default">Default</option>
                         <option value="Less">Less</option>
@@ -1319,8 +1363,8 @@ export default function Davora() {
                       <p>Davora can sometimes use its general knowledge to give fast, in-depth answers.</p>
                     </div>
                     <div className="toggle-switch">
-                       <input type="checkbox" id="fast-answers-toggle" checked={prefs.fastAnswers} onChange={e => setPrefs({...prefs, fastAnswers: e.target.checked})} />
-                       <label htmlFor="fast-answers-toggle"></label>
+                      <input type="checkbox" id="fast-answers-toggle" checked={prefs.fastAnswers} onChange={e => setPrefs({ ...prefs, fastAnswers: e.target.checked })} />
+                      <label htmlFor="fast-answers-toggle"></label>
                     </div>
                   </div>
 
@@ -1337,7 +1381,7 @@ export default function Davora() {
 
                   <div className="settings-section border-top" style={{ paddingTop: '24px' }}>
                     <h3>About you</h3>
-                    
+
                     <div className="settings-input-group">
                       <label>Nickname</label>
                       <input
@@ -1348,7 +1392,7 @@ export default function Davora() {
                         placeholder="What should Davora call you?"
                       />
                     </div>
-                    
+
                     <div className="settings-input-group">
                       <label>Occupation</label>
                       <input
@@ -1384,8 +1428,8 @@ export default function Davora() {
                         <p>Let Davora save and use memories when responding.</p>
                       </div>
                       <div className="toggle-switch">
-                         <input type="checkbox" id="ref-mem-toggle" checked={prefs.referenceMemories} onChange={e => setPrefs({...prefs, referenceMemories: e.target.checked})} />
-                         <label htmlFor="ref-mem-toggle"></label>
+                        <input type="checkbox" id="ref-mem-toggle" checked={prefs.referenceMemories} onChange={e => setPrefs({ ...prefs, referenceMemories: e.target.checked })} />
+                        <label htmlFor="ref-mem-toggle"></label>
                       </div>
                     </div>
 
@@ -1395,11 +1439,11 @@ export default function Davora() {
                         <p>Let Davora reference recent conversations when responding.</p>
                       </div>
                       <div className="toggle-switch">
-                         <input type="checkbox" id="ref-hist-toggle" checked={prefs.referenceHistory} onChange={e => setPrefs({...prefs, referenceHistory: e.target.checked})} />
-                         <label htmlFor="ref-hist-toggle"></label>
+                        <input type="checkbox" id="ref-hist-toggle" checked={prefs.referenceHistory} onChange={e => setPrefs({ ...prefs, referenceHistory: e.target.checked })} />
+                        <label htmlFor="ref-hist-toggle"></label>
                       </div>
                     </div>
-                    
+
                     <p className="setting-hint" style={{ marginTop: '12px' }}>
                       Davora may use Memory to personalize queries to search providers, such as Bing. <a href="#" style={{ color: 'var(--text-primary)', textDecoration: 'underline' }}>Learn more</a>
                     </p>
@@ -1407,7 +1451,7 @@ export default function Davora() {
 
                   <div className="settings-row border-top" style={{ paddingTop: '24px', flexDirection: 'column', gap: '16px' }}>
                     <button className="settings-nav-btn" onClick={() => setShowAdvancedSettings(!showAdvancedSettings)} style={{ padding: 0, width: '100%', justifyContent: 'space-between', color: 'var(--text-primary)' }}>
-                       Advanced <ChevronDown size={16} style={{ transform: showAdvancedSettings ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                      Advanced <ChevronDown size={16} style={{ transform: showAdvancedSettings ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                     </button>
                     {showAdvancedSettings && (
                       <div className="settings-row" style={{ width: '100%' }}>
@@ -1416,8 +1460,8 @@ export default function Davora() {
                           <p>Force Davora to adhere strictly to raw markdown spacing and block rendering.</p>
                         </div>
                         <div className="toggle-switch">
-                           <input type="checkbox" id="strict-md-toggle" checked={prefs.strictMarkdown} onChange={e => setPrefs({...prefs, strictMarkdown: e.target.checked})} />
-                           <label htmlFor="strict-md-toggle"></label>
+                          <input type="checkbox" id="strict-md-toggle" checked={prefs.strictMarkdown} onChange={e => setPrefs({ ...prefs, strictMarkdown: e.target.checked })} />
+                          <label htmlFor="strict-md-toggle"></label>
                         </div>
                       </div>
                     )}
@@ -1432,7 +1476,7 @@ export default function Davora() {
                       <label>Theme</label>
                       <p>Customize the UI color mode.</p>
                     </div>
-                    <select className="premium-select" value={prefs.theme} onChange={e => setPrefs({...prefs, theme: e.target.value})}>
+                    <select className="premium-select" value={prefs.theme} onChange={e => setPrefs({ ...prefs, theme: e.target.value })}>
                       <option value="dark">Dark</option>
                       <option value="light">Light</option>
                     </select>
@@ -1501,8 +1545,8 @@ export default function Davora() {
                       <p>Receive desktop alerts when tasks complete.</p>
                     </div>
                     <div className="toggle-switch">
-                       <input type="checkbox" id="push-notif-toggle" defaultChecked />
-                       <label htmlFor="push-notif-toggle"></label>
+                      <input type="checkbox" id="push-notif-toggle" checked={prefs.pushNotifications} onChange={e => setPrefs({...prefs, pushNotifications: e.target.checked})} />
+                      <label htmlFor="push-notif-toggle"></label>
                     </div>
                   </div>
                   <div className="settings-row border-top">
@@ -1511,8 +1555,8 @@ export default function Davora() {
                       <p>Receive emails about new features and models.</p>
                     </div>
                     <div className="toggle-switch">
-                       <input type="checkbox" id="email-notif-toggle" />
-                       <label htmlFor="email-notif-toggle"></label>
+                      <input type="checkbox" id="email-notif-toggle" checked={prefs.emailNotifications} onChange={e => setPrefs({...prefs, emailNotifications: e.target.checked})} />
+                      <label htmlFor="email-notif-toggle"></label>
                     </div>
                   </div>
                 </div>
@@ -1544,11 +1588,11 @@ export default function Davora() {
                       <label>Voice Profile</label>
                       <p>Select Davora's spoken voice.</p>
                     </div>
-                    <select className="premium-select">
-                      <option>Alloy</option>
-                      <option>Echo</option>
-                      <option>Nova</option>
-                      <option>Onyx</option>
+                    <select className="premium-select" value={prefs.voiceProfile} onChange={e => setPrefs({...prefs, voiceProfile: e.target.value})}>
+                      <option value="Alloy">Alloy</option>
+                      <option value="Echo">Echo</option>
+                      <option value="Nova">Nova</option>
+                      <option value="Onyx">Onyx</option>
                     </select>
                   </div>
                   <div className="settings-row border-top">
@@ -1557,8 +1601,8 @@ export default function Davora() {
                       <p>Automatically read Davora's responses via speech synthesis.</p>
                     </div>
                     <div className="toggle-switch">
-                       <input type="checkbox" id="auto-read-toggle" />
-                       <label htmlFor="auto-read-toggle"></label>
+                      <input type="checkbox" id="auto-read-toggle" checked={prefs.autoReadAloud} onChange={e => setPrefs({...prefs, autoReadAloud: e.target.checked})} />
+                      <label htmlFor="auto-read-toggle"></label>
                     </div>
                   </div>
                 </div>
@@ -1614,8 +1658,8 @@ export default function Davora() {
                       <p>Block responses containing highly explicit material.</p>
                     </div>
                     <div className="toggle-switch">
-                       <input type="checkbox" id="nsfw-filter-toggle" defaultChecked />
-                       <label htmlFor="nsfw-filter-toggle"></label>
+                      <input type="checkbox" id="nsfw-filter-toggle" checked={prefs.nsfwFilter} onChange={e => setPrefs({...prefs, nsfwFilter: e.target.checked})} />
+                      <label htmlFor="nsfw-filter-toggle"></label>
                     </div>
                   </div>
                   <div className="settings-row border-top">
@@ -1624,8 +1668,8 @@ export default function Davora() {
                       <p>Force SafeSearch on live data queries.</p>
                     </div>
                     <div className="toggle-switch">
-                       <input type="checkbox" id="safesearch-toggle" defaultChecked />
-                       <label htmlFor="safesearch-toggle"></label>
+                      <input type="checkbox" id="safesearch-toggle" checked={prefs.safeSearch} onChange={e => setPrefs({...prefs, safeSearch: e.target.checked})} />
+                      <label htmlFor="safesearch-toggle"></label>
                     </div>
                   </div>
                 </div>
@@ -1661,8 +1705,8 @@ export default function Davora() {
                       <p>Require a 4-digit PIN to access Davora.</p>
                     </div>
                     <div className="toggle-switch">
-                       <input type="checkbox" id="pin-toggle" />
-                       <label htmlFor="pin-toggle"></label>
+                      <input type="checkbox" id="pin-toggle" checked={prefs.requirePin} onChange={e => setPrefs({...prefs, requirePin: e.target.checked})} />
+                      <label htmlFor="pin-toggle"></label>
                     </div>
                   </div>
                   <div className="settings-row border-top">
@@ -1671,8 +1715,8 @@ export default function Davora() {
                       <p>Disable access outside of configured hours.</p>
                     </div>
                     <div className="toggle-switch">
-                       <input type="checkbox" id="time-limit-toggle" />
-                       <label htmlFor="time-limit-toggle"></label>
+                      <input type="checkbox" id="time-limit-toggle" checked={prefs.strictTimeLimits} onChange={e => setPrefs({...prefs, strictTimeLimits: e.target.checked})} />
+                      <label htmlFor="time-limit-toggle"></label>
                     </div>
                   </div>
                 </div>
@@ -1687,14 +1731,14 @@ export default function Davora() {
                     </div>
                   </div>
                   <div className="settings-row" style={{ paddingTop: 0 }}>
-                    <input className="premium-input-field" type="email" placeholder="trusted@example.com" style={{ width: '100%' }} />
+                    <input className="premium-input-field" type="email" placeholder="trusted@example.com" style={{ width: '100%' }} value={prefs.recoveryEmail} onChange={e => setPrefs({...prefs, recoveryEmail: e.target.value})} />
                   </div>
                   <div className="settings-row border-top">
                     <button className="settings-nav-btn" style={{ width: '100%', justifyContent: 'center', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px' }} onClick={() => showNotification("Recovery contact saved.")}>Save Contact</button>
                   </div>
                 </div>
               )}
-              
+
             </div>
           </div>
         </div>
@@ -1723,7 +1767,7 @@ export default function Davora() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Select a predefined AI persona to start chatting.</p>
                   {['Software Engineer', 'Creative Writer', 'Data Analyst', 'Financial Advisor', 'Therapist'].map(role => (
-                    <button key={role} className="sidebar-nav-btn outline-btn" onClick={() => { setPrefs({...prefs, customInstructions: `Act as a senior ${role}.`}); setActiveModal(null); showNotification(`${role} persona activated!`); }}>
+                    <button key={role} className="sidebar-nav-btn outline-btn" onClick={() => { setPrefs({ ...prefs, customInstructions: `Act as a senior ${role}.` }); setActiveModal(null); showNotification(`${role} persona activated!`); }}>
                       <Bot size={16} /> {role}
                     </button>
                   ))}
@@ -1770,7 +1814,7 @@ export default function Davora() {
                   ) : (
                     <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Davora hasn't learned any custom memory yet.</p>
                   )}
-                  <button onClick={() => { setPrefs({...prefs, customInstructions: '', nickname: '', occupation: '', aboutYou: ''}); showNotification('Memory cleared.'); setActiveModal(null); }} className="danger-btn" style={{ alignSelf: 'flex-start', marginTop: '8px' }}>Clear Memory</button>
+                  <button onClick={() => { setPrefs({ ...prefs, customInstructions: '', nickname: '', occupation: '', aboutYou: '' }); showNotification('Memory cleared.'); setActiveModal(null); }} className="danger-btn" style={{ alignSelf: 'flex-start', marginTop: '8px' }}>Clear Memory</button>
                 </div>
               )}
               {activeModal === 'sessions' && (
