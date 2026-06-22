@@ -186,39 +186,63 @@ export default function Davora() {
     toastTimeoutRef.current = setTimeout(() => setToast(null), 3000);
   };
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     if (typeof window === "undefined") return;
-    const makePayment = () => {
-      window.FlutterwaveCheckout({
-        public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY,
-        tx_ref: "tx-" + Date.now(),
-        amount: parseFloat(proPrice),
-        currency: "USD",
-        payment_options: "card, mobilemoneyghana, ussd",
-        customer: { email: userEmail, name: "Davora User" },
-        customizations: { title: "Davora Pro", description: "Premium AI Access" },
-        callback: async function (data) {
-          try {
-            await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
-              body: JSON.stringify({ tx_ref: data.tx_ref, transaction_id: String(data.transaction_id) })
-            });
-            setSubscriptionPlan("Davora Pro Active");
-            showNotification("Upgraded to Davora Pro successfully!");
-          } catch (e) { showNotification("Payment verification failed."); }
-        },
-        onclose: function () { }
+    
+    showNotification("Initiating secure checkout...");
+    try {
+      const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/checkout/initiate', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('davora_token')}`,
+          'ngrok-skip-browser-warning': 'true'
+        }
       });
-    };
+      
+      const data = await res.json();
+      
+      if (data.status === "success" && data.payment_link) {
+        // Secure Server-to-Server Checkout
+        window.location.href = data.payment_link;
+      } else if (data.status === "fallback") {
+        // Inline Checkout Fallback using Server-Calculated Amount & Currency
+        const makePayment = () => {
+          window.FlutterwaveCheckout({
+            public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY,
+            tx_ref: data.tx_ref,
+            amount: parseFloat(data.amount),
+            currency: data.currency,
+            payment_options: "card, mobilemoneyghana, ussd",
+            customer: { email: userEmail, name: "Davora User" },
+            customizations: { title: "Davora Pro", description: "Premium AI Access" },
+            callback: async function (cbData) {
+              try {
+                await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/verify-payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                  body: JSON.stringify({ tx_ref: cbData.tx_ref, transaction_id: String(cbData.transaction_id) })
+                });
+                setSubscriptionPlan("Davora Pro Active");
+                showNotification("Upgraded to Davora Pro successfully!");
+              } catch (e) { showNotification("Payment verification failed."); }
+            },
+            onclose: function () { }
+          });
+        };
 
-    if (!window.FlutterwaveCheckout) {
-      const script = document.createElement("script");
-      script.src = "https://checkout.flutterwave.com/v3.js";
-      script.onload = makePayment;
-      document.body.appendChild(script);
-    } else {
-      makePayment();
+        if (!window.FlutterwaveCheckout) {
+          const script = document.createElement("script");
+          script.src = "https://checkout.flutterwave.com/v3.js";
+          script.onload = makePayment;
+          document.body.appendChild(script);
+        } else {
+          makePayment();
+        }
+      } else {
+        showNotification("Failed to initiate checkout.");
+      }
+    } catch (e) {
+      showNotification("Server error during checkout initiation.");
     }
   };
 
