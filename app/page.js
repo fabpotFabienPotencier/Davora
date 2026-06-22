@@ -261,6 +261,7 @@ export default function Davora() {
             try { setPinnedSessionIds(JSON.parse(meta.pins)); } catch (e) { }
             try { setRatings(JSON.parse(meta.ratings)); } catch (e) { }
 
+            const savedActive = meta.active_session_id;
             if (savedActive === "new") {
               setActiveSessionId(null);
             } else if (savedActive && dbSessions.some(s => s.id === savedActive)) {
