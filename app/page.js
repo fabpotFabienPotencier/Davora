@@ -95,6 +95,7 @@ export default function Davora() {
   const [activeModal, setActiveModal] = useState(null);
   const [canvasArtifacts, setCanvasArtifacts] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [plusPrice, setPlusPrice] = useState("10");
   const [proPrice, setProPrice] = useState("20");
   const [subscriptionPlan, setSubscriptionPlan] = useState("Davora Free");
 
@@ -186,17 +187,19 @@ export default function Davora() {
     toastTimeoutRef.current = setTimeout(() => setToast(null), 3000);
   };
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (tier) => {
     if (typeof window === "undefined") return;
     
-    showNotification("Initiating secure checkout...");
+    showNotification(`Initiating secure checkout for Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)}...`);
     try {
       const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/checkout/initiate', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('davora_token')}`,
           'ngrok-skip-browser-warning': 'true'
-        }
+        },
+        body: JSON.stringify({ tier: tier })
       });
       
       const data = await res.json();
@@ -214,7 +217,7 @@ export default function Davora() {
             currency: data.currency,
             payment_options: "card, mobilemoneyghana, ussd",
             customer: { email: userEmail, name: "Davora User" },
-            customizations: { title: "Davora Pro", description: "Premium AI Access" },
+            customizations: { title: `Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)}`, description: "Premium AI Access" },
             callback: async function (cbData) {
               try {
                 await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/verify-payment', {
@@ -222,8 +225,8 @@ export default function Davora() {
                   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
                   body: JSON.stringify({ tx_ref: cbData.tx_ref, transaction_id: String(cbData.transaction_id) })
                 });
-                setSubscriptionPlan("Davora Pro Active");
-                showNotification("Upgraded to Davora Pro successfully!");
+                setSubscriptionPlan(`Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)} Active`);
+                showNotification(`Upgraded to Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)} successfully!`);
               } catch (e) { showNotification("Payment verification failed."); }
             },
             onclose: function () { }
@@ -297,7 +300,11 @@ export default function Davora() {
 
           try {
             const configRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } });
-            if (configRes.ok) { const cfg = await configRes.json(); setProPrice(cfg.pro_price); }
+            if (configRes.ok) { 
+              const cfg = await configRes.json(); 
+              setProPrice(cfg.pro_price);
+              setPlusPrice(cfg.plus_price); 
+            }
 
             const subRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/subscription', { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' } });
             if (subRes.ok) { const sub = await subRes.json(); setSubscriptionPlan(sub.plan_name); }
@@ -1701,12 +1708,41 @@ export default function Davora() {
                       <p style={{ fontWeight: '500' }}>{subscriptionPlan}</p>
                     </div>
                   </div>
-                  <div className="settings-row border-top" style={{ flexDirection: 'column', gap: '12px', alignItems: 'flex-start' }}>
-                    <div className="settings-info">
-                      <label>Upgrade to Davora Pro</label>
-                      <p>Unlock unlimited messages, priority speed, advanced models, and file uploads.</p>
+                  <div className="settings-row border-top" style={{ flexDirection: 'column', gap: '16px', alignItems: 'flex-start', width: '100%' }}>
+                    <div className="settings-info" style={{ width: '100%' }}>
+                      <label>Upgrade your Plan</label>
+                      <p>Unlock advanced capabilities and higher limits.</p>
                     </div>
-                    <button className="settings-nav-btn" style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', borderRadius: '24px', fontWeight: '600', border: 'none', cursor: 'pointer', width: 'auto' }} onClick={handleUpgrade}>Upgrade — ${proPrice}/mo</button>
+                    
+                    <div style={{ display: 'flex', gap: '16px', width: '100%', flexWrap: 'wrap' }}>
+                      <div style={{ flex: '1 1 200px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '8px' }}>Davora Plus</h3>
+                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>Perfect for individuals and heavy users.</p>
+                          <ul style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <li>General access even during peak times</li>
+                            <li>Faster response speed</li>
+                            <li>Priority over Free users</li>
+                          </ul>
+                        </div>
+                        <button className="settings-nav-btn" style={{ padding: '10px 20px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '8px', fontWeight: '600', border: 'none', cursor: 'pointer', width: '100%' }} onClick={() => handleUpgrade("plus")}>Upgrade — ${plusPrice}/mo</button>
+                      </div>
+
+                      <div style={{ flex: '1 1 200px', background: 'linear-gradient(to bottom right, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontSize: '0.7rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>POPULAR</div>
+                        <div>
+                          <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '8px' }}>Davora Pro</h3>
+                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>For advanced users needing maximum power.</p>
+                          <ul style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <li>Everything in Plus</li>
+                            <li>Access to advanced models (Davora-4)</li>
+                            <li>Unlimited file & image uploads</li>
+                            <li>Early access to new features</li>
+                          </ul>
+                        </div>
+                        <button className="settings-nav-btn" style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', borderRadius: '8px', fontWeight: '600', border: 'none', cursor: 'pointer', width: '100%' }} onClick={() => handleUpgrade("pro")}>Upgrade — ${proPrice}/mo</button>
+                      </div>
+                    </div>
                   </div>
                   <div className="settings-row border-top">
                     <div className="settings-info">
