@@ -91,13 +91,13 @@ export default function Davora() {
   });
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [userEmail, setUserEmail] = useState("");
-
   const [activeModal, setActiveModal] = useState(null);
   const [canvasArtifacts, setCanvasArtifacts] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [plusPrice, setPlusPrice] = useState("10");
   const [proPrice, setProPrice] = useState("20");
   const [subscriptionPlan, setSubscriptionPlan] = useState("Davora Free");
+  const [logoUrl, setLogoUrl] = useState(null);
 
   // Modals inputs
   const [projectName, setProjectName] = useState("");
@@ -303,7 +303,8 @@ export default function Davora() {
             if (configRes.ok) { 
               const cfg = await configRes.json(); 
               setProPrice(cfg.pro_price);
-              setPlusPrice(cfg.plus_price); 
+              setPlusPrice(cfg.plus_price);
+              if (cfg.logo_url) setLogoUrl(cfg.logo_url);
             }
 
             const subRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/subscription', { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' } });
@@ -838,7 +839,7 @@ export default function Davora() {
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header" style={{ padding: '16px 12px 12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="flex items-center text-white" style={{ display: 'flex', gap: '8px' }}>
-            <Bot size={22} />
+            {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: 22, height: 22, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={22} />}
           </div>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <Search size={18} className="hover-white" onClick={() => {
@@ -1022,7 +1023,7 @@ export default function Davora() {
           {messages.length === 0 && (
             <div className="welcome-screen">
               <div className="welcome-icon">
-                <Bot size={32} strokeWidth={1.5} />
+                {logoUrl ? <img src={logoUrl} alt="Davora" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={32} strokeWidth={1.5} />}
               </div>
               <h2>How can I help you today?</h2>
               <div className="suggestion-chips">
@@ -1038,7 +1039,7 @@ export default function Davora() {
           {messages.map((msg, index) => (
             <div key={msg.id || index} className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'}`}>
               <div className={`avatar ${msg.role === 'user' ? 'avatar-user' : 'avatar-ai'}`}>
-                {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
+                {msg.role === 'user' ? <User size={20} /> : (logoUrl ? <img src={logoUrl} alt="AI Avatar" style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={20} />)}
               </div>
 
               <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
