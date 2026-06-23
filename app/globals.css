@@ -166,7 +166,7 @@ body {
   bottom: 100%;
   left: 12px;
   width: calc(100% - 24px);
-  background: #202123;
+  background: var(--modal-bg);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
