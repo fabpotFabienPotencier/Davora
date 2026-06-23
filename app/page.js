@@ -101,9 +101,12 @@ export default function Davora() {
 
   // Modals inputs
   const [projectName, setProjectName] = useState("");
+  const [projectsList, setProjectsList] = useState([]);
   const [schedulePrompt, setSchedulePrompt] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [reportText, setReportText] = useState("");
+  const [shareLink, setShareLink] = useState("");
+  const [codexSnippets, setCodexSnippets] = useState([]);
 
   // Security States
   const [show2FA, setShow2FA] = useState(false);
@@ -296,6 +299,26 @@ export default function Davora() {
             } else if (dbSessions.length > 0) {
               setActiveSessionId(dbSessions[0].id);
             }
+          }
+
+          const projRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/projects', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'ngrok-skip-browser-warning': 'true'
+            }
+          });
+          if (projRes.ok) {
+            setProjectsList(await projRes.json());
+          }
+
+          const codexRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/codex', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'ngrok-skip-browser-warning': 'true'
+            }
+          });
+          if (codexRes.ok) {
+            setCodexSnippets(await codexRes.json());
           }
 
           try {
@@ -1098,13 +1121,40 @@ export default function Davora() {
                                       <div className="code-block-wrapper">
                                         <div className="code-header">
                                           <span className="code-lang">{match[1]}</span>
-                                          <button
-                                            onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), `${msg.id}-${match[1]}`)}
-                                            className="copy-code-btn"
-                                          >
-                                            {copiedId === `${msg.id}-${match[1]}` ? <Check size={14} /> : <Copy size={14} />}
-                                            {copiedId === `${msg.id}-${match[1]}` ? 'Copied!' : 'Copy'}
-                                          </button>
+                                          <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button
+                                              onClick={async () => {
+                                                try {
+                                                  const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/codex', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                                                    body: JSON.stringify({ title: `Snippet from ${new Date().toLocaleDateString()}`, language: match[1], code: String(children).replace(/\n$/, '') })
+                                                  });
+                                                  if (res.ok) {
+                                                    const data = await res.json();
+                                                    if (data.status === 'flagged') {
+                                                      showNotification('Saved to Codex (Warning: Flagged as unsafe)');
+                                                    } else {
+                                                      showNotification('Saved to Codex!');
+                                                    }
+                                                    // Refresh codex
+                                                    const codexRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/codex', { headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` } });
+                                                    if (codexRes.ok) setCodexSnippets(await codexRes.json());
+                                                  }
+                                                } catch (e) { showNotification('Failed to save to Codex'); }
+                                              }}
+                                              className="copy-code-btn"
+                                            >
+                                              <Bookmark size={14} /> Save
+                                            </button>
+                                            <button
+                                              onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), `${msg.id}-${match[1]}`)}
+                                              className="copy-code-btn"
+                                            >
+                                              {copiedId === `${msg.id}-${match[1]}` ? <Check size={14} /> : <Copy size={14} />}
+                                              {copiedId === `${msg.id}-${match[1]}` ? 'Copied!' : 'Copy'}
+                                            </button>
+                                          </div>
                                         </div>
                                         <SyntaxHighlighter
                                           {...props}
@@ -1951,24 +2001,65 @@ export default function Davora() {
                 </div>
               )}
               {activeModal === 'projects' && (
-                <div className="canvas-empty-state">
-                  <FolderKanban size={32} className="text-secondary mb-4" />
-                  <h3>No Projects Yet</h3>
-                  <p>Group your chats into projects for better organization.</p>
-                  <input type="text" className="sidebar-search-input" style={{ width: '100%', marginBottom: '12px', padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px' }} placeholder="Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
-                  <button className="send-btn" style={{ marginTop: '0px', padding: '8px 16px' }} onClick={async () => {
-                    if (!projectName) return;
-                    try {
-                      await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/projects', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
-                        body: JSON.stringify({ name: projectName })
-                      });
-                      setActiveModal(null);
-                      setProjectName("");
-                      showNotification('Project created!');
-                    } catch (e) { showNotification('Failed to create project'); }
-                  }}>Create Project</button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {projectsList.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Select a project to link the current chat.</p>
+                      {projectsList.map(proj => {
+                        const activeSession = sessions.find(s => s.id === activeSessionId);
+                        const isLinked = activeSession && activeSession.project_id === proj.id;
+                        return (
+                          <div key={proj.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px', border: isLinked ? '1px solid #10b981' : '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}><Folder size={18} /> {proj.name}</div>
+                            {activeSessionId && (
+                              <button 
+                                className="outline-btn" 
+                                style={{ fontSize: '0.8rem', padding: '4px 12px' }}
+                                onClick={async () => {
+                                  try {
+                                    await fetch(`https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions/${activeSessionId}/project`, {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                                      body: JSON.stringify({ project_id: isLinked ? null : proj.id })
+                                    });
+                                    setSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, project_id: isLinked ? null : proj.id } : s));
+                                    showNotification(isLinked ? 'Chat unlinked.' : 'Chat linked to project!');
+                                  } catch (e) { showNotification('Failed to link chat.'); }
+                                }}
+                              >
+                                {isLinked ? 'Unlink' : 'Link Chat'}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="canvas-empty-state">
+                      <FolderKanban size={32} className="text-secondary mb-4" />
+                      <h3>No Projects Yet</h3>
+                      <p>Group your chats into projects for better organization.</p>
+                    </div>
+                  )}
+                  <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+                    <input type="text" className="sidebar-search-input" style={{ flex: 1, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} placeholder="New Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+                    <button className="send-btn" style={{ padding: '8px 16px' }} onClick={async () => {
+                      if (!projectName) return;
+                      try {
+                        const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/projects', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                          body: JSON.stringify({ name: projectName })
+                        });
+                        if (res.ok) {
+                          const newProj = await res.json();
+                          setProjectsList(prev => [...prev, newProj]);
+                          setProjectName("");
+                          showNotification('Project created!');
+                        }
+                      } catch (e) { showNotification('Failed to create project'); }
+                    }}>Create</button>
+                  </div>
                 </div>
               )}
               {activeModal === 'apps' && (
@@ -1985,10 +2076,32 @@ export default function Davora() {
                 </div>
               )}
               {activeModal === 'codex' && (
-                <div className="canvas-empty-state">
-                  <Code size={32} className="text-secondary mb-4" />
-                  <h3>Code Snippet Vault</h3>
-                  <p>Code blocks you save from chats will appear here.</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {codexSnippets.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Your securely saved code snippets.</p>
+                      {codexSnippets.map(snippet => (
+                        <div key={snippet.id} style={{ background: 'var(--bg-primary)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{snippet.language.toUpperCase()}</strong>
+                            {snippet.is_safe === 0 && <span style={{ color: '#ef4444', fontSize: '0.7rem', padding: '2px 6px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '12px' }}>Flagged: Unsafe</span>}
+                          </div>
+                          <div style={{ background: 'var(--bg-secondary)', padding: '8px', borderRadius: '4px', fontSize: '0.8rem', fontFamily: 'monospace', color: 'var(--text-secondary)', maxHeight: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {snippet.code}
+                          </div>
+                          <button className="outline-btn" style={{ fontSize: '0.8rem', padding: '4px', alignSelf: 'flex-start' }} onClick={() => { navigator.clipboard.writeText(snippet.code); showNotification('Snippet copied!'); }}>
+                            <Copy size={14} style={{ marginRight: '4px', display: 'inline-block', verticalAlign: 'middle' }} /> Copy Code
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="canvas-empty-state">
+                      <Code size={32} className="text-secondary mb-4" />
+                      <h3>Code Snippet Vault</h3>
+                      <p>Code blocks you save from chats will appear here.</p>
+                    </div>
+                  )}
                 </div>
               )}
               {activeModal === 'memory' && (
@@ -2060,8 +2173,33 @@ export default function Davora() {
                   <Globe size={48} className="text-secondary mb-2" />
                   <p>Generate a public link to share this conversation.</p>
                   <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                    <input type="text" readOnly value={`https://davora.com/share/${activeSessionId || 'new'}`} style={{ flex: 1, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                    <button className="send-btn" onClick={() => { navigator.clipboard.writeText(`https://davora.com/share/${activeSessionId || 'new'}`); showNotification('Link copied!'); setActiveModal(null); }}>Copy</button>
+                    {shareLink ? (
+                      <>
+                        <input type="text" readOnly value={shareLink} style={{ flex: 1, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                        <button className="send-btn" onClick={() => { navigator.clipboard.writeText(shareLink); showNotification('Link copied!'); setActiveModal(null); setShareLink(''); }}>Copy</button>
+                      </>
+                    ) : (
+                      <button className="send-btn" style={{ width: '100%', padding: '12px' }} onClick={async () => {
+                        if (!activeSessionId) {
+                           showNotification('No active chat to share.');
+                           return;
+                        }
+                        try {
+                          const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/share', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                            body: JSON.stringify({ session_id: activeSessionId })
+                          });
+                          if (res.ok) {
+                            const data = await res.json();
+                            setShareLink(`https://davora-b5rw.vercel.app/share/${data.share_id}`);
+                            showNotification('Share link generated!');
+                          } else {
+                            showNotification('Failed to generate share link.');
+                          }
+                        } catch (e) { showNotification('Error sharing chat.'); }
+                      }}>Generate Link</button>
+                    )}
                   </div>
                 </div>
               )}
