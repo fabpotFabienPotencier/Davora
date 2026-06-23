@@ -1,18 +1,18 @@
 /* Premium Glassmorphic Theme for Davora */
 :root {
-  --bg-primary: #212121;
-  --bg-secondary: #2f2f2f;
-  --bg-sidebar: #171717;
-  --text-primary: #ececec;
-  --text-secondary: #b4b4b4;
+  --bg-primary: #000000;
+  --bg-secondary: #121212;
+  --bg-sidebar: #050505;
+  --text-primary: #f5f5f5;
+  --text-secondary: #737373;
   --accent-color: #ffffff;
-  --accent-hover: #e5e5e5;
-  --user-bubble: #2f2f2f;
+  --accent-hover: #cccccc;
+  --user-bubble: #171717;
   --ai-bubble: transparent;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --modal-bg: #2f2f2f;
-  --code-bg: #0d0d0d;
-  --inline-code-bg: #2f2f2f;
+  --border-color: #262626;
+  --modal-bg: #121212;
+  --code-bg: #0a0a0a;
+  --inline-code-bg: #1a1a1a;
   --sidebar-width: 260px;
 }
 
@@ -90,8 +90,8 @@ body {
 .sidebar-nav-group { padding: 0 12px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 2px; }
 .sidebar-nav-btn { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 8px; cursor: pointer; color: var(--text-primary); transition: background 0.2s; font-size: 0.875rem; background: transparent; border: none; font-weight: 400; width: 100%; text-align: left; }
 .sidebar-nav-btn:hover { background: var(--bg-primary); }
-.new-chat-btn { background: #212121; font-weight: 400; }
-.new-chat-btn:hover { background: #2f2f2f; }
+.new-chat-btn { background: var(--bg-secondary); font-weight: 400; }
+.new-chat-btn:hover { background: var(--user-bubble); }
 
 .hover-white { transition: color 0.2s; cursor: pointer; color: var(--text-secondary); }
 .hover-white:hover { color: var(--text-primary); }
@@ -102,7 +102,7 @@ body {
 .sidebar-history::-webkit-scrollbar { width: 4px; }
 .sidebar-history::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
 
-.sidebar-label { font-size: 0.85rem; color: #f5f5f5; margin: 12px 0 8px 12px; font-weight: 600; }
+.sidebar-label { font-size: 0.85rem; color: var(--text-primary); margin: 12px 0 8px 12px; font-weight: 600; }
 .sidebar-empty { font-size: 0.8rem; color: var(--text-secondary); padding: 8px; text-align: center; }
 
 .history-item {
@@ -238,7 +238,7 @@ body {
 .user-plan { font-size: 0.75rem; color: var(--text-secondary); }
 
 .upgrade-btn {
-  background: #2f2f2f;
+  background: var(--bg-secondary);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   padding: 6px 12px;
@@ -248,7 +248,7 @@ body {
   cursor: pointer;
   transition: background 0.2s;
 }
-.upgrade-btn:hover { background: #3f3f3f; }
+.upgrade-btn:hover { background: var(--user-bubble); }
 
 /* Main Content Area */
 .main-content { flex: 1; display: flex; flex-direction: column; position: relative; transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 100%; }
@@ -256,7 +256,7 @@ body {
 .main-content.sidebar-closed { width: 100vw; margin-left: 0; }
 
 /* Header */
-.header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(14,14,14,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 50; position: sticky; top: 0; left: 0; width: 100%; }
+.header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); z-index: 50; position: sticky; top: 0; left: 0; width: 100%; }
 .logo-section { display: flex; align-items: center; gap: 8px; }
 .model-selector-wrapper { position: relative; cursor: pointer; }
 .model-dropdown { position: absolute; top: 100%; left: 0; margin-top: 8px; width: 280px; background: var(--modal-bg); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 100; overflow: hidden; animation: slideDown 0.2s ease-out; }
@@ -752,7 +752,7 @@ body {
 .tool-execution-block { margin-bottom: 16px; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(0,0,0,0.1); overflow: hidden; transition: all 0.2s; }
 .tool-execution-block summary { padding: 8px 12px; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 8px; outline: none; list-style: none; }
 .tool-execution-block summary::-webkit-details-marker { display: none; }
-.tool-execution-content { padding: 12px; border-top: 1px solid var(--border-color); font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; color: #10b981; background: #0f172a; line-height: 1.4; overflow-x: auto; }
+.tool-execution-content { padding: 12px; border-top: 1px solid var(--border-color); font-family: 'Courier New', Courier, monospace; font-size: 0.8rem; color: #10b981; background: var(--code-bg); line-height: 1.4; overflow-x: auto; }
 
 /* Memory Updated Badge */
 .memory-updated-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); background: rgba(0,0,0,0.05); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 12px; margin-top: 12px; }
