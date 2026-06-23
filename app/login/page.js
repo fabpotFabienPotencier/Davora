@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bot, ArrowRight, Lock, Mail } from 'lucide-react';
+import { Bot, ArrowRight, Lock, Mail, Shield } from 'lucide-react';
 import '../globals.css';
 
 export default function Login() {
@@ -54,12 +54,26 @@ export default function Login() {
   return (
     <div className="app-layout" style={{ justifyContent: 'center', alignItems: 'center' }}>
       <div style={{ width: '100%', maxWidth: '400px', padding: '40px', background: 'var(--bg-secondary)', borderRadius: '24px', border: '1px solid var(--border-color)', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px' }}>
-          <div style={{ background: '#a855f7', padding: '12px', borderRadius: '16px', marginBottom: '16px' }}>
-            <Bot size={32} color="white" />
-          </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)' }}>Welcome back</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>Log in to access Davora</p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px', textAlign: 'center' }}>
+          {!requires2FA ? (
+            <>
+              <div style={{ background: '#a855f7', padding: '12px', borderRadius: '16px', marginBottom: '16px' }}>
+                <Bot size={32} color="white" />
+              </div>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)' }}>Welcome back</h1>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>Log in to access Davora</p>
+            </>
+          ) : (
+            <>
+              <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '16px', borderRadius: '50%', marginBottom: '16px' }}>
+                <Shield size={32} color="#a855f7" />
+              </div>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)' }}>Two-Step Verification</h1>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '8px', lineHeight: '1.5' }}>
+                Enter the authentication code provided by your authenticator app.
+              </p>
+            </>
+          )}
         </div>
 
         {error && <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '12px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '20px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>{error}</div>}
@@ -93,20 +107,26 @@ export default function Login() {
             </button>
           </form>
         ) : (
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ position: 'relative' }}>
-              <Lock size={18} style={{ position: 'absolute', left: '16px', top: '15px', color: 'var(--text-secondary)' }} />
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div>
               <input
                 type="text"
-                placeholder="6-Digit 2FA Code"
+                placeholder="000000"
+                maxLength="6"
                 value={twoFactorCode}
-                onChange={(e) => setTwoFactorCode(e.target.value)}
+                onChange={(e) => setTwoFactorCode(e.target.value.replace(/[^0-9]/g, ''))}
                 required
-                style={{ width: '100%', padding: '14px 16px 14px 44px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '12px', color: 'var(--text-primary)', outline: 'none', letterSpacing: '4px', textAlign: 'center' }}
+                autoFocus
+                style={{ width: '100%', padding: '16px', background: 'var(--bg-primary)', border: '2px solid var(--border-color)', borderRadius: '12px', color: 'var(--text-primary)', outline: 'none', letterSpacing: '0.75em', textAlign: 'center', fontSize: '1.5rem', fontWeight: '600', fontFamily: 'monospace', transition: 'border-color 0.2s' }}
+                onFocus={(e) => e.target.style.borderColor = '#a855f7'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
               />
             </div>
-            <button type="submit" disabled={isLoading} style={{ background: '#a855f7', color: 'white', padding: '14px', borderRadius: '12px', border: 'none', fontWeight: '600', cursor: isLoading ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '8px', transition: 'background 0.2s' }}>
-              {isLoading ? 'Verifying...' : <>Verify & Login <ArrowRight size={18} /></>}
+            <button type="submit" disabled={isLoading || twoFactorCode.length !== 6} style={{ background: '#a855f7', color: 'white', padding: '14px', borderRadius: '12px', border: 'none', fontWeight: '600', cursor: (isLoading || twoFactorCode.length !== 6) ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', opacity: (isLoading || twoFactorCode.length !== 6) ? 0.7 : 1, transition: 'all 0.2s' }}>
+              {isLoading ? 'Verifying...' : 'Verify Code'}
+            </button>
+            <button type="button" onClick={() => { setRequires2FA(false); setTwoFactorCode(""); }} style={{ background: 'transparent', color: 'var(--text-secondary)', border: 'none', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = 'var(--text-primary)'} onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}>
+              Back to login
             </button>
           </form>
         )}
