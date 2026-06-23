@@ -150,6 +150,7 @@ export default function Davora() {
 
   const [visibleSuggestions, setVisibleSuggestions] = useState([]);
   const [autoSuggestion, setAutoSuggestion] = useState("");
+  const [greeting, setGreeting] = useState("How can I help you today?");
 
   // Rotate suggestions every 5 seconds
   useEffect(() => {
@@ -163,6 +164,23 @@ export default function Davora() {
     };
     pickRandom();
     const interval = setInterval(pickRandom, 5000);
+    
+    // Set dynamic greeting
+    const hour = new Date().getHours();
+    let timeOfDay = "day";
+    if (hour < 12) timeOfDay = "morning";
+    else if (hour < 17) timeOfDay = "afternoon";
+    else timeOfDay = "evening";
+    
+    const greetings = [
+      `Good ${timeOfDay}! How can I help you?`,
+      `Good ${timeOfDay}! What's on your mind?`,
+      `Ready to assist this ${timeOfDay}.`,
+      `Good ${timeOfDay}! Let's get things done.`,
+      `Hello! I hope you're having a great ${timeOfDay}.`
+    ];
+    setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -1046,10 +1064,10 @@ export default function Davora() {
         <main className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
           {messages.length === 0 && (
             <div className="welcome-screen">
-              <div className="welcome-icon">
-                {logoUrl ? <img src={logoUrl} alt="Davora" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={32} strokeWidth={1.5} />}
+              <div className="welcome-icon" style={{ marginBottom: '16px' }}>
+                {logoUrl ? <img src={logoUrl} alt="Davora" style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={64} strokeWidth={1.5} />}
               </div>
-              <h2>How can I help you today?</h2>
+              <h2 style={{ textAlign: 'center', transition: 'opacity 0.3s ease-in' }}>{greeting}</h2>
               <div className="suggestion-chips">
                 {visibleSuggestions.map((s, idx) => (
                   <button key={idx} className="suggestion-chip" onClick={() => triggerSend(s.text)}>
