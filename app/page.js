@@ -1440,30 +1440,14 @@ export default function Davora() {
 
               {settingsTab === 'Personalization' && (
                 <div className="settings-pane">
-                  <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <div className="settings-row">
                     <div className="settings-info">
                       <label>Base style and tone</label>
                       <p>Set the style and tone of how Davora responds to you. This doesn't impact capabilities.</p>
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+                    <div className="toggle-btns compact" style={{ flexWrap: 'wrap', flex: '1 1 auto', maxWidth: '300px' }}>
                       {['Default', 'Professional', 'Friendly', 'Candid', 'Quirky', 'Efficient', 'Cynical'].map(style => (
-                        <button 
-                          key={style}
-                          onClick={() => setPrefs({ ...prefs, baseStyle: style })}
-                          style={{
-                            padding: '8px 16px',
-                            borderRadius: '20px',
-                            border: prefs.baseStyle === style ? '2px solid #a855f7' : '1px solid var(--border-color)',
-                            background: prefs.baseStyle === style ? 'rgba(168, 85, 247, 0.1)' : 'var(--bg-primary)',
-                            color: prefs.baseStyle === style ? '#a855f7' : 'var(--text-secondary)',
-                            fontWeight: prefs.baseStyle === style ? '600' : '500',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            boxShadow: prefs.baseStyle === style ? '0 2px 8px rgba(168, 85, 247, 0.2)' : 'none'
-                          }}
-                        >
-                          {style}
-                        </button>
+                        <button key={style} onClick={() => setPrefs({ ...prefs, baseStyle: style })} className={prefs.baseStyle === style ? 'active' : ''} style={{ flex: '1 1 30%', fontSize: '0.8rem', padding: '6px' }}>{style}</button>
                       ))}
                     </div>
                   </div>
@@ -1472,40 +1456,40 @@ export default function Davora() {
                     <h3>Characteristics</h3>
                     <p className="setting-hint">Choose additional customizations on top of your base style and tone.</p>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
-                      {[
-                        { key: 'characteristicsWarm', label: 'Warm' },
-                        { key: 'characteristicsEnthusiastic', label: 'Enthusiastic' },
-                        { key: 'characteristicsHeaders', label: 'Headers & Lists' },
-                        { key: 'characteristicsEmoji', label: 'Emoji' }
-                      ].map(char => (
-                        <div key={char.key} className="settings-row nested" style={{ alignItems: 'center', padding: '12px', background: 'var(--surface-bg)', borderRadius: '12px', border: '1px solid var(--border-color)', margin: 0 }}>
-                          <label style={{ flex: 1, margin: 0, fontWeight: '500' }}>{char.label}</label>
-                          <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '12px', gap: '4px', border: '1px solid var(--border-color)', width: '220px' }}>
-                            {['Less', 'Default', 'More'].map(opt => (
-                              <button
-                                key={opt}
-                                onClick={() => setPrefs({ ...prefs, [char.key]: opt })}
-                                style={{
-                                  flex: 1,
-                                  padding: '6px',
-                                  fontSize: '0.85rem',
-                                  borderRadius: '8px',
-                                  border: 'none',
-                                  background: prefs[char.key] === opt ? 'var(--bg-primary)' : 'transparent',
-                                  color: prefs[char.key] === opt ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                  fontWeight: prefs[char.key] === opt ? '600' : '500',
-                                  boxShadow: prefs[char.key] === opt ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s'
-                                }}
-                              >
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="settings-row nested">
+                      <label>Warm</label>
+                      <div className="toggle-btns compact">
+                        {['Less', 'Default', 'More'].map(val => (
+                          <button key={val} onClick={() => setPrefs({ ...prefs, characteristicsWarm: val })} className={prefs.characteristicsWarm === val ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>{val}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="settings-row nested">
+                      <label>Enthusiastic</label>
+                      <div className="toggle-btns compact">
+                        {['Less', 'Default', 'More'].map(val => (
+                          <button key={val} onClick={() => setPrefs({ ...prefs, characteristicsEnthusiastic: val })} className={prefs.characteristicsEnthusiastic === val ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>{val}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="settings-row nested">
+                      <label>Headers & Lists</label>
+                      <div className="toggle-btns compact">
+                        {['Less', 'Default', 'More'].map(val => (
+                          <button key={val} onClick={() => setPrefs({ ...prefs, characteristicsHeaders: val })} className={prefs.characteristicsHeaders === val ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>{val}</button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="settings-row nested">
+                      <label>Emoji</label>
+                      <div className="toggle-btns compact">
+                        {['Less', 'Default', 'More'].map(val => (
+                          <button key={val} onClick={() => setPrefs({ ...prefs, characteristicsEmoji: val })} className={prefs.characteristicsEmoji === val ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>{val}</button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -1628,10 +1612,10 @@ export default function Davora() {
                       <label>Theme</label>
                       <p>Customize the UI color mode.</p>
                     </div>
-                    <select className="premium-select" value={prefs.theme} onChange={e => setPrefs({ ...prefs, theme: e.target.value })}>
-                      <option value="dark">Dark</option>
-                      <option value="light">Light</option>
-                    </select>
+                    <div className="toggle-btns compact">
+                      <button onClick={() => setPrefs({ ...prefs, theme: 'light' })} className={prefs.theme === 'light' ? 'active' : ''} style={{ padding: '6px 16px' }}><Sun size={14} /> Light</button>
+                      <button onClick={() => setPrefs({ ...prefs, theme: 'dark' })} className={prefs.theme === 'dark' ? 'active' : ''} style={{ padding: '6px 16px' }}><Moon size={14} /> Dark</button>
+                    </div>
                   </div>
                   <div className="settings-row">
                     <div className="settings-info">
@@ -1740,12 +1724,11 @@ export default function Davora() {
                       <label>Voice Profile</label>
                       <p>Select Davora's spoken voice.</p>
                     </div>
-                    <select className="premium-select" value={prefs.voiceProfile} onChange={e => setPrefs({ ...prefs, voiceProfile: e.target.value })}>
-                      <option value="Alloy">Alloy</option>
-                      <option value="Echo">Echo</option>
-                      <option value="Nova">Nova</option>
-                      <option value="Onyx">Onyx</option>
-                    </select>
+                    <div className="toggle-btns compact" style={{ flexWrap: 'wrap', maxWidth: '250px' }}>
+                      {['Alloy', 'Echo', 'Nova', 'Onyx'].map(voice => (
+                        <button key={voice} onClick={() => setPrefs({ ...prefs, voiceProfile: voice })} className={prefs.voiceProfile === voice ? 'active' : ''} style={{ flex: '1 1 40%', padding: '8px' }}>{voice}</button>
+                      ))}
+                    </div>
                   </div>
                   <div className="settings-row border-top">
                     <div className="settings-info">
