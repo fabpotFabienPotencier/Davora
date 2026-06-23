@@ -151,6 +151,21 @@ export default function Davora() {
   const [visibleSuggestions, setVisibleSuggestions] = useState([]);
   const [autoSuggestion, setAutoSuggestion] = useState("");
   const [greeting, setGreeting] = useState("How can I help you today?");
+  const [scheduledTasks, setScheduledTasks] = useState([]);
+  const [issueReports, setIssueReports] = useState([]);
+
+  useEffect(() => {
+    if (settingsTab === 'Tasks') {
+      fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/schedule', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' }
+      }).then(r => r.json()).then(data => setScheduledTasks(data || []));
+    }
+    if (settingsTab === 'Reports') {
+      fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/report', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' }
+      }).then(r => r.json()).then(data => setIssueReports(data || []));
+    }
+  }, [settingsTab]);
 
   // Rotate suggestions every 5 seconds
   useEffect(() => {
@@ -270,6 +285,23 @@ export default function Davora() {
       showNotification("Server error during checkout initiation.");
     }
   };
+
+  // Global Fetch Interceptor to catch 401 Unauthorized
+  useEffect(() => {
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      if (response.status === 401) {
+        localStorage.removeItem('davora_token');
+        setToast("Session expired. Please log in again.");
+        setTimeout(() => router.push('/login'), 1500);
+      }
+      return response;
+    };
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [router]);
 
   // Initialization & DB Fetching
   useEffect(() => {
@@ -1458,6 +1490,8 @@ export default function Davora() {
                 <button className={`settings-nav-btn ${settingsTab === 'Parental controls' ? 'active' : ''}`} onClick={() => setSettingsTab('Parental controls')}><Users size={18} /> Parental controls</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Trusted contact' ? 'active' : ''}`} onClick={() => setSettingsTab('Trusted contact')}><UserPlus size={18} /> Trusted contact</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Account' ? 'active' : ''}`} onClick={() => setSettingsTab('Account')}><User size={18} /> Account</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Tasks' ? 'active' : ''}`} onClick={() => setSettingsTab('Tasks')}><Activity size={18} /> Scheduled Tasks</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Reports' ? 'active' : ''}`} onClick={() => setSettingsTab('Reports')}><Shield size={18} /> Bug Reports</button>
               </div>
             </div>
 
@@ -1999,7 +2033,16 @@ export default function Davora() {
                     </div>
                   )}
                   <div className="settings-row border-top">
-                    <button className="danger-btn" onClick={() => { localStorage.clear(); router.push('/login'); }}>Sign out of all devices</button>
+                    <button className="danger-btn" onClick={async () => {
+                      try {
+                        await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/auth/logout', { 
+                          method: 'POST', 
+                          headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' } 
+                        });
+                      } catch (e) {}
+                      localStorage.clear();
+                      router.push('/login');
+                    }}>Sign out of all devices</button>
                   </div>
                 </div>
               )}
@@ -2043,6 +2086,55 @@ export default function Davora() {
                   <div className="settings-row border-top">
                     <button className="settings-nav-btn" style={{ width: '100%', justifyContent: 'center', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px' }} onClick={() => showNotification("Recovery contact saved.")}>Save Contact</button>
                   </div>
+                </div>
+              )}
+
+              {settingsTab === 'Tasks' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Scheduled Tasks</label>
+                      <p>View or cancel tasks you've scheduled.</p>
+                    </div>
+                  </div>
+                  {scheduledTasks.length === 0 ? (
+                    <div className="settings-row"><p style={{ color: 'var(--text-secondary)' }}>No scheduled tasks.</p></div>
+                  ) : (
+                    scheduledTasks.map(t => (
+                      <div className="settings-row" key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <p style={{ fontWeight: '500', marginBottom: '4px' }}>{t.prompt}</p>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Scheduled for: {t.scheduled_for}</span>
+                        </div>
+                        <button className="danger-btn" style={{ padding: '6px 12px', width: 'auto' }} onClick={async () => {
+                          await fetch(`https://blatancy-barrack-spelling.ngrok-free.dev/api/schedule/${t.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' }});
+                          setScheduledTasks(scheduledTasks.filter(st => st.id !== t.id));
+                          showNotification('Task canceled successfully.');
+                        }}>Cancel</button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {settingsTab === 'Reports' && (
+                <div className="settings-pane">
+                  <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Bug Reports</label>
+                      <p>Your submitted issue reports.</p>
+                    </div>
+                  </div>
+                  {issueReports.length === 0 ? (
+                    <div className="settings-row"><p style={{ color: 'var(--text-secondary)' }}>No reports submitted.</p></div>
+                  ) : (
+                    issueReports.map(r => (
+                      <div className="settings-row" key={r.id}>
+                        <p>{r.description}</p>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Ticket #{r.id}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
 
