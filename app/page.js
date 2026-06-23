@@ -1090,11 +1090,7 @@ export default function Davora() {
                     )
                   ) : (
                     <div className="markdown-body">
-                      {msg.model && (
-                        <div className="per-message-model-badge">
-                          <Sparkles size={10} className="inline-icon text-purple-500" /> {msg.model}
-                        </div>
-                      )}
+
                       {(() => {
                         let contentToRender = msg.content || '';
                         let thinkContent = '';
