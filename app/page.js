@@ -1440,60 +1440,72 @@ export default function Davora() {
 
               {settingsTab === 'Personalization' && (
                 <div className="settings-pane">
-                  <div className="settings-row">
+                  <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                     <div className="settings-info">
                       <label>Base style and tone</label>
                       <p>Set the style and tone of how Davora responds to you. This doesn't impact capabilities.</p>
                     </div>
-                    <select className="premium-select" value={prefs.baseStyle} onChange={e => setPrefs({ ...prefs, baseStyle: e.target.value })}>
-                      <option value="Default">Default</option>
-                      <option value="Professional">Professional</option>
-                      <option value="Friendly">Friendly</option>
-                      <option value="Candid">Candid</option>
-                      <option value="Quirky">Quirky</option>
-                      <option value="Efficient">Efficient</option>
-                      <option value="Cynical">Cynical</option>
-                    </select>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+                      {['Default', 'Professional', 'Friendly', 'Candid', 'Quirky', 'Efficient', 'Cynical'].map(style => (
+                        <button 
+                          key={style}
+                          onClick={() => setPrefs({ ...prefs, baseStyle: style })}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            border: prefs.baseStyle === style ? '2px solid #a855f7' : '1px solid var(--border-color)',
+                            background: prefs.baseStyle === style ? 'rgba(168, 85, 247, 0.1)' : 'var(--bg-primary)',
+                            color: prefs.baseStyle === style ? '#a855f7' : 'var(--text-secondary)',
+                            fontWeight: prefs.baseStyle === style ? '600' : '500',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: prefs.baseStyle === style ? '0 2px 8px rgba(168, 85, 247, 0.2)' : 'none'
+                          }}
+                        >
+                          {style}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="settings-section">
                     <h3>Characteristics</h3>
                     <p className="setting-hint">Choose additional customizations on top of your base style and tone.</p>
 
-                    <div className="settings-row nested">
-                      <label>Warm</label>
-                      <select className="premium-select" value={prefs.characteristicsWarm} onChange={e => setPrefs({ ...prefs, characteristicsWarm: e.target.value })}>
-                        <option value="More">More</option>
-                        <option value="Default">Default</option>
-                        <option value="Less">Less</option>
-                      </select>
-                    </div>
-
-                    <div className="settings-row nested">
-                      <label>Enthusiastic</label>
-                      <select className="premium-select" value={prefs.characteristicsEnthusiastic} onChange={e => setPrefs({ ...prefs, characteristicsEnthusiastic: e.target.value })}>
-                        <option value="More">More</option>
-                        <option value="Default">Default</option>
-                        <option value="Less">Less</option>
-                      </select>
-                    </div>
-
-                    <div className="settings-row nested">
-                      <label>Headers & Lists</label>
-                      <select className="premium-select" value={prefs.characteristicsHeaders} onChange={e => setPrefs({ ...prefs, characteristicsHeaders: e.target.value })}>
-                        <option value="More">More</option>
-                        <option value="Default">Default</option>
-                        <option value="Less">Less</option>
-                      </select>
-                    </div>
-
-                    <div className="settings-row nested">
-                      <label>Emoji</label>
-                      <select className="premium-select" value={prefs.characteristicsEmoji} onChange={e => setPrefs({ ...prefs, characteristicsEmoji: e.target.value })}>
-                        <option value="More">More</option>
-                        <option value="Default">Default</option>
-                        <option value="Less">Less</option>
-                      </select>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+                      {[
+                        { key: 'characteristicsWarm', label: 'Warm' },
+                        { key: 'characteristicsEnthusiastic', label: 'Enthusiastic' },
+                        { key: 'characteristicsHeaders', label: 'Headers & Lists' },
+                        { key: 'characteristicsEmoji', label: 'Emoji' }
+                      ].map(char => (
+                        <div key={char.key} className="settings-row nested" style={{ alignItems: 'center', padding: '12px', background: 'var(--surface-bg)', borderRadius: '12px', border: '1px solid var(--border-color)', margin: 0 }}>
+                          <label style={{ flex: 1, margin: 0, fontWeight: '500' }}>{char.label}</label>
+                          <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '12px', gap: '4px', border: '1px solid var(--border-color)', width: '220px' }}>
+                            {['Less', 'Default', 'More'].map(opt => (
+                              <button
+                                key={opt}
+                                onClick={() => setPrefs({ ...prefs, [char.key]: opt })}
+                                style={{
+                                  flex: 1,
+                                  padding: '6px',
+                                  fontSize: '0.85rem',
+                                  borderRadius: '8px',
+                                  border: 'none',
+                                  background: prefs[char.key] === opt ? 'var(--bg-primary)' : 'transparent',
+                                  color: prefs[char.key] === opt ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                  fontWeight: prefs[char.key] === opt ? '600' : '500',
+                                  boxShadow: prefs[char.key] === opt ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s'
+                                }}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
