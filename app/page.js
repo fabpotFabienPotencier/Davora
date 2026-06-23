@@ -1860,7 +1860,10 @@ export default function Davora() {
                     <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={async () => {
                       try {
                         const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/auth/2fa/generate', {
-                          headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` }
+                          headers: { 
+                            'Authorization': `Bearer ${localStorage.getItem('davora_token')}`,
+                            'ngrok-skip-browser-warning': 'true'
+                          }
                         });
                         const data = await res.json();
                         if (data.status === "already_enabled") { showNotification("2FA is already enabled."); return; }
@@ -1882,7 +1885,11 @@ export default function Davora() {
                           try {
                             const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/auth/2fa/verify', {
                               method: 'POST',
-                              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                              headers: { 
+                                'Content-Type': 'application/json', 
+                                'Authorization': `Bearer ${localStorage.getItem('davora_token')}`,
+                                'ngrok-skip-browser-warning': 'true'
+                              },
                               body: JSON.stringify({ code: twoFactorCode })
                             });
                             if (res.ok) { showNotification("2FA Successfully Enabled!"); setShow2FA(false); }
@@ -1909,7 +1916,11 @@ export default function Davora() {
                         try {
                           const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/auth/password/update', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                            headers: { 
+                              'Content-Type': 'application/json', 
+                              'Authorization': `Bearer ${localStorage.getItem('davora_token')}`,
+                              'ngrok-skip-browser-warning': 'true'
+                            },
                             body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
                           });
                           if (res.ok) { showNotification("Password updated!"); setShowPasswordUpdate(false); setCurrentPassword(""); setNewPassword(""); }
