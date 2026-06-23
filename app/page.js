@@ -644,9 +644,20 @@ export default function Davora() {
     setEditingId(null);
     setIsListening(false);
 
-    if (ws.current.readyState !== WebSocket.OPEN) {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
       connectWebSocket();
-      setTimeout(() => ws.current.send(JSON.stringify(payloadObj)), 500);
+      let attempts = 0;
+      const checkAndSend = setInterval(() => {
+        attempts++;
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+          ws.current.send(JSON.stringify(payloadObj));
+          clearInterval(checkAndSend);
+        } else if (attempts > 50) { // Timeout after 5 seconds
+          clearInterval(checkAndSend);
+          showNotification("Connection timeout. Please try sending again.");
+          setIsTyping(false);
+        }
+      }, 100);
     } else {
       ws.current.send(JSON.stringify(payloadObj));
     }
@@ -1153,7 +1164,7 @@ export default function Davora() {
                                                       showNotification('Saved to Codex!');
                                                     }
                                                     // Refresh codex
-                                                    const codexRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/codex', { headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` } });
+                                                    const codexRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/codex', { headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' } });
                                                     if (codexRes.ok) setCodexSnippets(await codexRes.json());
                                                   }
                                                 } catch (e) { showNotification('Failed to save to Codex'); }
