@@ -838,7 +838,7 @@ export default function Davora() {
       {/* Sidebar for Chat History */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header" style={{ padding: '16px 12px 12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className="flex items-center text-white" style={{ display: 'flex', gap: '8px' }}>
+          <div className="flex items-center" style={{ color: 'var(--text-primary)', display: 'flex', gap: '8px' }}>
             {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: 22, height: 22, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={22} />}
           </div>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
@@ -958,7 +958,7 @@ export default function Davora() {
               <span className="user-name" style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.85rem', width: '100%', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{userEmail.split('@')[0] || "User"}</span>
               <span className="user-plan" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Free</span>
             </div>
-            <div className="upgrade-pill" style={{ background: '#2f2f2f', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: '500' }}>
+            <div className="upgrade-pill" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: '500' }}>
               Upgrade
             </div>
           </button>
@@ -1270,7 +1270,7 @@ export default function Davora() {
                 <div className="attachment-preview" style={{ padding: '8px 16px', display: 'flex' }}>
                   <div style={{ position: 'relative', display: 'inline-block' }}>
                     <img src={attachment.url} alt="Attachment" style={{ height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
-                    <button type="button" onClick={() => setAttachment(null)} style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--bg-secondary)', borderRadius: '50%', padding: '2px', cursor: 'pointer', border: '1px solid var(--border-color)' }}><X size={14} className="text-white" /></button>
+                    <button type="button" onClick={() => setAttachment(null)} style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--bg-secondary)', borderRadius: '50%', padding: '2px', cursor: 'pointer', border: '1px solid var(--border-color)' }}><X size={14} style={{ color: 'var(--text-primary)' }} /></button>
                   </div>
                 </div>
               )}
@@ -1512,7 +1512,7 @@ export default function Davora() {
                   <div className="settings-section border-top" style={{ paddingTop: '24px' }}>
                     <div className="settings-row" style={{ alignItems: 'center' }}>
                       <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>Memory <span className="help-icon" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '16px', height: '16px', borderRadius: '50%', border: '1px solid var(--text-secondary)', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>?</span></h3>
-                      <button className="manage-btn" onClick={() => { setShowSettings(false); setActiveModal('memory'); }} style={{ background: '#202123', color: 'white', border: '1px solid #3f3f3f', padding: '6px 12px', borderRadius: '16px', fontSize: '0.8rem', fontWeight: '500', cursor: 'pointer' }}>Manage</button>
+                      <button className="manage-btn" onClick={() => { setShowSettings(false); setActiveModal('memory'); }} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '6px 12px', borderRadius: '16px', fontSize: '0.8rem', fontWeight: '500', cursor: 'pointer' }}>Manage</button>
                     </div>
 
                     <div className="settings-row border-top" style={{ paddingTop: '16px', marginTop: '16px' }}>
