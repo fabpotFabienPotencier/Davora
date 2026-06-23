@@ -61,6 +61,7 @@ export default function Davora() {
   // Settings & Preferences
   const [showSettings, setShowSettings] = useState(false);
   const [settingsTab, setSettingsTab] = useState('Personalization');
+  const [mobileSettingsView, setMobileSettingsView] = useState('menu');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [prefs, setPrefs] = useState({
     theme: 'dark',
@@ -1026,9 +1027,9 @@ export default function Davora() {
               </div>
               <div className="popover-menu">
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setActiveModal('upgrade'); }}><Sparkles size={16} /> Upgrade plan</button>
-                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); }}><VenetianMask size={16} /> Personalization</button>
-                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); }}><User size={16} /> Profile</button>
-                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); }}><Settings size={16} /> Settings</button>
+                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><VenetianMask size={16} /> Personalization</button>
+                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Account'); setMobileSettingsView('pane'); }}><User size={16} /> Profile</button>
+                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); setMobileSettingsView('menu'); }}><Settings size={16} /> Settings</button>
                 <div className="popover-divider"></div>
                 <button className="popover-item"><TriangleAlert size={16} /> Help</button>
                 <button className="popover-item" onClick={() => { localStorage.clear(); router.push('/login'); }}><span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ChevronRight size={16} /></span> Log out</button>
@@ -1470,35 +1471,40 @@ export default function Davora() {
 
       {/* Settings Modal Overlay */}
       {showSettings && (
-        <div className="modal-overlay" onClick={() => setShowSettings(false)}>
-          <div className="settings-modal-content" onClick={e => e.stopPropagation()}>
+        <div className="modal-overlay" onClick={() => { setShowSettings(false); setMobileSettingsView('menu'); }}>
+          <div className={`settings-modal-content mobile-view-${mobileSettingsView}`} onClick={e => e.stopPropagation()}>
             <div className="settings-sidebar">
               <div className="settings-sidebar-header hide-on-desktop">
-                <button className="icon-action-btn" onClick={() => setShowSettings(false)}><X size={20} /></button>
+                <h2>Settings</h2>
+                <button className="icon-action-btn" onClick={() => { setShowSettings(false); setMobileSettingsView('menu'); }}><X size={20} /></button>
               </div>
               <div className="settings-nav">
-                <button className={`settings-nav-btn ${settingsTab === 'General' ? 'active' : ''}`} onClick={() => setSettingsTab('General')}><Settings size={18} /> General</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Notifications' ? 'active' : ''}`} onClick={() => setSettingsTab('Notifications')}><Bell size={18} /> Notifications</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Personalization' ? 'active' : ''}`} onClick={() => setSettingsTab('Personalization')}><VenetianMask size={18} /> Personalization</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Apps' ? 'active' : ''}`} onClick={() => setSettingsTab('Apps')}><Grid size={18} /> Apps</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Voice' ? 'active' : ''}`} onClick={() => setSettingsTab('Voice')}><Mic size={18} /> Voice</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Billing' ? 'active' : ''}`} onClick={() => setSettingsTab('Billing')}><CreditCard size={18} /> Billing</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Data controls' ? 'active' : ''}`} onClick={() => setSettingsTab('Data controls')}><Database size={18} /> Data controls</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Storage' ? 'active' : ''}`} onClick={() => setSettingsTab('Storage')}><HardDrive size={18} /> Storage</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Safety' ? 'active' : ''}`} onClick={() => setSettingsTab('Safety')}><Shield size={18} /> Safety</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Security' ? 'active' : ''}`} onClick={() => setSettingsTab('Security')}><Settings size={18} /> Security and login</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Parental controls' ? 'active' : ''}`} onClick={() => setSettingsTab('Parental controls')}><Users size={18} /> Parental controls</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Trusted contact' ? 'active' : ''}`} onClick={() => setSettingsTab('Trusted contact')}><UserPlus size={18} /> Trusted contact</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Account' ? 'active' : ''}`} onClick={() => setSettingsTab('Account')}><User size={18} /> Account</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Tasks' ? 'active' : ''}`} onClick={() => setSettingsTab('Tasks')}><Activity size={18} /> Scheduled Tasks</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Reports' ? 'active' : ''}`} onClick={() => setSettingsTab('Reports')}><Shield size={18} /> Bug Reports</button>
+                <button className={`settings-nav-btn ${settingsTab === 'General' ? 'active' : ''}`} onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }}><Settings size={18} /> General</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Notifications' ? 'active' : ''}`} onClick={() => { setSettingsTab('Notifications'); setMobileSettingsView('pane'); }}><Bell size={18} /> Notifications</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Personalization' ? 'active' : ''}`} onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><VenetianMask size={18} /> Personalization</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Apps' ? 'active' : ''}`} onClick={() => { setSettingsTab('Apps'); setMobileSettingsView('pane'); }}><Grid size={18} /> Apps</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Voice' ? 'active' : ''}`} onClick={() => { setSettingsTab('Voice'); setMobileSettingsView('pane'); }}><Mic size={18} /> Voice</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Billing' ? 'active' : ''}`} onClick={() => { setSettingsTab('Billing'); setMobileSettingsView('pane'); }}><CreditCard size={18} /> Billing</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Data controls' ? 'active' : ''}`} onClick={() => { setSettingsTab('Data controls'); setMobileSettingsView('pane'); }}><Database size={18} /> Data controls</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Storage' ? 'active' : ''}`} onClick={() => { setSettingsTab('Storage'); setMobileSettingsView('pane'); }}><HardDrive size={18} /> Storage</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Safety' ? 'active' : ''}`} onClick={() => { setSettingsTab('Safety'); setMobileSettingsView('pane'); }}><Shield size={18} /> Safety</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Security' ? 'active' : ''}`} onClick={() => { setSettingsTab('Security'); setMobileSettingsView('pane'); }}><Settings size={18} /> Security and login</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Parental controls' ? 'active' : ''}`} onClick={() => { setSettingsTab('Parental controls'); setMobileSettingsView('pane'); }}><Users size={18} /> Parental controls</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Trusted contact' ? 'active' : ''}`} onClick={() => { setSettingsTab('Trusted contact'); setMobileSettingsView('pane'); }}><UserPlus size={18} /> Trusted contact</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Account' ? 'active' : ''}`} onClick={() => { setSettingsTab('Account'); setMobileSettingsView('pane'); }}><User size={18} /> Account</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Tasks' ? 'active' : ''}`} onClick={() => { setSettingsTab('Tasks'); setMobileSettingsView('pane'); }}><Activity size={18} /> Scheduled Tasks</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Reports' ? 'active' : ''}`} onClick={() => { setSettingsTab('Reports'); setMobileSettingsView('pane'); }}><Shield size={18} /> Bug Reports</button>
               </div>
             </div>
 
             <div className="settings-body">
-              <div className="settings-header-desktop">
+              <div className="settings-header-desktop hide-on-mobile">
                 <h2>{settingsTab}</h2>
-                <button className="icon-action-btn" onClick={() => setShowSettings(false)}><X size={20} /></button>
+                <button className="icon-action-btn" onClick={() => { setShowSettings(false); setMobileSettingsView('menu'); }}><X size={20} /></button>
+              </div>
+              <div className="settings-header-mobile hide-on-desktop" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <button className="icon-action-btn" onClick={() => setMobileSettingsView('menu')}><ChevronLeft size={24} /></button>
+                <h2 style={{ flex: 1 }}>{settingsTab}</h2>
               </div>
 
               {settingsTab === 'Personalization' && (
@@ -2438,7 +2444,7 @@ export default function Davora() {
               <button className="cmd-item" onClick={() => { setInputMode('deep'); setShowCmdPalette(false); }}>
                 <Activity size={16} /> Switch to Deep Think Mode
               </button>
-              <button className="cmd-item" onClick={() => { setShowSettings(true); setShowCmdPalette(false); }}>
+              <button className="cmd-item" onClick={() => { setShowSettings(true); setMobileSettingsView('menu'); setShowCmdPalette(false); }}>
                 <Settings size={16} /> Open Settings
               </button>
               <p className="cmd-label">Recent Chats</p>
