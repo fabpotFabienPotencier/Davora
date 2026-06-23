@@ -112,6 +112,7 @@ export default function Davora() {
   const [show2FA, setShow2FA] = useState(false);
   const [twoFactorSecret, setTwoFactorSecret] = useState("");
   const [twoFactorUri, setTwoFactorUri] = useState("");
+  const [twoFactorQrCode, setTwoFactorQrCode] = useState("");
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [showPasswordUpdate, setShowPasswordUpdate] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -1869,6 +1870,7 @@ export default function Davora() {
                         if (data.status === "already_enabled") { showNotification("2FA is already enabled."); return; }
                         setTwoFactorSecret(data.secret);
                         setTwoFactorUri(data.totp_uri);
+                        setTwoFactorQrCode(data.qr_code);
                         setShow2FA(true);
                       } catch (e) { showNotification("Failed to generate 2FA"); }
                     }}>Enable</button>
@@ -1883,9 +1885,17 @@ export default function Davora() {
                         <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>Setup Authenticator</h4>
                       </div>
                       
-                      <p style={{ marginBottom: '16px', color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5' }}>
-                        For maximum security, we do not transmit QR codes over the network. Please copy your secure setup key below and enter it into your authenticator app (e.g. Google Authenticator, Authy).
-                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px', width: '100%' }}>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px', textAlign: 'center', maxWidth: '400px' }}>
+                          Scan the QR code below with your authenticator app (e.g. Google Authenticator, Authy, 1Password).
+                        </p>
+                        {twoFactorQrCode && (
+                          <div style={{ background: 'white', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'inline-block', marginBottom: '16px' }}>
+                            <img src={twoFactorQrCode} alt="2FA QR Code" style={{ width: '150px', height: '150px', display: 'block' }} />
+                          </div>
+                        )}
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Or enter the setup key manually:</p>
+                      </div>
 
                       <div style={{ width: '100%', marginBottom: '24px' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Secure Setup Key</label>
