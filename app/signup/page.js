@@ -100,7 +100,7 @@ export default function Signup() {
               {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={24} color="#fff" />}
             </div>
             <div className="auth-pill">
-              You are signing into <Bot size={14} color="#fff" style={{ marginLeft: '4px' }} /> <strong style={{ color: '#fff', fontWeight: 600 }}>Davora</strong>
+              You are signing into {logoUrl ? <img src={logoUrl} alt="logo" style={{ width: 14, height: 14, objectFit: 'contain', marginLeft: '4px', borderRadius: '50%' }} /> : <Bot size={14} color="#fff" style={{ marginLeft: '4px' }} />} <strong style={{ color: '#fff', fontWeight: 600 }}>Davora</strong>
             </div>
           </div>
 
