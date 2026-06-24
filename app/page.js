@@ -933,7 +933,7 @@ export default function Davora() {
   };
 
   return (
-    <div className={`app-layout font-size-${prefs.fontSize} ${isTyping ? 'ambient-focus' : ''}`}>
+    <div className={`app-layout font-size-${prefs.fontSize} ${isTyping ? 'ambient-focus' : ''} ${isTemporary ? 'incognito-theme' : ''}`}>
 
       {/* Toast Notification */}
       <div className={`toast-notification ${toast ? 'show' : ''}`}>
@@ -1118,26 +1118,28 @@ export default function Davora() {
         </header>
 
         {/* Chat Box */}
-        {isTemporary && (
-          <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '12px', textAlign: 'center', fontSize: '0.85rem', fontWeight: '500', borderBottom: '1px solid rgba(16, 185, 129, 0.2)', width: '100%', zIndex: 10 }}>
-            <Shield size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px', marginBottom: '2px' }} />
-            Private Chat Mode Enabled. This conversation will only be stored securely for 30 days and then permanently deleted.
-          </div>
-        )}
         <main className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
           {messages.length === 0 && (
             <div className="welcome-screen">
               <div className="welcome-icon" style={{ marginBottom: '16px' }}>
-                {logoUrl ? <img src={logoUrl} alt="Davora" style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={64} strokeWidth={1.5} />}
+                {isTemporary ? <Ghost size={64} strokeWidth={1.5} color="#10b981" /> : (logoUrl ? <img src={logoUrl} alt="Davora" style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={64} strokeWidth={1.5} />)}
               </div>
-              <h2 style={{ textAlign: 'center', transition: 'opacity 0.3s ease-in' }}>{greeting}</h2>
-              <div className="suggestion-chips">
-                {visibleSuggestions.map((s, idx) => (
-                  <button key={idx} className="suggestion-chip" onClick={() => triggerSend(s.text)}>
-                    {s.icon} {s.text}
-                  </button>
-                ))}
-              </div>
+              <h2 style={{ textAlign: 'center', transition: 'opacity 0.3s ease-in', marginBottom: isTemporary ? '12px' : '32px' }}>{isTemporary ? "Private Chat Mode" : greeting}</h2>
+              {isTemporary && (
+                <div style={{ color: '#10b981', textAlign: 'center', fontSize: '0.9rem', maxWidth: '600px', margin: '0 auto 24px', lineHeight: '1.5', opacity: 0.8 }}>
+                  <Shield size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px', marginBottom: '2px' }} />
+                  Private Chat Mode Enabled. This conversation will only be stored securely for 30 days and then permanently deleted. We do not use private chats for model training.
+                </div>
+              )}
+              {!isTemporary && (
+                <div className="suggestion-chips">
+                  {visibleSuggestions.map((s, idx) => (
+                    <button key={idx} className="suggestion-chip" onClick={() => triggerSend(s.text)}>
+                      {s.icon} {s.text}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
