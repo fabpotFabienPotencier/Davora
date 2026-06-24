@@ -530,6 +530,24 @@ export default function Davora() {
     ws.current = new WebSocket(wsUrl);
     ws.current.onmessage = (event) => {
       const data = event.data;
+      if (data.includes("quota_error")) {
+        try {
+          const quotaData = JSON.parse(data);
+          if (quotaData.quota_error) {
+            setIsTyping(false);
+            let msg = "Usage limit reached.";
+            if (quotaData.quota_error === "UNAUTHORIZED") msg = "Authentication failed. Please log in.";
+            else if (quotaData.quota_error === "IMAGE_LIMIT") msg = `Free image limit reached. Wait ${quotaData.wait_hours} hours or upgrade.`;
+            else if (quotaData.quota_error === "CHAT_LIMIT") msg = `Free chat limit reached. Wait ${quotaData.wait_hours} hours or upgrade.`;
+            
+            showNotification(msg);
+            if (quotaData.quota_error.includes("LIMIT")) {
+              setActiveModal("upgrade");
+            }
+            return;
+          }
+        } catch (e) {}
+      }
       if (data === "[DONE]") {
         setIsTyping(false);
         setTimeout(() => inputRef.current?.focus(), 100);
@@ -665,7 +683,8 @@ export default function Davora() {
       aboutYou: prefs.aboutYou,
       referenceMemories: prefs.referenceMemories,
       referenceHistory: prefs.referenceHistory,
-      strictMarkdown: prefs.strictMarkdown
+      strictMarkdown: prefs.strictMarkdown,
+      token: localStorage.getItem('davora_token')
     };
     if (attachment) {
       payloadObj.image = attachment.base64;
