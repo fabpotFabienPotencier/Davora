@@ -11,7 +11,7 @@ import {
   Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database, Globe,
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight, ShieldCheck,
   VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert, Ghost,
-  Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image,
+  Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint,
   Bell, Grid, CreditCard, HardDrive, Users, UserPlus
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -1046,7 +1046,7 @@ export default function Davora() {
               </div>
               <div className="popover-menu">
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setActiveModal('upgrade'); }}><Sparkles size={16} /> Upgrade plan</button>
-                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Sparkles size={16} /> Personalization</button>
+                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Fingerprint size={16} /> Personalization</button>
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Account'); setMobileSettingsView('pane'); }}><User size={16} /> Profile</button>
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); setMobileSettingsView('menu'); }}><Settings size={16} /> Settings</button>
                 <div className="popover-divider"></div>
@@ -1500,7 +1500,7 @@ export default function Davora() {
               <div className="settings-nav">
                 <button className={`settings-nav-btn ${settingsTab === 'General' ? 'active' : ''}`} onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }}><Settings size={18} /> General</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Notifications' ? 'active' : ''}`} onClick={() => { setSettingsTab('Notifications'); setMobileSettingsView('pane'); }}><Bell size={18} /> Notifications</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Personalization' ? 'active' : ''}`} onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Sparkles size={18} /> Personalization</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Personalization' ? 'active' : ''}`} onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Fingerprint size={18} /> Personalization</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Apps' ? 'active' : ''}`} onClick={() => { setSettingsTab('Apps'); setMobileSettingsView('pane'); }}><Grid size={18} /> Apps</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Voice' ? 'active' : ''}`} onClick={() => { setSettingsTab('Voice'); setMobileSettingsView('pane'); }}><Mic size={18} /> Voice</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Billing' ? 'active' : ''}`} onClick={() => { setSettingsTab('Billing'); setMobileSettingsView('pane'); }}><CreditCard size={18} /> Billing</button>
