@@ -43,51 +43,89 @@ export default function Signup() {
   };
 
   return (
-    <div className="app-layout" style={{ justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '400px', padding: '40px', background: 'var(--bg-secondary)', borderRadius: '24px', border: '1px solid var(--border-color)', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '32px' }}>
-          <div style={{ background: '#10b981', padding: '12px', borderRadius: '16px', marginBottom: '16px' }}>
-            <Bot size={32} color="white" />
+    <>
+      <style dangerouslySetInnerHTML={{__html: `
+        .auth-container { display: flex; width: 100vw; height: 100vh; background: var(--bg-primary); overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .auth-form-side { flex: 1; display: flex; justify-content: center; align-items: center; padding: 24px; position: relative; z-index: 10; background: var(--bg-primary); }
+        .auth-form-card { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 32px; }
+        .auth-brand-side { display: none; flex: 1.2; position: relative; overflow: hidden; background: #000; border-left: 1px solid rgba(255,255,255,0.05); }
+        .brand-bg { position: absolute; inset: 0; background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%); opacity: 0.8; }
+        .brand-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50vw; height: 50vw; background: #10b981; filter: blur(150px); opacity: 0.15; border-radius: 50%; animation: pulse 8s ease-in-out infinite alternate; pointer-events: none; }
+        .brand-content { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; user-select: none; }
+        .auth-input-wrapper { position: relative; width: 100%; }
+        .auth-input { width: 100%; padding: 16px 16px 16px 48px; background: transparent; border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-primary); outline: none; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+        .auth-input:focus { border-color: #10b981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1); }
+        .auth-input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; }
+        .auth-btn { width: 100%; background: var(--text-primary); color: var(--bg-primary); padding: 16px; border-radius: 12px; border: none; font-weight: 600; font-size: 1rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: opacity 0.2s, transform 0.1s; }
+        .auth-btn:hover:not(:disabled) { opacity: 0.9; }
+        .auth-btn:active:not(:disabled) { transform: scale(0.98); }
+        .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .auth-link { color: #10b981; text-decoration: none; font-weight: 500; transition: opacity 0.2s; }
+        .auth-link:hover { opacity: 0.8; }
+        @keyframes pulse { 0% { opacity: 0.1; transform: translate(-50%, -50%) scale(0.9); } 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(1.1); } }
+        @media (min-width: 1024px) {
+          .auth-brand-side { display: block; }
+        }
+      `}} />
+      <div className="auth-container">
+        <div className="auth-form-side">
+          <div className="auth-form-card">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
+              <h1 style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Create account</h1>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>Join Davora to start chatting.</p>
+            </div>
+
+            {error && <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '14px', borderRadius: '12px', fontSize: '0.9rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}>{error}</div>}
+
+            <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="auth-input-wrapper">
+                  <Mail size={20} className="auth-input-icon" />
+                  <input
+                    type="email"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="auth-input"
+                  />
+                </div>
+                <div className="auth-input-wrapper">
+                  <Lock size={20} className="auth-input-icon" />
+                  <input
+                    type="password"
+                    placeholder="Password (min 6 chars)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="auth-input"
+                  />
+                </div>
+              </div>
+              <button type="submit" disabled={isLoading} className="auth-btn">
+                {isLoading ? 'Creating account...' : <>Sign Up <ArrowRight size={18} /></>}
+              </button>
+            </form>
+
+            <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '16px' }}>
+              Already have an account? <a href="/login" className="auth-link">Log in</a>
+            </p>
           </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)' }}>Create an account</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '4px' }}>Join Davora to start chatting</p>
         </div>
-
-        {error && <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '12px', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '20px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>{error}</div>}
-
-        <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ position: 'relative' }}>
-            <Mail size={18} style={{ position: 'absolute', left: '16px', top: '15px', color: 'var(--text-secondary)' }} />
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{ width: '100%', padding: '14px 16px 14px 44px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '12px', color: 'var(--text-primary)', outline: 'none' }}
-            />
+        
+        <div className="auth-brand-side">
+          <div className="brand-bg"></div>
+          <div className="brand-glow"></div>
+          <div className="brand-content">
+            <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '24px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', marginBottom: '32px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+              <Bot size={80} strokeWidth={1} color="#fff" />
+            </div>
+            <h2 style={{ fontSize: '2.5rem', fontWeight: '400', letterSpacing: '8px', margin: 0, paddingLeft: '8px' }}>DAVORA</h2>
+            <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '2px', marginTop: '16px', textTransform: 'uppercase' }}>Advanced Cognitive Engine</p>
           </div>
-          <div style={{ position: 'relative' }}>
-            <Lock size={18} style={{ position: 'absolute', left: '16px', top: '15px', color: 'var(--text-secondary)' }} />
-            <input
-              type="password"
-              placeholder="Password (min 6 chars)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              style={{ width: '100%', padding: '14px 16px 14px 44px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '12px', color: 'var(--text-primary)', outline: 'none' }}
-            />
-          </div>
-          <button type="submit" disabled={isLoading} style={{ background: '#10b981', color: 'white', padding: '14px', borderRadius: '12px', border: 'none', fontWeight: '600', cursor: isLoading ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '8px', transition: 'background 0.2s' }}>
-            {isLoading ? 'Creating account...' : <>Sign Up <ArrowRight size={18} /></>}
-          </button>
-        </form>
-
-        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '24px' }}>
-          Already have an account? <a href="/login" style={{ color: '#10b981', textDecoration: 'none', fontWeight: '500' }}>Log in</a>
-        </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
