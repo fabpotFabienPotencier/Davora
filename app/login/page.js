@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bot, ArrowRight, Lock, Mail, Shield } from 'lucide-react';
+import { Bot, ArrowRight, Lock, Mail, Shield, Eye, EyeOff } from 'lucide-react';
 import '../globals.css';
 
 export default function Login() {
@@ -12,6 +12,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -140,13 +141,23 @@ export default function Login() {
                   </div>
                   <div className="auth-input-group">
                     <label className="auth-label">Password</label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="auth-input"
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="auth-input"
+                        style={{ paddingRight: '48px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                   <button type="submit" disabled={isLoading} className="auth-btn">
                     {isLoading ? 'Authenticating...' : 'Next'}

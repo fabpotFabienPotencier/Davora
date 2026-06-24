@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bot, ArrowRight, Lock, Mail } from 'lucide-react';
+import { Bot, ArrowRight, Lock, Mail, Eye, EyeOff } from 'lucide-react';
 import '../globals.css';
 
 export default function Signup() {
@@ -10,6 +10,7 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -23,6 +24,12 @@ export default function Signup() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/signup', {
@@ -126,14 +133,36 @@ export default function Signup() {
                 </div>
                 <div className="auth-input-group">
                   <label className="auth-label">Password (min 6 chars)</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                    className="auth-input"
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="auth-input"
+                      style={{ paddingRight: '48px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px' }}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  {password.length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                      <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', display: 'flex', gap: '2px' }}>
+                        <div style={{ flex: 1, background: password.length > 0 ? (password.length < 6 ? '#ef4444' : (password.length > 7 && /[A-Z0-9]/.test(password) ? '#10b981' : '#eab308')) : 'transparent', transition: 'background 0.3s' }} />
+                        <div style={{ flex: 1, background: password.length >= 6 ? (password.length > 7 && /[A-Z0-9]/.test(password) && /[^A-Za-z0-9]/.test(password) ? '#10b981' : (password.length > 7 && /[A-Z]/.test(password) && /[0-9]/.test(password) ? '#10b981' : '#eab308')) : 'transparent', transition: 'background 0.3s' }} />
+                        <div style={{ flex: 1, background: password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password) ? '#10b981' : 'transparent', transition: 'background 0.3s' }} />
+                      </div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, width: '45px', textAlign: 'right', color: password.length < 6 ? '#ef4444' : (password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password) ? '#10b981' : '#eab308') }}>
+                        {password.length < 6 ? 'Weak' : (password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password) ? 'Strong' : 'Good')}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <button type="submit" disabled={isLoading} className="auth-btn">
                   {isLoading ? 'Creating account...' : 'Next'}
