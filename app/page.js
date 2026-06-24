@@ -10,7 +10,7 @@ import {
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
   Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database, Globe,
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight, ShieldCheck,
-  VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert,
+  VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert, Ghost,
   Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image,
   Bell, Grid, CreditCard, HardDrive, Users, UserPlus
 } from "lucide-react";
@@ -985,7 +985,7 @@ export default function Davora() {
           <button className="sidebar-nav-btn" onClick={() => setActiveModal('codex')}>
             <Code size={16} /> Codex
           </button>
-          <button className="sidebar-nav-btn" onClick={() => setActiveModal('more')}>
+          <button className="sidebar-nav-btn" onClick={() => showNotification('Coming soon...')}>
             <MoreHorizontal size={16} /> More
           </button>
         </div>
@@ -1046,7 +1046,7 @@ export default function Davora() {
               </div>
               <div className="popover-menu">
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setActiveModal('upgrade'); }}><Sparkles size={16} /> Upgrade plan</button>
-                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><VenetianMask size={16} /> Personalization</button>
+                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Sparkles size={16} /> Personalization</button>
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Account'); setMobileSettingsView('pane'); }}><User size={16} /> Profile</button>
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); setMobileSettingsView('menu'); }}><Settings size={16} /> Settings</button>
                 <div className="popover-divider"></div>
@@ -1111,7 +1111,7 @@ export default function Davora() {
               onClick={() => { setIsTemporary(!isTemporary); showNotification(isTemporary ? "Temporary Chat Disabled" : "Temporary Chat Enabled. History won't be saved."); }}
               title="Temporary Chat (Incognito)"
             >
-              <VenetianMask size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
+              <Ghost size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
             </button>
 
           </div>
@@ -1500,7 +1500,7 @@ export default function Davora() {
               <div className="settings-nav">
                 <button className={`settings-nav-btn ${settingsTab === 'General' ? 'active' : ''}`} onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }}><Settings size={18} /> General</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Notifications' ? 'active' : ''}`} onClick={() => { setSettingsTab('Notifications'); setMobileSettingsView('pane'); }}><Bell size={18} /> Notifications</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Personalization' ? 'active' : ''}`} onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><VenetianMask size={18} /> Personalization</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Personalization' ? 'active' : ''}`} onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Sparkles size={18} /> Personalization</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Apps' ? 'active' : ''}`} onClick={() => { setSettingsTab('Apps'); setMobileSettingsView('pane'); }}><Grid size={18} /> Apps</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Voice' ? 'active' : ''}`} onClick={() => { setSettingsTab('Voice'); setMobileSettingsView('pane'); }}><Mic size={18} /> Voice</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Billing' ? 'active' : ''}`} onClick={() => { setSettingsTab('Billing'); setMobileSettingsView('pane'); }}><CreditCard size={18} /> Billing</button>
