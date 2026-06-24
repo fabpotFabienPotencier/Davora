@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bot, ArrowRight, Lock, Mail, Shield } from 'lucide-react';
 import '../globals.css';
@@ -11,7 +11,15 @@ export default function Login() {
   const [requires2FA, setRequires2FA] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(null);
   const router = useRouter();
+
+  useEffect(() => {
+    fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } })
+      .then(res => res.json())
+      .then(cfg => { if (cfg.logo_url) setLogoUrl(cfg.logo_url); })
+      .catch(() => {});
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -75,11 +83,17 @@ export default function Login() {
         @media (min-width: 1024px) {
           .auth-brand-side { display: block; }
         }
+        @media (max-width: 1023px) {
+          .mobile-only-logo { display: block !important; }
+        }
       `}} />
       <div className="auth-container">
         <div className="auth-form-side">
           <div className="auth-form-card">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
+              <div className="mobile-only-logo" style={{ marginBottom: '16px', display: 'none' }}>
+                {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={40} color="#a855f7" />}
+              </div>
               {!requires2FA ? (
                 <>
                   <h1 style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>Sign in</h1>
@@ -166,7 +180,7 @@ export default function Login() {
           <div className="brand-glow"></div>
           <div className="brand-content">
             <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '24px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(10px)', marginBottom: '32px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
-              <Bot size={80} strokeWidth={1} color="#fff" />
+              {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: 80, height: 80, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={80} strokeWidth={1} color="#fff" />}
             </div>
             <h2 style={{ fontSize: '2.5rem', fontWeight: '400', letterSpacing: '8px', margin: 0, paddingLeft: '8px' }}>DAVORA</h2>
             <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '2px', marginTop: '16px', textTransform: 'uppercase' }}>Advanced Cognitive Engine</p>
