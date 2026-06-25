@@ -13,21 +13,21 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState(null);
   const [platformName, setPlatformName] = useState('Davora');
-  const [termsUrl, setTermsUrl] = useState('#');
-  const [privacyUrl, setPrivacyUrl] = useState('#');
+  const [termsUrl, setTermsUrl] = useState('/terms');
+  const [privacyUrl, setPrivacyUrl] = useState('/privacy');
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } })
       .then(res => res.json())
-      .then(cfg => { 
-        if (cfg.logo_url) setLogoUrl(cfg.logo_url); 
+      .then(cfg => {
+        if (cfg.logo_url) setLogoUrl(cfg.logo_url);
         if (cfg.platform_name) setPlatformName(cfg.platform_name);
         if (cfg.terms_url) setTermsUrl(cfg.terms_url);
         if (cfg.privacy_url) setPrivacyUrl(cfg.privacy_url);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const handleLogin = async (e) => {
@@ -38,7 +38,7 @@ export default function Login() {
     try {
       const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/login', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'ngrok-skip-browser-warning': 'true'
         },
@@ -51,13 +51,13 @@ export default function Login() {
       }
 
       const data = await res.json();
-      
+
       if (data.requires_2fa) {
         setRequires2FA(true);
         setTwoFactorCode('');
         return;
       }
-      
+
       localStorage.setItem('davora_token', data.access_token);
       localStorage.setItem('davora_email', email);
       router.push('/');
@@ -70,7 +70,8 @@ export default function Login() {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .auth-container { display: flex; width: 100vw; height: 100vh; background: #000000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #ffffff; }
         .auth-form-side { flex: 1; display: flex; flex-direction: column; padding: 24px; position: relative; z-index: 10; background: #161616; border-right: 1px solid rgba(255,255,255,0.05); }
         .auth-form-side-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 24px; position: absolute; top: 0; left: 0; }
@@ -112,7 +113,7 @@ export default function Login() {
       `}} />
       <div className="auth-container">
         <div className="auth-form-side">
-          
+
           <div className="auth-form-side-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={24} color="#fff" />}
@@ -124,7 +125,7 @@ export default function Login() {
 
           <div className="auth-form-wrapper">
             <div className="auth-form-card">
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '8px' }}>
                 {!requires2FA ? (
                   <h1 style={{ fontSize: '1.75rem', fontWeight: '500', color: '#ffffff', textAlign: 'center' }}>Log in with your email</h1>
@@ -209,12 +210,12 @@ export default function Login() {
               )}
             </div>
           </div>
-          
+
           <div className="terms-text">
             By continuing, you agree to {platformName}'s <a href={termsUrl}>Terms of Service</a> and <a href={privacyUrl}>Privacy Policy</a>.
           </div>
         </div>
-        
+
         <div className="auth-brand-side">
           <div className="brand-bg"></div>
           <div className="brand-content">
