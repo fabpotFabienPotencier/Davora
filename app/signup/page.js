@@ -10,13 +10,22 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState(null);
+  const [platformName, setPlatformName] = useState('Davora');
+  const [termsUrl, setTermsUrl] = useState('/terms');
+  const [privacyUrl, setPrivacyUrl] = useState('/privacy');
   const [showPassword, setShowPassword] = useState(false);
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } })
       .then(res => res.json())
-      .then(cfg => { if (cfg.logo_url) setLogoUrl(cfg.logo_url); })
+      .then(cfg => { 
+        if (cfg.logo_url) setLogoUrl(cfg.logo_url); 
+        if (cfg.platform_name) setPlatformName(cfg.platform_name);
+        if (cfg.terms_url) setTermsUrl(cfg.terms_url);
+        if (cfg.privacy_url) setPrivacyUrl(cfg.privacy_url);
+      })
       .catch(() => {});
   }, []);
 
@@ -24,6 +33,12 @@ export default function Signup() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+
+    if (!agreeToTerms) {
+      setError('You must agree to the Terms of Service and Privacy Policy to proceed.');
+      setIsLoading(false);
+      return;
+    }
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters long.');
@@ -107,7 +122,7 @@ export default function Signup() {
               {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={24} color="#fff" />}
             </div>
             <div className="auth-pill">
-              You are signing into {logoUrl ? <img src={logoUrl} alt="logo" style={{ width: 14, height: 14, objectFit: 'contain', marginLeft: '4px', borderRadius: '50%' }} /> : <Bot size={14} color="#fff" style={{ marginLeft: '4px' }} />} <strong style={{ color: '#fff', fontWeight: 600 }}>Davora</strong>
+              You are signing into {logoUrl ? <img src={logoUrl} alt="logo" style={{ width: 14, height: 14, objectFit: 'contain', marginLeft: '4px', borderRadius: '50%' }} /> : <Bot size={14} color="#fff" style={{ marginLeft: '4px' }} />} <strong style={{ color: '#fff', fontWeight: 600 }}>{platformName}</strong>
             </div>
           </div>
 
@@ -164,6 +179,20 @@ export default function Signup() {
                     </div>
                   )}
                 </div>
+                
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '4px' }}>
+                  <input 
+                    type="checkbox" 
+                    id="terms-checkbox" 
+                    checked={agreeToTerms} 
+                    onChange={(e) => setAgreeToTerms(e.target.checked)} 
+                    style={{ marginTop: '3px', cursor: 'pointer', accentColor: '#10b981' }} 
+                  />
+                  <label htmlFor="terms-checkbox" style={{ fontSize: '0.8rem', color: '#aaaaaa', cursor: 'pointer', userSelect: 'none', lineHeight: '1.4' }}>
+                    I have read and agree to {platformName}'s <a href={termsUrl} target="_blank" rel="noopener noreferrer" className="auth-link">Terms of Service</a> and <a href={privacyUrl} target="_blank" rel="noopener noreferrer" className="auth-link">Privacy Policy</a>, including the processing of my data as governed by the GDPR.
+                  </label>
+                </div>
+
                 <button type="submit" disabled={isLoading} className="auth-btn">
                   {isLoading ? 'Creating account...' : 'Next'}
                 </button>
@@ -179,14 +208,14 @@ export default function Signup() {
           </div>
           
           <div className="terms-text">
-            By continuing, you agree to Davora's <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+            By continuing, you agree to {platformName}'s <a href={termsUrl}>Terms of Service</a> and <a href={privacyUrl}>Privacy Policy</a>.
           </div>
         </div>
         
         <div className="auth-brand-side">
           <div className="brand-bg"></div>
           <div className="brand-content">
-            {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: '80%', height: '80%', objectFit: 'contain' }} /> : <Bot style={{ width: '80%', height: '80%' }} color="#fff" />}
+            {logoUrl ? <img src={logoUrl} alt={`${platformName} Logo`} style={{ width: '80%', height: '80%', objectFit: 'contain' }} /> : <Bot style={{ width: '80%', height: '80%' }} color="#fff" />}
           </div>
         </div>
       </div>

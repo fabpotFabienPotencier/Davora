@@ -12,13 +12,21 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [logoUrl, setLogoUrl] = useState(null);
+  const [platformName, setPlatformName] = useState('Davora');
+  const [termsUrl, setTermsUrl] = useState('#');
+  const [privacyUrl, setPrivacyUrl] = useState('#');
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } })
       .then(res => res.json())
-      .then(cfg => { if (cfg.logo_url) setLogoUrl(cfg.logo_url); })
+      .then(cfg => { 
+        if (cfg.logo_url) setLogoUrl(cfg.logo_url); 
+        if (cfg.platform_name) setPlatformName(cfg.platform_name);
+        if (cfg.terms_url) setTermsUrl(cfg.terms_url);
+        if (cfg.privacy_url) setPrivacyUrl(cfg.privacy_url);
+      })
       .catch(() => {});
   }, []);
 
@@ -110,7 +118,7 @@ export default function Login() {
               {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: 24, height: 24, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={24} color="#fff" />}
             </div>
             <div className="auth-pill">
-              You are signing into {logoUrl ? <img src={logoUrl} alt="logo" style={{ width: 14, height: 14, objectFit: 'contain', marginLeft: '4px', borderRadius: '50%' }} /> : <Bot size={14} color="#fff" style={{ marginLeft: '4px' }} />} <strong style={{ color: '#fff', fontWeight: 600 }}>Davora</strong>
+              You are signing into {logoUrl ? <img src={logoUrl} alt="logo" style={{ width: 14, height: 14, objectFit: 'contain', marginLeft: '4px', borderRadius: '50%' }} /> : <Bot size={14} color="#fff" style={{ marginLeft: '4px' }} />} <strong style={{ color: '#fff', fontWeight: 600 }}>{platformName}</strong>
             </div>
           </div>
 
@@ -140,7 +148,10 @@ export default function Login() {
                     />
                   </div>
                   <div className="auth-input-group">
-                    <label className="auth-label">Password</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label className="auth-label">Password</label>
+                      <a href="/forgot-password" style={{ fontSize: '0.75rem', color: '#aaaaaa', textDecoration: 'none', fontWeight: 500 }} onMouseEnter={(e) => e.target.style.textDecoration = 'underline'} onMouseLeave={(e) => e.target.style.textDecoration = 'none'}>Forgot password?</a>
+                    </div>
                     <div style={{ position: 'relative' }}>
                       <input
                         type={showPassword ? "text" : "password"}
@@ -200,14 +211,14 @@ export default function Login() {
           </div>
           
           <div className="terms-text">
-            By continuing, you agree to Davora's <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+            By continuing, you agree to {platformName}'s <a href={termsUrl}>Terms of Service</a> and <a href={privacyUrl}>Privacy Policy</a>.
           </div>
         </div>
         
         <div className="auth-brand-side">
           <div className="brand-bg"></div>
           <div className="brand-content">
-            {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: '80%', height: '80%', objectFit: 'contain' }} /> : <Bot style={{ width: '80%', height: '80%' }} color="#fff" />}
+            {logoUrl ? <img src={logoUrl} alt={`${platformName} Logo`} style={{ width: '80%', height: '80%', objectFit: 'contain' }} /> : <Bot style={{ width: '80%', height: '80%' }} color="#fff" />}
           </div>
         </div>
       </div>
