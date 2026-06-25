@@ -3,7 +3,8 @@ import '../globals.css';
 
 export default function Privacy() {
   return (
-    <div style={{ padding: '40px 20px', maxWidth: '800px', margin: '0 auto', color: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
+    <div style={{ height: '100vh', overflowY: 'auto', backgroundColor: '#000000', width: '100%' }}>
+      <div style={{ padding: '40px 20px', maxWidth: '800px', margin: '0 auto', color: '#ffffff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
       <h1 style={{ fontSize: '2.5rem', marginBottom: '24px', fontWeight: '700' }}>Privacy Policy</h1>
       <p style={{ color: '#aaaaaa', marginBottom: '32px' }}>Last Updated: {new Date().toLocaleDateString()}</p>
       
@@ -70,6 +71,7 @@ export default function Privacy() {
           </p>
         </section>
       </div>
+    </div>
     </div>
   );
 }
