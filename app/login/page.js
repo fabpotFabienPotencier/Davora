@@ -23,9 +23,9 @@ export default function Login() {
       .then(res => res.json())
       .then(cfg => {
         if (cfg.logo_url) setLogoUrl(cfg.logo_url);
-        if (cfg.platform_name) setPlatformName(cfg.platform_name);
-        if (cfg.terms_url) setTermsUrl(cfg.terms_url);
-        if (cfg.privacy_url) setPrivacyUrl(cfg.privacy_url);
+        if (cfg.platform_name && cfg.platform_name !== 'Davora') setPlatformName(cfg.platform_name);
+        if (cfg.terms_url && cfg.terms_url !== '#') setTermsUrl(cfg.terms_url);
+        if (cfg.privacy_url && cfg.privacy_url !== '#') setPrivacyUrl(cfg.privacy_url);
       })
       .catch(() => { });
   }, []);
@@ -212,7 +212,7 @@ export default function Login() {
           </div>
 
           <div className="terms-text">
-            By continuing, you agree to {platformName}'s <a href={termsUrl}>Terms of Service</a> and <a href={privacyUrl}>Privacy Policy</a>.
+            By continuing, you agree to {platformName}'s <a href={termsUrl} target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href={privacyUrl} target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
           </div>
         </div>
 

@@ -22,9 +22,9 @@ export default function Signup() {
       .then(res => res.json())
       .then(cfg => { 
         if (cfg.logo_url) setLogoUrl(cfg.logo_url); 
-        if (cfg.platform_name) setPlatformName(cfg.platform_name);
-        if (cfg.terms_url) setTermsUrl(cfg.terms_url);
-        if (cfg.privacy_url) setPrivacyUrl(cfg.privacy_url);
+        if (cfg.platform_name && cfg.platform_name !== 'Davora') setPlatformName(cfg.platform_name);
+        if (cfg.terms_url && cfg.terms_url !== '#') setTermsUrl(cfg.terms_url);
+        if (cfg.privacy_url && cfg.privacy_url !== '#') setPrivacyUrl(cfg.privacy_url);
       })
       .catch(() => {});
   }, []);
