@@ -19,7 +19,7 @@ export default function Login() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } })
+    fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } })
       .then(res => res.json())
       .then(cfg => {
         if (cfg.logo_url) setLogoUrl(cfg.logo_url);
@@ -36,7 +36,7 @@ export default function Login() {
     setError('');
 
     try {
-      const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/login', {
+      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +60,8 @@ export default function Login() {
 
       localStorage.setItem('davora_token', data.access_token);
       localStorage.setItem('davora_email', email);
-      router.push('/');
+      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+      window.location.href = `${window.location.protocol}//chat.${baseDomain}`;
     } catch (err) {
       setError(err.message);
     } finally {
@@ -205,7 +206,7 @@ export default function Login() {
 
               {!requires2FA && (
                 <p style={{ textAlign: 'center', color: '#aaaaaa', fontSize: '0.85rem', marginTop: '16px' }}>
-                  Don't have an account? <a href="/signup" className="auth-link">Sign up</a>
+                  Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//signup.${baseDomain}`; }} className="auth-link">Sign up</a>
                 </p>
               )}
             </div>

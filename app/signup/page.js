@@ -18,7 +18,7 @@ export default function Signup() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } })
+    fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } })
       .then(res => res.json())
       .then(cfg => { 
         if (cfg.logo_url) setLogoUrl(cfg.logo_url); 
@@ -47,7 +47,7 @@ export default function Signup() {
     }
 
     try {
-      const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/signup', {
+      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/signup', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -64,7 +64,8 @@ export default function Signup() {
       const data = await res.json();
       localStorage.setItem('davora_token', data.access_token);
       localStorage.setItem('davora_email', email);
-      router.push('/');
+      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+      window.location.href = `${window.location.protocol}//chat.${baseDomain}`;
     } catch (err) {
       setError(err.message);
     } finally {
@@ -196,13 +197,13 @@ export default function Signup() {
                 <button type="submit" disabled={isLoading} className="auth-btn">
                   {isLoading ? 'Creating account...' : 'Next'}
                 </button>
-                <button type="button" onClick={() => router.push('/login')} className="auth-btn-secondary">
+                <button type="button" onClick={() => { const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="auth-btn-secondary">
                   Go back
                 </button>
               </form>
 
               <p style={{ textAlign: 'center', color: '#aaaaaa', fontSize: '0.85rem', marginTop: '16px' }}>
-                Already have an account? <a href="/login" className="auth-link">Log in</a>
+                Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="auth-link">Log in</a>
               </p>
             </div>
           </div>

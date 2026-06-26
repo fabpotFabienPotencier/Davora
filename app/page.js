@@ -157,12 +157,12 @@ export default function Davora() {
 
   useEffect(() => {
     if (settingsTab === 'Tasks') {
-      fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/schedule', {
+      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/schedule', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' }
       }).then(r => r.json()).then(data => setScheduledTasks(data || []));
     }
     if (settingsTab === 'Reports') {
-      fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/report', {
+      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/report', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' }
       }).then(r => r.json()).then(data => setIssueReports(data || []));
     }
@@ -230,7 +230,7 @@ export default function Davora() {
     
     showNotification(`Initiating secure checkout for Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)}...`);
     try {
-      const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/checkout/initiate', {
+      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/checkout/initiate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -258,7 +258,7 @@ export default function Davora() {
             customizations: { title: `Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)}`, description: "Premium AI Access" },
             callback: async function (cbData) {
               try {
-                await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/verify-payment', {
+                await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/verify-payment', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
                   body: JSON.stringify({ tx_ref: cbData.tx_ref, transaction_id: String(cbData.transaction_id) })
@@ -295,7 +295,10 @@ export default function Davora() {
       if (response.status === 401) {
         localStorage.removeItem('davora_token');
         setToast("Session expired. Please log in again.");
-        setTimeout(() => router.push('/login'), 1500);
+        setTimeout(() => {
+          const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+          window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+        }, 1500);
       }
       return response;
     };
@@ -309,14 +312,15 @@ export default function Davora() {
     const token = localStorage.getItem("davora_token");
     const email = localStorage.getItem("davora_email");
     if (!token) {
-      router.push("/login");
+      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+      window.location.href = `${window.location.protocol}//login.${baseDomain}`;
       return;
     }
     setUserEmail(email || "User");
 
     const fetchSessions = async () => {
       try {
-        const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions', {
+        const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'ngrok-skip-browser-warning': 'true'
@@ -324,13 +328,14 @@ export default function Davora() {
         });
         if (res.status === 401) {
           localStorage.removeItem("davora_token");
-          router.push("/login");
+          const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+          window.location.href = `${window.location.protocol}//login.${baseDomain}`;
           return;
         }
         if (res.ok) {
           const dbSessions = await res.json();
           setSessions(dbSessions);
-          const metaRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/metadata', {
+          const metaRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/metadata', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'ngrok-skip-browser-warning': 'true'
@@ -353,7 +358,7 @@ export default function Davora() {
             }
           }
 
-          const projRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/projects', {
+          const projRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/projects', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'ngrok-skip-browser-warning': 'true'
@@ -363,7 +368,7 @@ export default function Davora() {
             setProjectsList(await projRes.json());
           }
 
-          const codexRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/codex', {
+          const codexRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'ngrok-skip-browser-warning': 'true'
@@ -374,7 +379,7 @@ export default function Davora() {
           }
 
           try {
-            const configRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } });
+            const configRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } });
             if (configRes.ok) { 
               const cfg = await configRes.json(); 
               setProPrice(cfg.pro_price);
@@ -382,7 +387,7 @@ export default function Davora() {
               if (cfg.logo_url) setLogoUrl(cfg.logo_url);
             }
 
-            const subRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/subscription', { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' } });
+            const subRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/subscription', { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' } });
             if (subRes.ok) { const sub = await subRes.json(); setSubscriptionPlan(sub.plan_name); }
           } catch (e) { }
         }
@@ -460,7 +465,7 @@ export default function Davora() {
   const syncMetadata = (updates) => {
     const token = localStorage.getItem("davora_token");
     if (!token) return;
-    fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/metadata', {
+    fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/metadata', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -484,7 +489,7 @@ export default function Davora() {
 
     const token = localStorage.getItem("davora_token");
     if (token) {
-      fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions', {
+      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -526,7 +531,7 @@ export default function Davora() {
   };
 
   const connectWebSocket = () => {
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://blatancy-barrack-spelling.ngrok-free.dev/ws/chat";
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://api.davora.xyz/ws/chat";
     ws.current = new WebSocket(wsUrl);
     ws.current.onmessage = (event) => {
       const data = event.data;
@@ -873,7 +878,7 @@ export default function Davora() {
         if (renamedSession && !renamedSession.isTemporary) {
           const token = localStorage.getItem("davora_token");
           if (token) {
-            fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions', {
+            fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
               body: JSON.stringify(renamedSession)
@@ -911,7 +916,7 @@ export default function Davora() {
       showNotification("Chat deleted");
       const token = localStorage.getItem("davora_token");
       if (token) {
-        fetch(`https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions/${id}`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
         }).catch(err => console.error("Delete sync error", err));
@@ -923,7 +928,7 @@ export default function Davora() {
       setShowSettings(false);
       const token = localStorage.getItem("davora_token");
       if (token) {
-        fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions/all', {
+        fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions/all', {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
         }).catch(err => console.error("Clear all sync error", err));
@@ -1051,7 +1056,7 @@ export default function Davora() {
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); setMobileSettingsView('menu'); }}><Settings size={16} /> Settings</button>
                 <div className="popover-divider"></div>
                 <button className="popover-item"><TriangleAlert size={16} /> Help</button>
-                <button className="popover-item" onClick={() => { localStorage.clear(); router.push('/login'); }}><span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ChevronRight size={16} /></span> Log out</button>
+                <button className="popover-item" onClick={() => { localStorage.clear(); const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}><span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ChevronRight size={16} /></span> Log out</button>
               </div>
             </div>
           )}
@@ -1205,7 +1210,7 @@ export default function Davora() {
                                             <button
                                               onClick={async () => {
                                                 try {
-                                                  const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/codex', {
+                                                  const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', {
                                                     method: 'POST',
                                                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
                                                     body: JSON.stringify({ title: `Snippet from ${new Date().toLocaleDateString()}`, language: match[1], code: String(children).replace(/\n$/, '') })
@@ -1218,7 +1223,7 @@ export default function Davora() {
                                                       showNotification('Saved to Codex!');
                                                     }
                                                     // Refresh codex
-                                                    const codexRes = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/codex', { headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' } });
+                                                    const codexRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', { headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' } });
                                                     if (codexRes.ok) setCodexSnippets(await codexRes.json());
                                                   }
                                                 } catch (e) { showNotification('Failed to save to Codex'); }
@@ -1739,7 +1744,7 @@ export default function Davora() {
                     <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={() => setSettingsTab('Billing')}>Upgrade</button>
                   </div>
                   <div className="settings-row border-top" style={{ paddingTop: '24px' }}>
-                    <button onClick={() => { localStorage.clear(); router.push('/login'); }} className="danger-btn" style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>Log out</button>
+                    <button onClick={() => { localStorage.clear(); const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="danger-btn" style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>Log out</button>
                   </div>
                 </div>
               )}
@@ -1941,7 +1946,7 @@ export default function Davora() {
                     </div>
                     <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={async () => {
                       try {
-                        const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/auth/2fa/generate', {
+                        const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/2fa/generate', {
                           headers: { 
                             'Authorization': `Bearer ${localStorage.getItem('davora_token')}`,
                             'ngrok-skip-browser-warning': 'true'
@@ -2008,7 +2013,7 @@ export default function Davora() {
                             disabled={twoFactorCode.length !== 6}
                             onClick={async () => {
                               try {
-                                const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/auth/2fa/verify', {
+                                const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/2fa/verify', {
                                   method: 'POST',
                                   headers: { 
                                     'Content-Type': 'application/json', 
@@ -2044,7 +2049,7 @@ export default function Davora() {
                       <input type="password" placeholder="New Password" className="premium-input-field" style={{ marginBottom: '16px', width: '100%' }} value={newPassword} onChange={e => setNewPassword(e.target.value)} />
                       <button className="send-btn" onClick={async () => {
                         try {
-                          const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/auth/password/update', {
+                          const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/password/update', {
                             method: 'POST',
                             headers: { 
                               'Content-Type': 'application/json', 
@@ -2062,13 +2067,13 @@ export default function Davora() {
                   <div className="settings-row border-top">
                     <button className="danger-btn" onClick={async () => {
                       try {
-                        await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/auth/logout', { 
+                        await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/logout', { 
                           method: 'POST', 
                           headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' } 
                         });
                       } catch (e) {}
                       localStorage.clear();
-                      router.push('/login');
+                      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`;
                     }}>Sign out of all devices</button>
                   </div>
                 </div>
@@ -2134,7 +2139,7 @@ export default function Davora() {
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Scheduled for: {t.scheduled_for}</span>
                         </div>
                         <button className="danger-btn" style={{ padding: '6px 12px', width: 'auto' }} onClick={async () => {
-                          await fetch(`https://blatancy-barrack-spelling.ngrok-free.dev/api/schedule/${t.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' }});
+                          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/schedule/${t.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' }});
                           setScheduledTasks(scheduledTasks.filter(st => st.id !== t.id));
                           showNotification('Task canceled successfully.');
                         }}>Cancel</button>
@@ -2216,7 +2221,7 @@ export default function Davora() {
                                 style={{ fontSize: '0.8rem', padding: '4px 12px' }}
                                 onClick={async () => {
                                   try {
-                                    await fetch(`https://blatancy-barrack-spelling.ngrok-free.dev/api/sessions/${activeSessionId}/project`, {
+                                    await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${activeSessionId}/project`, {
                                       method: 'PUT',
                                       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
                                       body: JSON.stringify({ project_id: isLinked ? null : proj.id })
@@ -2245,7 +2250,7 @@ export default function Davora() {
                     <button className="send-btn" style={{ padding: '8px 16px' }} onClick={async () => {
                       if (!projectName) return;
                       try {
-                        const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/projects', {
+                        const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/projects', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
                           body: JSON.stringify({ name: projectName })
@@ -2325,7 +2330,7 @@ export default function Davora() {
                     <p style={{ fontWeight: '600', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>Current Device <span style={{ color: '#10b981', fontSize: '0.8rem' }}>Active</span></p>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{userEmail || 'User'} • {new Date().toLocaleDateString()}</p>
                   </div>
-                  <button className="danger-btn" onClick={() => { localStorage.clear(); router.push('/login'); }}>Sign Out Everywhere</button>
+                  <button className="danger-btn" onClick={() => { localStorage.clear(); const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}>Sign Out Everywhere</button>
                 </div>
               )}
               {activeModal === 'schedule' && (
@@ -2336,7 +2341,7 @@ export default function Davora() {
                   <button className="send-btn" onClick={async () => {
                     if (!schedulePrompt || !scheduleTime) return;
                     try {
-                      await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/schedule', {
+                      await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/schedule', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
                         body: JSON.stringify({ prompt: schedulePrompt, scheduled_for: scheduleTime })
@@ -2355,7 +2360,7 @@ export default function Davora() {
                   <button className="danger-btn" onClick={async () => {
                     if (!reportText) return;
                     try {
-                      await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/report', {
+                      await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/report', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
                         body: JSON.stringify({ description: reportText })
@@ -2384,7 +2389,7 @@ export default function Davora() {
                            return;
                         }
                         try {
-                          const res = await fetch('https://blatancy-barrack-spelling.ngrok-free.dev/api/share', {
+                          const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/share', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
                             body: JSON.stringify({ session_id: activeSessionId })
