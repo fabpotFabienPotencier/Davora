@@ -287,29 +287,39 @@ export default function Davora() {
     }
   };
 
-  // Global Fetch Interceptor to catch 401 Unauthorized
+  // Global Fetch Interceptor to catch 401 Unauthorized and add credentials
   useEffect(() => {
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
+      let [resource, config] = args;
+      if (resource && (resource.includes('api.davora.xyz') || resource.includes('localhost') || resource.includes('ngrok'))) {
+        config = config || {};
+        config.credentials = 'include';
+        args = [resource, config];
+      }
       const response = await originalFetch(...args);
       if (response.status === 401) {
-        localStorage.removeItem('davora_token');
+        document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;";
         setToast("Session expired. Please log in again.");
-        setTimeout(() => router.push('/login'), 1500);
+        setTimeout(() => {
+          const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+          window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+        }, 1500);
       }
       return response;
     };
     return () => {
       window.fetch = originalFetch;
     };
-  }, [router]);
+  }, []);
 
   // Initialization & DB Fetching
   useEffect(() => {
-    const token = localStorage.getItem("davora_token");
+    const isAuth = document.cookie.includes('davora_auth=1');
     const email = localStorage.getItem("davora_email");
-    if (!token) {
-      router.push("/login");
+    if (!isAuth) {
+      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+      window.location.href = `${window.location.protocol}//login.${baseDomain}`;
       return;
     }
     setUserEmail(email || "User");
@@ -1051,7 +1061,7 @@ export default function Davora() {
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); setMobileSettingsView('menu'); }}><Settings size={16} /> Settings</button>
                 <div className="popover-divider"></div>
                 <button className="popover-item"><TriangleAlert size={16} /> Help</button>
-                <button className="popover-item" onClick={() => { localStorage.clear(); router.push('/login'); }}><span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ChevronRight size={16} /></span> Log out</button>
+                <button className="popover-item" onClick={() => { document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;"; const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}><span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ChevronRight size={16} /></span> Log out</button>
               </div>
             </div>
           )}
@@ -1739,7 +1749,7 @@ export default function Davora() {
                     <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={() => setSettingsTab('Billing')}>Upgrade</button>
                   </div>
                   <div className="settings-row border-top" style={{ paddingTop: '24px' }}>
-                    <button onClick={() => { localStorage.clear(); router.push('/login'); }} className="danger-btn" style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>Log out</button>
+                    <button onClick={() => { document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;"; const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="danger-btn" style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>Log out</button>
                   </div>
                 </div>
               )}
@@ -2068,7 +2078,8 @@ export default function Davora() {
                         });
                       } catch (e) {}
                       localStorage.clear();
-                      router.push('/login');
+                      document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;";
+                      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`;
                     }}>Sign out of all devices</button>
                   </div>
                 </div>
@@ -2325,7 +2336,7 @@ export default function Davora() {
                     <p style={{ fontWeight: '600', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>Current Device <span style={{ color: '#10b981', fontSize: '0.8rem' }}>Active</span></p>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{userEmail || 'User'} • {new Date().toLocaleDateString()}</p>
                   </div>
-                  <button className="danger-btn" onClick={() => { localStorage.clear(); router.push('/login'); }}>Sign Out Everywhere</button>
+                  <button className="danger-btn" onClick={() => { document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;"; const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}>Sign Out Everywhere</button>
                 </div>
               )}
               {activeModal === 'schedule' && (
