@@ -880,3 +880,24 @@ body {
   .mobile-view-pane .settings-body { display: flex !important; height: 100%; }
   .settings-body { overflow-y: auto; padding-bottom: 40px; }
 }
+
+/* Incognito Theme */
+.app-layout.incognito-theme {
+  --bg-primary: #020617; /* Very deep slate */
+  --bg-secondary: #0f172a;
+  --bg-sidebar: #020617;
+  --border-color: #1e293b;
+  --accent-color: #10b981;
+  --accent-hover: #059669;
+  --ai-avatar-bg: #10b981;
+  --ai-avatar-color: #ffffff;
+}
+.app-layout.incognito-theme .temporary-chat-toggle.active {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #10b981 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+.app-layout.incognito-theme .chat-input-wrapper {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.1) !important;
+}
