@@ -60,8 +60,7 @@ export default function Login() {
 
       localStorage.setItem('davora_token', data.access_token);
       localStorage.setItem('davora_email', email);
-      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-      window.location.href = `${window.location.protocol}//chat.${baseDomain}`;
+      router.push('/');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -206,7 +205,7 @@ export default function Login() {
 
               {!requires2FA && (
                 <p style={{ textAlign: 'center', color: '#aaaaaa', fontSize: '0.85rem', marginTop: '16px' }}>
-                  Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//signup.${baseDomain}`; }} className="auth-link">Sign up</a>
+                  Don't have an account? <a href="/signup" className="auth-link">Sign up</a>
                 </p>
               )}
             </div>

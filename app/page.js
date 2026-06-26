@@ -295,10 +295,7 @@ export default function Davora() {
       if (response.status === 401) {
         localStorage.removeItem('davora_token');
         setToast("Session expired. Please log in again.");
-        setTimeout(() => {
-          const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-          window.location.href = `${window.location.protocol}//login.${baseDomain}`;
-        }, 1500);
+        setTimeout(() => router.push('/login'), 1500);
       }
       return response;
     };
@@ -312,8 +309,7 @@ export default function Davora() {
     const token = localStorage.getItem("davora_token");
     const email = localStorage.getItem("davora_email");
     if (!token) {
-      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-      window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+      router.push("/login");
       return;
     }
     setUserEmail(email || "User");
@@ -328,8 +324,7 @@ export default function Davora() {
         });
         if (res.status === 401) {
           localStorage.removeItem("davora_token");
-          const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-          window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+          router.push("/login");
           return;
         }
         if (res.ok) {
@@ -1056,7 +1051,7 @@ export default function Davora() {
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); setMobileSettingsView('menu'); }}><Settings size={16} /> Settings</button>
                 <div className="popover-divider"></div>
                 <button className="popover-item"><TriangleAlert size={16} /> Help</button>
-                <button className="popover-item" onClick={() => { localStorage.clear(); const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}><span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ChevronRight size={16} /></span> Log out</button>
+                <button className="popover-item" onClick={() => { localStorage.clear(); router.push('/login'); }}><span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ChevronRight size={16} /></span> Log out</button>
               </div>
             </div>
           )}
@@ -1744,7 +1739,7 @@ export default function Davora() {
                     <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={() => setSettingsTab('Billing')}>Upgrade</button>
                   </div>
                   <div className="settings-row border-top" style={{ paddingTop: '24px' }}>
-                    <button onClick={() => { localStorage.clear(); const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="danger-btn" style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>Log out</button>
+                    <button onClick={() => { localStorage.clear(); router.push('/login'); }} className="danger-btn" style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>Log out</button>
                   </div>
                 </div>
               )}
@@ -2073,7 +2068,7 @@ export default function Davora() {
                         });
                       } catch (e) {}
                       localStorage.clear();
-                      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+                      router.push('/login');
                     }}>Sign out of all devices</button>
                   </div>
                 </div>
@@ -2330,7 +2325,7 @@ export default function Davora() {
                     <p style={{ fontWeight: '600', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>Current Device <span style={{ color: '#10b981', fontSize: '0.8rem' }}>Active</span></p>
                     <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{userEmail || 'User'} • {new Date().toLocaleDateString()}</p>
                   </div>
-                  <button className="danger-btn" onClick={() => { localStorage.clear(); const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}>Sign Out Everywhere</button>
+                  <button className="danger-btn" onClick={() => { localStorage.clear(); router.push('/login'); }}>Sign Out Everywhere</button>
                 </div>
               )}
               {activeModal === 'schedule' && (

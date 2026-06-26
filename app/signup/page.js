@@ -64,8 +64,7 @@ export default function Signup() {
       const data = await res.json();
       localStorage.setItem('davora_token', data.access_token);
       localStorage.setItem('davora_email', email);
-      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-      window.location.href = `${window.location.protocol}//chat.${baseDomain}`;
+      router.push('/');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -197,13 +196,13 @@ export default function Signup() {
                 <button type="submit" disabled={isLoading} className="auth-btn">
                   {isLoading ? 'Creating account...' : 'Next'}
                 </button>
-                <button type="button" onClick={() => { const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="auth-btn-secondary">
+                <button type="button" onClick={() => router.push('/login')} className="auth-btn-secondary">
                   Go back
                 </button>
               </form>
 
               <p style={{ textAlign: 'center', color: '#aaaaaa', fontSize: '0.85rem', marginTop: '16px' }}>
-                Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="auth-link">Log in</a>
+                Already have an account? <a href="/login" className="auth-link">Log in</a>
               </p>
             </div>
           </div>
