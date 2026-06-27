@@ -168,12 +168,12 @@ export default function Davora() {
   useEffect(() => {
     if (settingsTab === 'Tasks') {
       fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/schedule', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' }
+        headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' }
       }).then(r => r.json()).then(data => setScheduledTasks(data || []));
     }
     if (settingsTab === 'Reports') {
       fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/report', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' }
+        headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' }
       }).then(r => r.json()).then(data => setIssueReports(data || []));
     }
   }, [settingsTab]);
@@ -244,7 +244,7 @@ export default function Davora() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('davora_token')}`,
+          'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
           'ngrok-skip-browser-warning': 'true'
         },
         body: JSON.stringify({ tier: tier })
@@ -270,7 +270,7 @@ export default function Davora() {
               try {
                 await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/verify-payment', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
                   body: JSON.stringify({ tx_ref: cbData.tx_ref, transaction_id: String(cbData.transaction_id) })
                 });
                 setSubscriptionPlan(`Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)} Active`);
@@ -328,6 +328,7 @@ export default function Davora() {
     if (subdomain === 'login' || subdomain === 'signup') return;
     
     const isAuth = document.cookie.includes('davora_auth=1');
+    const token = (localStorage.getItem('davora_token') || '') || "";
     const email = localStorage.getItem("davora_email");
     if (!isAuth && subdomain === 'chat') {
       const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
@@ -480,7 +481,7 @@ export default function Davora() {
   }, []);
 
   const syncMetadata = (updates) => {
-    const token = localStorage.getItem("davora_token");
+    const token = (localStorage.getItem('davora_token') || '');
     if (!token) return;
     fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/metadata', {
       method: 'POST',
@@ -504,7 +505,7 @@ export default function Davora() {
     const currentSession = sessions.find(s => s.id === activeSessionId);
     if (!currentSession || currentSession.isTemporary) return;
 
-    const token = localStorage.getItem("davora_token");
+    const token = (localStorage.getItem('davora_token') || '');
     if (token) {
       fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
         method: 'POST',
@@ -706,7 +707,7 @@ export default function Davora() {
       referenceMemories: prefs.referenceMemories,
       referenceHistory: prefs.referenceHistory,
       strictMarkdown: prefs.strictMarkdown,
-      token: localStorage.getItem('davora_token')
+      token: (localStorage.getItem('davora_token') || '')
     };
     if (attachment) {
       payloadObj.image = attachment.base64;
@@ -893,7 +894,7 @@ export default function Davora() {
         // Sync the renamed session directly to the DB
         const renamedSession = newSessions.find(s => s.id === id);
         if (renamedSession && !renamedSession.isTemporary) {
-          const token = localStorage.getItem("davora_token");
+          const token = (localStorage.getItem('davora_token') || '');
           if (token) {
             fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
               method: 'POST',
@@ -931,7 +932,7 @@ export default function Davora() {
       setSessions(prev => prev.filter(s => s.id !== id));
       if (activeSessionId === id) setActiveSessionId(null);
       showNotification("Chat deleted");
-      const token = localStorage.getItem("davora_token");
+      const token = (localStorage.getItem('davora_token') || '');
       if (token) {
         fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${id}`, {
           method: 'DELETE',
@@ -943,7 +944,7 @@ export default function Davora() {
       setActiveSessionId(null);
       showNotification("All chats cleared");
       setShowSettings(false);
-      const token = localStorage.getItem("davora_token");
+      const token = (localStorage.getItem('davora_token') || '');
       if (token) {
         fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions/all', {
           method: 'DELETE',
@@ -1233,7 +1234,7 @@ export default function Davora() {
                                                 try {
                                                   const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', {
                                                     method: 'POST',
-                                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
                                                     body: JSON.stringify({ title: `Snippet from ${new Date().toLocaleDateString()}`, language: match[1], code: String(children).replace(/\n$/, '') })
                                                   });
                                                   if (res.ok) {
@@ -1244,7 +1245,7 @@ export default function Davora() {
                                                       showNotification('Saved to Codex!');
                                                     }
                                                     // Refresh codex
-                                                    const codexRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', { headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' } });
+                                                    const codexRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', { headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' } });
                                                     if (codexRes.ok) setCodexSnippets(await codexRes.json());
                                                   }
                                                 } catch (e) { showNotification('Failed to save to Codex'); }
@@ -1969,7 +1970,7 @@ export default function Davora() {
                       try {
                         const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/2fa/generate', {
                           headers: { 
-                            'Authorization': `Bearer ${localStorage.getItem('davora_token')}`,
+                            'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
                             'ngrok-skip-browser-warning': 'true'
                           }
                         });
@@ -2038,7 +2039,7 @@ export default function Davora() {
                                   method: 'POST',
                                   headers: { 
                                     'Content-Type': 'application/json', 
-                                    'Authorization': `Bearer ${localStorage.getItem('davora_token')}`,
+                                    'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
                                     'ngrok-skip-browser-warning': 'true'
                                   },
                                   body: JSON.stringify({ code: twoFactorCode })
@@ -2074,7 +2075,7 @@ export default function Davora() {
                             method: 'POST',
                             headers: { 
                               'Content-Type': 'application/json', 
-                              'Authorization': `Bearer ${localStorage.getItem('davora_token')}`,
+                              'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
                               'ngrok-skip-browser-warning': 'true'
                             },
                             body: JSON.stringify({ current_password: currentPassword, new_password: newPassword })
@@ -2090,7 +2091,7 @@ export default function Davora() {
                       try {
                         await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/logout', { 
                           method: 'POST', 
-                          headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' } 
+                          headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' } 
                         });
                       } catch (e) {}
                       localStorage.clear();
@@ -2161,7 +2162,7 @@ export default function Davora() {
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Scheduled for: {t.scheduled_for}</span>
                         </div>
                         <button className="danger-btn" style={{ padding: '6px 12px', width: 'auto' }} onClick={async () => {
-                          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/schedule/${t.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${localStorage.getItem('davora_token')}`, 'ngrok-skip-browser-warning': 'true' }});
+                          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/schedule/${t.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' }});
                           setScheduledTasks(scheduledTasks.filter(st => st.id !== t.id));
                           showNotification('Task canceled successfully.');
                         }}>Cancel</button>
@@ -2245,7 +2246,7 @@ export default function Davora() {
                                   try {
                                     await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${activeSessionId}/project`, {
                                       method: 'PUT',
-                                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
                                       body: JSON.stringify({ project_id: isLinked ? null : proj.id })
                                     });
                                     setSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, project_id: isLinked ? null : proj.id } : s));
@@ -2274,7 +2275,7 @@ export default function Davora() {
                       try {
                         const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/projects', {
                           method: 'POST',
-                          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
                           body: JSON.stringify({ name: projectName })
                         });
                         if (res.ok) {
@@ -2365,7 +2366,7 @@ export default function Davora() {
                     try {
                       await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/schedule', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
                         body: JSON.stringify({ prompt: schedulePrompt, scheduled_for: scheduleTime })
                       });
                       setActiveModal(null);
@@ -2384,7 +2385,7 @@ export default function Davora() {
                     try {
                       await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/report', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
                         body: JSON.stringify({ description: reportText })
                       });
                       setActiveModal(null);
@@ -2413,7 +2414,7 @@ export default function Davora() {
                         try {
                           const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/share', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('davora_token')}` },
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
                             body: JSON.stringify({ session_id: activeSessionId })
                           });
                           if (res.ok) {
