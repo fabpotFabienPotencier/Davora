@@ -19,18 +19,8 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus, vs } from "react-syntax-highlighter/dist/esm/styles/prism";
 import TextareaAutosize from "react-textarea-autosize";
-import Login from "./login/page";
-import Signup from "./signup/page";
 
 export default function Davora() {
-  const [subdomain, setSubdomain] = useState(null);
-
-  useEffect(() => {
-    const host = window.location.hostname;
-    if (host.startsWith('login.')) setSubdomain('login');
-    else if (host.startsWith('signup.')) setSubdomain('signup');
-    else setSubdomain('chat');
-  }, []);
   const router = useRouter();
 
   // Session Management (Sidebar)
@@ -325,12 +315,14 @@ export default function Davora() {
 
   // Initialization & DB Fetching
   useEffect(() => {
-    if (subdomain === 'login' || subdomain === 'signup') return;
+    // Read email from cross-subdomain cookie set by the backend
+    const emailCookie = document.cookie.split('; ').find(c => c.startsWith('davora_email='));
+    const email = emailCookie ? decodeURIComponent(emailCookie.split('=')[1]) : null;
+    const token = (localStorage.getItem('davora_token') || '');
     
-    const isAuth = document.cookie.includes('davora_auth=1');
-    const token = (localStorage.getItem('davora_token') || '') || "";
-    const email = localStorage.getItem("davora_email");
-    if (!isAuth && subdomain === 'chat') {
+    // Fallback client-side auth check (middleware handles this server-side,
+    // but this catches mid-session cookie expiry)
+    if (!document.cookie.includes('davora_auth=1')) {
       const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
       window.location.href = `${window.location.protocol}//login.${baseDomain}`;
       return;
@@ -955,9 +947,7 @@ export default function Davora() {
     setDeleteConfirm(null);
   };
 
-  if (subdomain === null) return <div style={{width: '100vw', height: '100vh', background: '#000'}}></div>;
-  if (subdomain === 'login') return <Login />;
-  if (subdomain === 'signup') return <Signup />;
+
 
   return (
     <div className={`app-layout font-size-${prefs.fontSize} ${isTyping ? 'ambient-focus' : ''} ${isTemporary ? 'incognito-theme' : ''}`}>
