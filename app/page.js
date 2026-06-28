@@ -189,11 +189,9 @@ export default function Davora() {
     else timeOfDay = "evening";
     
     const greetings = [
-      `Good ${timeOfDay}! How can I help you?`,
-      `Good ${timeOfDay}! What's on your mind?`,
-      `Ready to assist this ${timeOfDay}.`,
-      `Good ${timeOfDay}! Let's get things done.`,
-      `Hello! I hope you're having a great ${timeOfDay}.`
+      `Hey there, good ${timeOfDay}`,
+      `Hey, good ${timeOfDay}`,
+      `Good ${timeOfDay}!`,
     ];
     setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
 
@@ -1162,9 +1160,7 @@ export default function Davora() {
 
           {messages.map((msg, index) => (
             <div key={msg.id || index} className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'}`}>
-              <div className={`avatar ${msg.role === 'user' ? 'avatar-user' : 'avatar-ai'}`}>
-                {msg.role === 'user' ? <User size={20} /> : (logoUrl ? <img src={logoUrl} alt="AI Avatar" style={{ width: 20, height: 20, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={20} />)}
-              </div>
+
 
               <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
                 <div className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
@@ -1350,7 +1346,7 @@ export default function Davora() {
 
           {isTyping && (
             <div className="message-row row-ai">
-              <div className="avatar avatar-ai"><Bot size={20} /></div>
+
               <div className="message-bubble-wrapper wrapper-ai">
                 <div className="message-bubble bubble-ai typing-indicator">
                   {inputMode === 'deep' ? (
