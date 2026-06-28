@@ -36,6 +36,10 @@ export function middleware(request) {
       url.pathname = '/login';
       return NextResponse.rewrite(url);
     }
+    // Allow forgot-password and reset-password on the login subdomain
+    if (url.pathname === '/forgot-password' || url.pathname === '/reset-password' || url.pathname === '/verify') {
+      return NextResponse.next();
+    }
     return NextResponse.next();
   }
 
