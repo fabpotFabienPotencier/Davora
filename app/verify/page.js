@@ -13,7 +13,7 @@ function VerifyContent() {
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setMessage('No verification token provided.');
+      setMessage('No verification token provided in the URL.');
       return;
     }
 
@@ -24,62 +24,114 @@ function VerifyContent() {
           setStatus('success');
         } else {
           setStatus('error');
-          setMessage(data.detail || 'Verification failed.');
+          // If already verified or bot pre-fetched it, make it friendly
+          if (data.detail && data.detail.includes("Invalid or expired")) {
+            setMessage("This link is invalid or has already been used. If you've already verified your email, you can simply log in.");
+          } else {
+            setMessage(data.detail || 'Verification failed.');
+          }
         }
       })
       .catch(err => {
         setStatus('error');
-        setMessage('Network error occurred.');
+        setMessage('A network error occurred while verifying your email.');
       });
   }, [token]);
 
   return (
-    <div className="auth-container">
-      <div className="auth-form-side" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <div className="auth-form-card" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
-          
-          {status === 'loading' && (
-            <>
-              <Loader size={48} color="#10b981" className="animate-spin" />
-              <h1 style={{ fontSize: '1.75rem', fontWeight: '500', color: '#ffffff' }}>Verifying...</h1>
-              <p style={{ color: '#aaaaaa' }}>Please wait while we verify your email address.</p>
-            </>
-          )}
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      minHeight: '100vh', 
+      width: '100vw',
+      background: '#000000', 
+      color: '#ffffff',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+      padding: '24px'
+    }}>
+      <div style={{
+        background: '#161616',
+        border: '1px solid rgba(255,255,255,0.05)',
+        borderRadius: '16px',
+        padding: '48px 32px',
+        width: '100%',
+        maxWidth: '440px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+      }}>
+        
+        {status === 'loading' && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+            <Loader size={56} color="#10b981" className="animate-spin" />
+            <h1 style={{ fontSize: '1.75rem', fontWeight: '500', margin: 0 }}>Verifying Account</h1>
+            <p style={{ color: '#aaaaaa', margin: 0, lineHeight: 1.5 }}>Please wait a moment while we verify your secure link.</p>
+          </div>
+        )}
 
-          {status === 'success' && (
-            <>
-              <CheckCircle size={48} color="#10b981" />
-              <h1 style={{ fontSize: '1.75rem', fontWeight: '500', color: '#ffffff' }}>Email Verified!</h1>
-              <p style={{ color: '#aaaaaa' }}>Your email has been successfully verified. You can now log in to your account.</p>
-              <button 
-                className="auth-btn" 
-                onClick={() => { const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}
-                style={{ marginTop: '12px' }}
-              >
-                Go to Login
-              </button>
-            </>
-          )}
+        {status === 'success' && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
+            <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '16px', borderRadius: '50%' }}>
+              <CheckCircle size={56} color="#10b981" />
+            </div>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: '500', margin: 0 }}>Email Verified!</h1>
+            <p style={{ color: '#aaaaaa', margin: 0, lineHeight: 1.5 }}>Your email has been successfully verified. You now have full access to your account.</p>
+            <button 
+              onClick={() => { const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}
+              style={{ 
+                marginTop: '12px',
+                width: '100%',
+                background: '#ffffff',
+                color: '#000000',
+                padding: '14px',
+                borderRadius: '9999px',
+                border: 'none',
+                fontWeight: '600',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                transition: 'opacity 0.2s'
+              }}
+              onMouseOver={e => e.currentTarget.style.opacity = '0.9'}
+              onMouseOut={e => e.currentTarget.style.opacity = '1'}
+            >
+              Log in to your account
+            </button>
+          </div>
+        )}
 
-          {status === 'error' && (
-            <>
-              <XCircle size={48} color="#ef4444" />
-              <h1 style={{ fontSize: '1.75rem', fontWeight: '500', color: '#ffffff' }}>Verification Failed</h1>
-              <p style={{ color: '#aaaaaa' }}>{message}</p>
-              <button 
-                className="auth-btn-secondary" 
-                onClick={() => { const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}
-                style={{ marginTop: '12px' }}
-              >
-                Go to Login
-              </button>
-            </>
-          )}
-          
-        </div>
-      </div>
-      <div className="auth-brand-side">
-        <div className="brand-bg"></div>
+        {status === 'error' && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', width: '100%' }}>
+            <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '16px', borderRadius: '50%' }}>
+              <XCircle size={56} color="#ef4444" />
+            </div>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: '500', margin: 0 }}>Verification Failed</h1>
+            <p style={{ color: '#aaaaaa', margin: 0, lineHeight: 1.5 }}>{message}</p>
+            <button 
+              onClick={() => { const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}
+              style={{ 
+                marginTop: '12px',
+                width: '100%',
+                background: 'transparent',
+                color: '#ffffff',
+                padding: '14px',
+                borderRadius: '9999px',
+                border: '1px solid rgba(255,255,255,0.3)',
+                fontWeight: '600',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+              onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+              onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+            >
+              Return to Login
+            </button>
+          </div>
+        )}
+        
       </div>
     </div>
   );
