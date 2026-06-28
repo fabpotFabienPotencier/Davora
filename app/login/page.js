@@ -16,6 +16,8 @@ export default function Login() {
   const [termsUrl, setTermsUrl] = useState('/terms');
   const [privacyUrl, setPrivacyUrl] = useState('/privacy');
   const [showPassword, setShowPassword] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -29,6 +31,25 @@ export default function Login() {
       })
       .catch(() => { });
   }, []);
+
+  const handleResendVerification = async () => {
+    setIsResending(true);
+    setResendMessage('');
+    try {
+      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to resend link');
+      setResendMessage(data.message);
+    } catch (err) {
+      setResendMessage(err.message);
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -136,7 +157,23 @@ export default function Login() {
                 )}
               </div>
 
-              {error && <div style={{ color: '#ef4444', fontSize: '0.9rem', textAlign: 'center' }}>{error}</div>}
+              {error && (
+                <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', padding: '12px', borderRadius: '8px', fontSize: '0.85rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span>{error}</span>
+                  {error.toLowerCase().includes('verify') && (
+                    <div style={{ marginTop: '4px' }}>
+                      <button 
+                        onClick={handleResendVerification} 
+                        disabled={isResending}
+                        style={{ background: 'transparent', border: '1px solid rgba(239,68,68,0.5)', color: '#ef4444', padding: '6px 12px', borderRadius: '4px', cursor: isResending ? 'not-allowed' : 'pointer', fontSize: '0.8rem' }}
+                      >
+                        {isResending ? 'Sending...' : 'Resend Verification Email'}
+                      </button>
+                      {resendMessage && <div style={{ marginTop: '8px', color: resendMessage.includes('sent') ? '#10b981' : '#ef4444' }}>{resendMessage}</div>}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {!requires2FA ? (
                 <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

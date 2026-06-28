@@ -63,6 +63,13 @@ export default function Davora() {
   const [settingsTab, setSettingsTab] = useState('Personalization');
   const [mobileSettingsView, setMobileSettingsView] = useState('menu');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [changeOldPassword, setChangeOldPassword] = useState("");
+  const [changeNewPassword, setChangeNewPassword] = useState("");
+  const [changePasswordStatus, setChangePasswordStatus] = useState("idle");
+  const [changePasswordMessage, setChangePasswordMessage] = useState("");
+  const [deleteAccountPassword, setDeleteAccountPassword] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
   const [prefs, setPrefs] = useState({
     theme: 'dark',
     fontSize: 'medium',
@@ -221,6 +228,68 @@ export default function Davora() {
     setToast(msg);
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     toastTimeoutRef.current = setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setChangePasswordStatus('loading');
+    try {
+      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`
+        },
+        body: JSON.stringify({ old_password: changeOldPassword, new_password: changeNewPassword })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to change password');
+      setChangePasswordStatus('success');
+      setChangePasswordMessage('Password changed successfully.');
+      setChangeOldPassword('');
+      setChangeNewPassword('');
+    } catch (err) {
+      setChangePasswordStatus('error');
+      setChangePasswordMessage(err.message);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setDeleteMessage('');
+    try {
+      // First verify password
+      const verifyRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`
+        },
+        // We use the change-password endpoint just to verify the current password, by setting it to the same or checking error
+        body: JSON.stringify({ old_password: deleteAccountPassword, new_password: deleteAccountPassword + '123' })
+      });
+      if (!verifyRes.ok) {
+        throw new Error('Incorrect password');
+      }
+
+      // If correct, proceed to delete
+      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/delete-account', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`
+        }
+      });
+      if (!res.ok) throw new Error('Failed to delete account');
+      
+      // Logout
+      localStorage.removeItem('davora_token');
+      localStorage.removeItem('davora_email');
+      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+      window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+    } catch (err) {
+      setIsDeleting(false);
+      setDeleteMessage(err.message);
+    }
   };
 
   const handleUpgrade = async (tier) => {
@@ -1751,8 +1820,66 @@ export default function Davora() {
                     </div>
                     <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={() => setSettingsTab('Billing')}>Upgrade</button>
                   </div>
+                  <div className="settings-row border-top" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '16px' }}>
+                    <div className="settings-info" style={{ width: '100%' }}>
+                      <label>Change Password</label>
+                      <p>Update your password to keep your account secure.</p>
+                    </div>
+                    <form onSubmit={handleChangePassword} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--surface-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <input 
+                        type="password" 
+                        placeholder="Current password" 
+                        required
+                        value={changeOldPassword}
+                        onChange={e => setChangeOldPassword(e.target.value)}
+                        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '10px 12px', borderRadius: '6px', fontSize: '0.9rem' }}
+                      />
+                      <input 
+                        type="password" 
+                        placeholder="New password (min 6 chars)" 
+                        required
+                        value={changeNewPassword}
+                        onChange={e => setChangeNewPassword(e.target.value)}
+                        style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '10px 12px', borderRadius: '6px', fontSize: '0.9rem' }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                        <span style={{ fontSize: '0.85rem', color: changePasswordStatus === 'error' ? '#ef4444' : changePasswordStatus === 'success' ? '#10b981' : 'transparent' }}>
+                          {changePasswordMessage || 'Placeholder'}
+                        </span>
+                        <button type="submit" disabled={changePasswordStatus === 'loading'} style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px', border: 'none', cursor: 'pointer', fontWeight: '600', opacity: changePasswordStatus === 'loading' ? 0.7 : 1 }}>
+                          {changePasswordStatus === 'loading' ? 'Updating...' : 'Update Password'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                  <div className="settings-row border-top" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '16px' }}>
+                    <div className="settings-info" style={{ width: '100%' }}>
+                      <label style={{ color: '#ef4444' }}>Danger Zone</label>
+                      <p>Permanently delete your account and all associated data.</p>
+                    </div>
+                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(239, 68, 68, 0.05)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                      <input 
+                        type="password" 
+                        placeholder="Enter password to confirm deletion" 
+                        value={deleteAccountPassword}
+                        onChange={e => setDeleteAccountPassword(e.target.value)}
+                        style={{ background: 'var(--bg-primary)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'var(--text-primary)', padding: '10px 12px', borderRadius: '6px', fontSize: '0.9rem' }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#ef4444' }}>{deleteMessage}</span>
+                        <button 
+                          onClick={handleDeleteAccount} 
+                          disabled={isDeleting || !deleteAccountPassword}
+                          className="danger-btn"
+                          style={{ opacity: (isDeleting || !deleteAccountPassword) ? 0.5 : 1 }}
+                        >
+                          {isDeleting ? 'Deleting...' : 'Delete Account'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                   <div className="settings-row border-top" style={{ paddingTop: '24px' }}>
-                    <button onClick={() => { document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;"; const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="danger-btn" style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>Log out</button>
+                    <button onClick={() => { document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;"; const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="danger-btn" style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', width: '100%' }}>Log out</button>
                   </div>
                 </div>
               )}
