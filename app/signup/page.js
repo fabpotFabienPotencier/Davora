@@ -15,6 +15,7 @@ export default function Signup() {
   const [privacyUrl, setPrivacyUrl] = useState('/privacy');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [isEmailSent, setIsEmailSent] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -63,6 +64,12 @@ export default function Signup() {
       }
 
       const data = await res.json();
+      
+      if (data.access_token === "verify_email") {
+        setIsEmailSent(true);
+        return;
+      }
+      
       localStorage.setItem('davora_token', data.access_token);
       localStorage.setItem('davora_email', email);
       const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
@@ -129,9 +136,30 @@ export default function Signup() {
           </div>
 
           <div className="auth-form-wrapper">
-            <div className="auth-form-card">
-              
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '8px' }}>
+            {isEmailSent ? (
+              <div className="auth-form-card" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
+                <div style={{ marginBottom: '8px' }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </div>
+                <h1 style={{ fontSize: '1.75rem', fontWeight: '500', color: '#ffffff', textAlign: 'center' }}>Verify your email</h1>
+                <p style={{ color: '#aaaaaa', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                  We've sent a verification link to <strong>{email}</strong>. Please check your inbox and click the link to verify your account.
+                </p>
+                <button 
+                  className="auth-btn-secondary" 
+                  onClick={() => { const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}
+                  style={{ marginTop: '12px' }}
+                >
+                  Go to Login
+                </button>
+              </div>
+            ) : (
+              <div className="auth-form-card">
+                
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '8px' }}>
                 <h1 style={{ fontSize: '1.75rem', fontWeight: '500', color: '#ffffff', textAlign: 'center' }}>Create your account</h1>
               </div>
 
@@ -207,6 +235,7 @@ export default function Signup() {
                 Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="auth-link">Log in</a>
               </p>
             </div>
+            )}
           </div>
           
           <div className="terms-text">
