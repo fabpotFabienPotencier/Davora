@@ -1271,7 +1271,22 @@ export default function Davora() {
                       </div>
                     ) : (
                       <>
-                        {msg.image_url && <img src={msg.image_url} alt="Attached image" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', marginBottom: '12px' }} />}
+                        {(() => {
+                          if (!msg.image_url) return null;
+                          try {
+                            const parsed = JSON.parse(msg.image_url);
+                            if (Array.isArray(parsed)) {
+                              return (
+                                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '12px' }}>
+                                  {parsed.map((img, i) => (
+                                    <img key={i} src={img} alt="Attached image" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', flexShrink: 0 }} />
+                                  ))}
+                                </div>
+                              );
+                            }
+                          } catch (e) { }
+                          return <img src={msg.image_url} alt="Attached image" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', marginBottom: '12px' }} />;
+                        })()}
                         {msg.content && <p className="user-text">{msg.content}</p>}
                       </>
                     )
