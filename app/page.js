@@ -813,6 +813,28 @@ export default function Davora() {
     const currentSession = sessions.find(s => s.id === targetSessionId);
     let activeMessages = currentSession ? [...currentSession.messages, newMessage] : [newMessage];
     
+    // INSTANT DB SAVE: Guarantee the session is saved before the stream even starts
+    if (!isTemporary) {
+      const instantSaveSession = {
+        id: targetSessionId,
+        title: currentSession ? currentSession.title : (textToSend || "New Chat").substring(0, 25),
+        messages: activeMessages,
+        isTemporary: false
+      };
+      const token = localStorage.getItem('davora_token') || '';
+      if (token) {
+        fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
+          },
+          body: JSON.stringify(instantSaveSession)
+        }).catch(err => console.error("Instant Save error", err));
+      }
+    }
+
     const payloadObj = {
       message: textToSend,
       history: activeMessages,
