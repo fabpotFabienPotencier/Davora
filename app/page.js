@@ -608,12 +608,18 @@ export default function Davora() {
         messages: currentSession.messages.map(m => ({ ...m, isStreaming: undefined }))
       };
 
-      // sendBeacon is reliable during page unload (fetch may get cancelled)
-      const blob = new Blob([JSON.stringify(cleanSession)], { type: 'application/json' });
-      navigator.sendBeacon(
-        (process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions?token=' + token,
-        blob
-      );
+      // fetch with keepalive: true is the modern reliable way to send data on unload
+      // It supports application/json properly, whereas sendBeacon can fail CORS
+      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body: JSON.stringify(cleanSession),
+        keepalive: true
+      }).catch(err => console.error("Unload Sync error", err));
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
