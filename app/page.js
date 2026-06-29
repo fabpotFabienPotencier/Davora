@@ -27,6 +27,7 @@ export default function Davora() {
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const activeSessionIdRef = useRef(null);
+  const sessionsRef = useRef([]);
   const [sidebarOpen, setSidebarOpen] = useState(false); // Start closed on mobile to prevent blocking
   const [searchQuery, setSearchQuery] = useState("");
   const [renamingId, setRenamingId] = useState(null);
@@ -558,11 +559,22 @@ export default function Davora() {
     syncMetadata({ active_session_id: activeSessionId || "new" });
   }, [activeSessionId]);
 
+  // Keep sessionsRef in sync for beforeunload handler
+  useEffect(() => {
+    sessionsRef.current = sessions;
+  }, [sessions]);
+
   useEffect(() => {
     // Persist to DB when typing stops
     if (isTyping || !activeSessionId) return;
     const currentSession = sessions.find(s => s.id === activeSessionId);
     if (!currentSession || currentSession.isTemporary) return;
+
+    // Clean isStreaming flags before syncing
+    const cleanSession = {
+      ...currentSession,
+      messages: currentSession.messages.map(m => ({ ...m, isStreaming: undefined }))
+    };
 
     const token = (localStorage.getItem('davora_token') || '');
     if (token) {
@@ -573,10 +585,39 @@ export default function Davora() {
           'Authorization': `Bearer ${token}`,
           'ngrok-skip-browser-warning': 'true'
         },
-        body: JSON.stringify(currentSession)
+        body: JSON.stringify(cleanSession)
       }).catch(err => console.error("DB Sync error", err));
     }
   }, [sessions, isTyping, activeSessionId]);
+
+  // Force-sync active session before page unload (prevents data loss on refresh)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const sessionId = activeSessionIdRef.current;
+      if (!sessionId) return;
+      const token = localStorage.getItem('davora_token') || '';
+      if (!token) return;
+      
+      // Use sessionsRef to get latest state
+      const allSessions = sessionsRef.current || [];
+      const currentSession = allSessions.find(s => s.id === sessionId);
+      if (!currentSession || currentSession.isTemporary) return;
+
+      const cleanSession = {
+        ...currentSession,
+        messages: currentSession.messages.map(m => ({ ...m, isStreaming: undefined }))
+      };
+
+      // sendBeacon is reliable during page unload (fetch may get cancelled)
+      const blob = new Blob([JSON.stringify(cleanSession)], { type: 'application/json' });
+      navigator.sendBeacon(
+        (process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions?token=' + token,
+        blob
+      );
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   useEffect(() => {
     syncMetadata({ prefs: JSON.stringify(prefs) });
