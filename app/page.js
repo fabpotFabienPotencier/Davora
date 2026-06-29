@@ -44,7 +44,7 @@ export default function Davora() {
   const [inputMode, setInputMode] = useState("instant");
   const [thinkingText, setThinkingText] = useState("Thinking...");
   const [copiedId, setCopiedId] = useState(null);
-  const [attachment, setAttachment] = useState(null);
+  const [attachments, setAttachments] = useState([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
@@ -707,28 +707,44 @@ export default function Davora() {
   };
 
   const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      showNotification("Only images are supported right now");
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    if (attachments.length + files.length > 3) {
+      showNotification("You can only upload up to 3 images at once.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setAttachment({
-        file,
-        base64: event.target.result.split(',')[1],
-        url: URL.createObjectURL(file)
-      });
-      setShowPlusMenu(false);
-      inputRef.current?.focus();
-    };
-    reader.readAsDataURL(file);
+
+    const newAttachments = [];
+    let processed = 0;
+
+    files.forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        showNotification("Only images are supported right now");
+        processed++;
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        newAttachments.push({
+          file,
+          base64: event.target.result.split(',')[1],
+          url: event.target.result // Use base64 data URI to prevent blob loss on reload
+        });
+        processed++;
+        if (processed === files.length) {
+          setAttachments(prev => [...prev, ...newAttachments]);
+          setShowPlusMenu(false);
+          inputRef.current?.focus();
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const triggerSend = (customText = null) => {
     const textToSend = customText !== null ? customText : input.trim();
-    if ((!textToSend && !attachment) || !ws.current || isTyping) return;
+    if ((!textToSend && attachments.length === 0) || !ws.current || isTyping) return;
 
     if (synthRef.current) synthRef.current.cancel();
     setSpeakingId(null);
@@ -738,15 +754,21 @@ export default function Davora() {
       targetSessionId = createNewSession(textToSend || "Image Upload");
     }
 
+    // Convert attachments array into a single JSON string if there are any
+    const imageUrls = attachments.length > 0 ? JSON.stringify(attachments.map(a => a.url)) : null;
+
     const newMessage = {
-      id: Date.now(), role: "user", content: textToSend, image_url: attachment?.url,
+      id: Date.now(), role: "user", content: textToSend, image_url: imageUrls,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     setSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newMessage] } : s));
 
-    const activeMessages = sessions.find(s => s.id === targetSessionId)?.messages || [];
-
+    // Fix: activeMessages needs to include the message we just added
+    // because `setSessions` is async and hasn't updated the state yet
+    const currentSession = sessions.find(s => s.id === targetSessionId);
+    let activeMessages = currentSession ? [...currentSession.messages, newMessage] : [newMessage];
+    
     const payloadObj = {
       message: textToSend,
       history: activeMessages,
@@ -768,12 +790,12 @@ export default function Davora() {
       strictMarkdown: prefs.strictMarkdown,
       token: (localStorage.getItem('davora_token') || '')
     };
-    if (attachment) {
-      payloadObj.image = attachment.base64;
+    if (attachments.length > 0) {
+      payloadObj.image_data_array = attachments.map(a => a.base64);
     }
 
     setInput("");
-    setAttachment(null);
+    setAttachments([]);
     setIsTyping(true);
     setEditingId(null);
     setIsListening(false);
@@ -1459,7 +1481,7 @@ export default function Davora() {
                   <button type="button" className="plus-menu-item" onClick={() => fileInputRef.current?.click()}>
                     <Image size={18} /> Add photo
                   </button>
-                  <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} />
+                  <input type="file" accept="image/*" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} />
                   <div className="plus-menu-divider"></div>
                   <button type="button" className={`plus-menu-item ${inputMode === 'instant' ? 'active' : ''}`} onClick={() => { setInputMode("instant"); setShowPlusMenu(false); }}>
                     <Zap size={18} className="text-yellow-500" /> Instant
@@ -1478,12 +1500,14 @@ export default function Davora() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-              {attachment && (
-                <div className="attachment-preview" style={{ padding: '8px 16px', display: 'flex' }}>
-                  <div style={{ position: 'relative', display: 'inline-block' }}>
-                    <img src={attachment.url} alt="Attachment" style={{ height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
-                    <button type="button" onClick={() => setAttachment(null)} style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--bg-secondary)', borderRadius: '50%', padding: '2px', cursor: 'pointer', border: '1px solid var(--border-color)' }}><X size={14} style={{ color: 'var(--text-primary)' }} /></button>
-                  </div>
+              {attachments.length > 0 && (
+                <div className="attachment-preview" style={{ padding: '8px 16px', display: 'flex', gap: '8px', overflowX: 'auto' }}>
+                  {attachments.map((att, idx) => (
+                    <div key={idx} style={{ position: 'relative', display: 'inline-block', flexShrink: 0 }}>
+                      <img src={att.url} alt="Attachment" style={{ height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                      <button type="button" onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))} style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--bg-secondary)', borderRadius: '50%', padding: '2px', cursor: 'pointer', border: '1px solid var(--border-color)' }}><X size={14} style={{ color: 'var(--text-primary)' }} /></button>
+                    </div>
+                  ))}
                 </div>
               )}
               <div className={`textarea-container ${isListening ? 'hidden' : ''}`} style={{ position: 'relative' }}>
