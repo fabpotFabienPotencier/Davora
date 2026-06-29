@@ -608,14 +608,11 @@ export default function Davora() {
         messages: currentSession.messages.map(m => ({ ...m, isStreaming: undefined }))
       };
 
-      // fetch with keepalive: true is the modern reliable way to send data on unload
-      // It supports application/json properly, whereas sendBeacon can fail CORS
-      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
+      // fetch with keepalive: true and text/plain to bypass CORS preflight during page unload
+      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions/unload?token=' + token, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'ngrok-skip-browser-warning': 'true'
+          'Content-Type': 'text/plain' // Must be text/plain to prevent CORS preflight from being aborted
         },
         body: JSON.stringify(cleanSession),
         keepalive: true
