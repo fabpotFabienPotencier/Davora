@@ -46,6 +46,7 @@ export default function Davora() {
   const [thinkingText, setThinkingText] = useState("Thinking...");
   const [copiedId, setCopiedId] = useState(null);
   const [attachments, setAttachments] = useState([]);
+  const [activeLightboxImg, setActiveLightboxImg] = useState(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
@@ -762,7 +763,7 @@ export default function Davora() {
     return newId;
   };
 
-  const handleFileSelect = (e) => {
+  const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
     
@@ -772,29 +773,96 @@ export default function Davora() {
     }
 
     const newAttachments = [];
-    let processed = 0;
+    const filesToUpload = [];
 
     files.forEach(file => {
       if (!file.type.startsWith('image/')) {
         showNotification("Only images are supported right now");
-        processed++;
         return;
       }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        newAttachments.push({
-          file,
-          base64: event.target.result.split(',')[1],
-          url: event.target.result // Use base64 data URI to prevent blob loss on reload
-        });
-        processed++;
-        if (processed === files.length) {
-          setAttachments(prev => [...prev, ...newAttachments]);
-          setShowPlusMenu(false);
-          inputRef.current?.focus();
-        }
+
+      // Create a temporary local URL for immediate rendering
+      const localUrl = URL.createObjectURL(file);
+      const attItem = {
+        file,
+        url: localUrl,
+        base64: null,
+        uploading: true,
+        error: null,
+        publicUrl: null
       };
-      reader.readAsDataURL(file);
+      newAttachments.push(attItem);
+      filesToUpload.push(attItem);
+    });
+
+    if (newAttachments.length === 0) return;
+
+    setAttachments(prev => [...prev, ...newAttachments]);
+    setShowPlusMenu(false);
+    inputRef.current?.focus();
+
+    // Trigger upload in background for each new image
+    filesToUpload.forEach(async (att) => {
+      try {
+        // Read file as base64 first for legacy/fallback support
+        const base64Data = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (event) => resolve(event.target.result.split(',')[1]);
+          reader.readAsDataURL(att.file);
+        });
+
+        // Update local state with base64 for fallback
+        setAttachments(prev => prev.map(item => item.url === att.url ? { ...item, base64: base64Data } : item));
+
+        const token = localStorage.getItem('davora_token') || '';
+        const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/images/presigned-url', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            filename: att.file.name,
+            content_type: att.file.type
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error("Presigned URL generation failed");
+        }
+
+        const data = await res.json();
+        const { upload_url, public_url } = data;
+
+        // Perform PUT request to Cloudflare R2
+        const uploadRes = await fetch(upload_url, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': att.file.type
+          },
+          body: att.file
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error("R2 upload request failed");
+        }
+
+        // Update state with the public R2 URL
+        setAttachments(prev => prev.map(item => item.url === att.url ? {
+          ...item,
+          url: public_url,
+          publicUrl: public_url,
+          uploading: false
+        } : item));
+
+      } catch (err) {
+        console.error("R2 upload error, falling back to legacy base64 mode:", err);
+        setAttachments(prev => prev.map(item => item.url === att.url ? {
+          ...item,
+          uploading: false,
+          error: "R2 upload failed, using legacy mode"
+        } : item));
+      }
     });
   };
 
@@ -802,6 +870,12 @@ export default function Davora() {
     console.log("Davora v3.3 - TriggerSend executing! Fast Save Enabled.");
     const textToSend = customText !== null ? customText : input.trim();
     if ((!textToSend && attachments.length === 0) || !ws.current || isTyping) return;
+
+    const isUploading = attachments.some(a => a.uploading);
+    if (isUploading) {
+      showNotification("Please wait for images to finish uploading.");
+      return;
+    }
 
     if (synthRef.current) synthRef.current.cancel();
     setSpeakingId(null);
@@ -878,7 +952,8 @@ export default function Davora() {
       token: (localStorage.getItem('davora_token') || '')
     };
     if (attachments.length > 0) {
-      payloadObj.image_data_array = attachments.map(a => a.base64);
+      payloadObj.image_urls = attachments.map(a => a.publicUrl).filter(Boolean);
+      payloadObj.image_data_array = attachments.map(a => a.base64).filter(Boolean);
     }
 
     setInput("");
@@ -1362,17 +1437,55 @@ export default function Davora() {
                           if (!msg.image_url) return null;
                           try {
                             const parsed = JSON.parse(msg.image_url);
-                            if (Array.isArray(parsed)) {
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                              const count = parsed.length;
+                              let gridStyle = { display: 'grid', gap: '8px', marginBottom: '12px' };
+                              let imgStyle = { width: '100%', borderRadius: '8px', objectFit: 'cover', cursor: 'zoom-in', transition: 'transform 0.15s ease' };
+
+                              if (count === 1) {
+                                gridStyle.gridTemplateColumns = '1fr';
+                                imgStyle.maxHeight = '220px';
+                                imgStyle.objectFit = 'contain';
+                                imgStyle.width = 'auto';
+                              } else if (count === 2) {
+                                gridStyle.gridTemplateColumns = 'repeat(2, 1fr)';
+                                imgStyle.aspectRatio = '16 / 10';
+                              } else {
+                                gridStyle.gridTemplateColumns = 'repeat(3, 1fr)';
+                                imgStyle.aspectRatio = '1 / 1';
+                              }
+
                               return (
-                                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '12px' }}>
+                                <div style={gridStyle}>
                                   {parsed.map((img, i) => (
-                                    <img key={i} src={img} alt="Attached image" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', flexShrink: 0 }} />
+                                    <img 
+                                      key={i} 
+                                      src={img} 
+                                      alt="Attached image" 
+                                      onClick={() => setActiveLightboxImg(img)}
+                                      className="chat-attached-image"
+                                      style={imgStyle} 
+                                    />
                                   ))}
                                 </div>
                               );
                             }
                           } catch (e) { }
-                          return <img src={msg.image_url} alt="Attached image" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', marginBottom: '12px' }} />;
+                          return (
+                            <img 
+                              src={msg.image_url} 
+                              alt="Attached image" 
+                              onClick={() => setActiveLightboxImg(msg.image_url)}
+                              style={{ 
+                                maxWidth: '100%', 
+                                maxHeight: '220px', 
+                                borderRadius: '8px', 
+                                marginBottom: '12px', 
+                                objectFit: 'contain',
+                                cursor: 'zoom-in'
+                              }} 
+                            />
+                          );
                         })()}
                         {msg.content && <p className="user-text">{msg.content}</p>}
                       </>
@@ -1606,7 +1719,33 @@ export default function Davora() {
                 <div className="attachment-preview" style={{ padding: '8px 16px', display: 'flex', gap: '8px', overflowX: 'auto' }}>
                   {attachments.map((att, idx) => (
                     <div key={idx} style={{ position: 'relative', display: 'inline-block', flexShrink: 0 }}>
-                      <img src={att.url} alt="Attachment" style={{ height: '60px', borderRadius: '8px', objectFit: 'cover' }} />
+                      <img 
+                        src={att.url} 
+                        alt="Attachment" 
+                        style={{ 
+                          height: '60px', 
+                          borderRadius: '8px', 
+                          objectFit: 'cover',
+                          opacity: att.uploading ? 0.5 : 1,
+                          transition: 'opacity 0.2s'
+                        }} 
+                      />
+                      {att.uploading && (
+                        <div style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'rgba(0,0,0,0.3)',
+                          borderRadius: '8px'
+                        }}>
+                          <Loader2 size={16} className="animate-spin" style={{ color: '#ffffff' }} />
+                        </div>
+                      )}
                       <button type="button" onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))} style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--bg-secondary)', borderRadius: '50%', padding: '2px', cursor: 'pointer', border: '1px solid var(--border-color)' }}><X size={14} style={{ color: 'var(--text-primary)' }} /></button>
                     </div>
                   ))}
@@ -2887,6 +3026,38 @@ export default function Davora() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Lightbox Modal */}
+      {activeLightboxImg && (
+        <div 
+          onClick={() => setActiveLightboxImg(null)} 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            cursor: 'zoom-out'
+          }}
+        >
+          <img 
+            src={activeLightboxImg} 
+            alt="Enlarged view" 
+            style={{
+              maxWidth: '90%',
+              maxHeight: '90%',
+              borderRadius: '8px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+              objectFit: 'contain'
+            }} 
+          />
         </div>
       )}
 
