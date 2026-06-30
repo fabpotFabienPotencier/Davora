@@ -801,9 +801,10 @@ export default function Davora() {
 
     // Trigger upload in background for each new image
     filesToUpload.forEach(async (att) => {
+      let base64Data = null;
       try {
         // Read file as base64 first for legacy/fallback support
-        const base64Data = await new Promise((resolve) => {
+        base64Data = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = (event) => resolve(event.target.result.split(',')[1]);
           reader.readAsDataURL(att.file);
