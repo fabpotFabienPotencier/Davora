@@ -718,6 +718,7 @@ export default function Davora() {
       }));
     };
     ws.current.onclose = () => {
+      setIsTyping(false); // CRITICAL: Reset typing state so the chat can be saved to the database!
       setSessions(prev => prev.map(session => {
         if (session.id === activeSessionIdRef.current) {
           return { ...session, messages: session.messages.map(m => ({ ...m, isStreaming: false })) };
@@ -813,28 +814,28 @@ export default function Davora() {
     const currentSession = sessions.find(s => s.id === targetSessionId);
     let activeMessages = currentSession ? [...currentSession.messages, newMessage] : [newMessage];
     
-    // INSTANT DB SAVE: Guarantee the session is saved before the stream even starts
+    // IMMEDIATE SAVE: Securely save the user's message to the cloud instantly
+    // This ensures that even if they refresh the page before the AI starts typing, 
+    // the chat session is safely preserved in the database.
     if (!isTemporary) {
-      const instantSaveSession = {
-        id: targetSessionId,
-        title: currentSession ? currentSession.title : (textToSend || "New Chat").substring(0, 25),
-        messages: activeMessages,
-        isTemporary: false
-      };
-      const token = localStorage.getItem('davora_token') || '';
-      if (token) {
+      const initSessionToken = localStorage.getItem('davora_token') || '';
+      if (initSessionToken) {
         fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            'ngrok-skip-browser-warning': 'true'
+            'Authorization': `Bearer ${initSessionToken}`
           },
-          body: JSON.stringify(instantSaveSession)
-        }).catch(err => console.error("Instant Save error", err));
+          body: JSON.stringify({
+            id: targetSessionId,
+            title: currentSession ? currentSession.title : (textToSend.length > 25 ? textToSend.substring(0, 25) + "..." : (textToSend || "Image Upload")),
+            isTemporary: false,
+            messages: activeMessages
+          })
+        }).catch(err => console.error("Fast save failed", err));
       }
     }
-
+    
     const payloadObj = {
       message: textToSend,
       history: activeMessages,
