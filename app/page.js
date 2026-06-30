@@ -580,13 +580,13 @@ export default function Davora() {
       messages: currentSession.messages.map(m => ({ ...m, isStreaming: undefined }))
     };
 
-    const token = (localStorage.getItem('davora_token') || '');
-    if (token) {
+    const isAuthenticated = document.cookie.includes('davora_auth=1');
+    if (isAuthenticated) {
       fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': 'Bearer ',
           'ngrok-skip-browser-warning': 'true'
         },
         body: JSON.stringify(cleanSession)
@@ -599,8 +599,8 @@ export default function Davora() {
     const handleBeforeUnload = () => {
       const sessionId = activeSessionIdRef.current;
       if (!sessionId) return;
-      const token = localStorage.getItem('davora_token') || '';
-      if (!token) return;
+      const isAuthenticated = document.cookie.includes('davora_auth=1');
+      if (!isAuthenticated) return;
       
       // Use sessionsRef to get latest state
       const allSessions = sessionsRef.current || [];
@@ -613,7 +613,7 @@ export default function Davora() {
       };
 
       // fetch with keepalive: true and text/plain to bypass CORS preflight during page unload
-      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions/unload?token=' + token, {
+      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions/unload?token=', {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain' // Must be text/plain to prevent CORS preflight from being aborted
@@ -836,13 +836,13 @@ export default function Davora() {
     // This ensures that even if they refresh the page before the AI starts typing, 
     // the chat session is safely preserved in the database.
     if (!isTemporary) {
-      const initSessionToken = localStorage.getItem('davora_token') || '';
-      if (initSessionToken) {
+      const isAuthenticated = document.cookie.includes('davora_auth=1');
+      if (isAuthenticated) {
         fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${initSessionToken}`
+            'Authorization': 'Bearer '
           },
           body: JSON.stringify({
             id: targetSessionId,
