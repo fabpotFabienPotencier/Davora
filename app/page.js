@@ -746,6 +746,11 @@ export default function Davora() {
     const title = initialMsg.length > 25 ? initialMsg.substring(0, 25) + "..." : initialMsg;
     const newId = Date.now().toString();
     const newSession = { id: newId, title, messages: [], isTemporary };
+    
+    // Synchronously update refs so beforeunload works immediately even before React re-renders
+    activeSessionIdRef.current = newId;
+    sessionsRef.current = [newSession, ...(sessionsRef.current || [])];
+    
     setSessions(prev => [newSession, ...prev]);
     setActiveSessionId(newId);
     return newId;
@@ -811,8 +816,16 @@ export default function Davora() {
 
     // Fix: activeMessages needs to include the message we just added
     // because `setSessions` is async and hasn't updated the state yet
-    const currentSession = sessions.find(s => s.id === targetSessionId);
+    const currentSession = sessions.find(s => s.id === targetSessionId) || (sessionsRef.current || []).find(s => s.id === targetSessionId);
     let activeMessages = currentSession ? [...currentSession.messages, newMessage] : [newMessage];
+    
+    // Synchronously update sessionsRef for beforeunload
+    if (sessionsRef.current) {
+      const sIdx = sessionsRef.current.findIndex(s => s.id === targetSessionId);
+      if (sIdx !== -1) {
+        sessionsRef.current[sIdx] = { ...sessionsRef.current[sIdx], messages: activeMessages };
+      }
+    }
     
     // IMMEDIATE SAVE: Securely save the user's message to the cloud instantly
     // This ensures that even if they refresh the page before the AI starts typing, 
