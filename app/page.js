@@ -403,7 +403,8 @@ export default function Davora() {
           headers: {
             'Authorization': `Bearer ${token}`,
             'ngrok-skip-browser-warning': 'true'
-          }
+          },
+          cache: 'no-store'
         });
         if (res.status === 401) {
           localStorage.removeItem("davora_token");
@@ -417,7 +418,8 @@ export default function Davora() {
             headers: {
               'Authorization': `Bearer ${token}`,
               'ngrok-skip-browser-warning': 'true'
-            }
+            },
+            cache: 'no-store'
           });
           if (metaRes.ok) {
             const meta = await metaRes.json();
@@ -440,7 +442,8 @@ export default function Davora() {
             headers: {
               'Authorization': `Bearer ${token}`,
               'ngrok-skip-browser-warning': 'true'
-            }
+            },
+            cache: 'no-store'
           });
           if (projRes.ok) {
             setProjectsList(await projRes.json());
@@ -450,14 +453,15 @@ export default function Davora() {
             headers: {
               'Authorization': `Bearer ${token}`,
               'ngrok-skip-browser-warning': 'true'
-            }
+            },
+            cache: 'no-store'
           });
           if (codexRes.ok) {
             setCodexSnippets(await codexRes.json());
           }
 
           try {
-            const configRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } });
+            const configRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' }, cache: 'no-store' });
             if (configRes.ok) { 
               const cfg = await configRes.json(); 
               setProPrice(cfg.pro_price);
@@ -465,7 +469,7 @@ export default function Davora() {
               if (cfg.logo_url) setLogoUrl(cfg.logo_url);
             }
 
-            const subRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/subscription', { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' } });
+            const subRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/subscription', { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }, cache: 'no-store' });
             if (subRes.ok) { const sub = await subRes.json(); setSubscriptionPlan(sub.plan_name); }
           } catch (e) { }
         }
@@ -793,6 +797,7 @@ export default function Davora() {
   };
 
   const triggerSend = (customText = null) => {
+    console.log("Davora v3.3 - TriggerSend executing! Fast Save Enabled.");
     const textToSend = customText !== null ? customText : input.trim();
     if ((!textToSend && attachments.length === 0) || !ws.current || isTyping) return;
 
