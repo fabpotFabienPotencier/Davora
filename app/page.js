@@ -686,25 +686,23 @@ export default function Davora() {
         setTimeout(() => inputRef.current?.focus(), 100);
         // Auto-read aloud if enabled
         if (prefs.autoReadAloud && synthRef.current) {
-          setSessions(prev => {
-            const session = prev.find(s => s.id === activeSessionIdRef.current);
-            if (session) {
-              const lastMsg = session.messages[session.messages.length - 1];
-              if (lastMsg && lastMsg.role === "ai") {
-                synthRef.current.cancel();
-                const cleanText = lastMsg.content.replace(/[*#`_~]/g, '');
-                const utterance = new SpeechSynthesisUtterance(cleanText);
-                utterance.onend = () => setSpeakingId(null);
-                utterance.onerror = () => setSpeakingId(null);
-                const voices = synthRef.current.getVoices();
-                const goodVoice = voices.find(v => v.lang.includes('en-') && (v.name.includes('Google') || v.name.includes('Natural')));
-                if (goodVoice) utterance.voice = goodVoice;
-                setSpeakingId(lastMsg.id);
-                synthRef.current.speak(utterance);
-              }
+          const allSessions = sessionsRef.current || [];
+          const session = allSessions.find(s => s.id === activeSessionIdRef.current);
+          if (session) {
+            const lastMsg = session.messages[session.messages.length - 1];
+            if (lastMsg && lastMsg.role === "ai") {
+              synthRef.current.cancel();
+              const cleanText = lastMsg.content.replace(/[*#`_~]/g, '');
+              const utterance = new SpeechSynthesisUtterance(cleanText);
+              utterance.onend = () => setSpeakingId(null);
+              utterance.onerror = () => setSpeakingId(null);
+              const voices = synthRef.current.getVoices();
+              const goodVoice = voices.find(v => v.lang.includes('en-') && (v.name.includes('Google') || v.name.includes('Natural')));
+              if (goodVoice) utterance.voice = goodVoice;
+              setSpeakingId(lastMsg.id);
+              synthRef.current.speak(utterance);
             }
-            return prev;
-          });
+          }
         }
         return;
       }
@@ -859,6 +857,7 @@ export default function Davora() {
         console.error("R2 upload error, falling back to legacy base64 mode:", err);
         setAttachments(prev => prev.map(item => item.url === att.url ? {
           ...item,
+          url: `data:${att.file.type};base64,${base64Data}`,
           uploading: false,
           error: "R2 upload failed, using legacy mode"
         } : item));
