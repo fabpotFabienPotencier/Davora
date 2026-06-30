@@ -103,8 +103,9 @@ export default function Davora() {
   const [activeModal, setActiveModal] = useState(null);
   const [canvasArtifacts, setCanvasArtifacts] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [plusPrice, setPlusPrice] = useState("10");
-  const [proPrice, setProPrice] = useState("20");
+  const [basicPrice, setBasicPrice] = useState("3");
+  const [proPrice, setProPrice] = useState("7");
+  const [premiumPrice, setPremiumPrice] = useState("15");
   const [subscriptionPlan, setSubscriptionPlan] = useState("Davora Free");
   const [logoUrl, setLogoUrl] = useState(null);
 
@@ -464,8 +465,9 @@ export default function Davora() {
             const configRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' }, cache: 'no-store' });
             if (configRes.ok) { 
               const cfg = await configRes.json(); 
-              setProPrice(cfg.pro_price);
-              setPlusPrice(cfg.plus_price);
+              setBasicPrice(cfg.basic_price || "3");
+              setProPrice(cfg.pro_price || "7");
+              setPremiumPrice(cfg.premium_price || "15");
               if (cfg.logo_url) setLogoUrl(cfg.logo_url);
             }
 
@@ -2102,7 +2104,7 @@ export default function Davora() {
                   <div className="settings-row">
                     <div className="settings-info">
                       <label>Current Plan</label>
-                      <p style={{ fontWeight: '500' }}>{subscriptionPlan}</p>
+                      <p style={{ fontWeight: '600', fontSize: '1.1rem', color: '#10b981' }}>{subscriptionPlan}</p>
                     </div>
                   </div>
                   <div className="settings-row border-top" style={{ flexDirection: 'column', gap: '16px', alignItems: 'flex-start', width: '100%' }}>
@@ -2111,34 +2113,88 @@ export default function Davora() {
                       <p>Unlock advanced capabilities and higher limits.</p>
                     </div>
                     
-                    <div style={{ display: 'flex', gap: '16px', width: '100%', flexWrap: 'wrap' }}>
-                      <div style={{ flex: '1 1 200px', background: 'var(--surface-bg)', border: '1px solid var(--border-color)', padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', width: '100%', marginTop: '8px' }}>
+                      
+                      {/* Free Plan Card */}
+                      <div style={{ flex: '1', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
-                          <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '8px' }}>Davora Plus</h3>
-                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>Perfect for individuals and heavy users.</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <Compass size={20} style={{ color: 'var(--text-secondary)' }} />
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>Free</h3>
+                          </div>
+                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>Basic features for everyday tasks.</p>
                           <ul style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <li>General access even during peak times</li>
-                            <li>Faster response speed</li>
-                            <li>Priority over Free users</li>
+                            <li>20-30 messages / day</li>
+                            <li>4 photo uploads / day</li>
+                            <li>Basic response speed</li>
                           </ul>
                         </div>
-                        <button className="settings-nav-btn" style={{ padding: '10px 20px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '8px', fontWeight: '600', border: 'none', cursor: 'pointer', width: '100%' }} onClick={() => handleUpgrade("plus")}>Upgrade — ${plusPrice}/mo</button>
+                        <button className="settings-nav-btn" style={{ padding: '10px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', borderRadius: '8px', fontWeight: '600', cursor: 'not-allowed', width: '100%', textAlign: 'center', justifyContent: 'center' }} disabled>
+                          {!subscriptionPlan || subscriptionPlan.includes("Free") ? "Active Plan" : "Included"}
+                        </button>
                       </div>
 
-                      <div style={{ flex: '1 1 200px', background: 'linear-gradient(to bottom right, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
-                        <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontSize: '0.7rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>POPULAR</div>
+                      {/* Basic Plan Card */}
+                      <div style={{ flex: '1', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
-                          <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '8px' }}>Davora Pro</h3>
-                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>For advanced users needing maximum power.</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <Zap size={20} style={{ color: '#10b981' }} />
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>Basic</h3>
+                          </div>
+                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>More messages and faster responses.</p>
                           <ul style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <li>Everything in Plus</li>
-                            <li>Access to advanced models (Davora-4)</li>
-                            <li>Unlimited file & image uploads</li>
-                            <li>Early access to new features</li>
+                            <li>100 messages / day</li>
+                            <li>10 photo uploads / day</li>
+                            <li>Slightly faster responses</li>
                           </ul>
                         </div>
-                        <button className="settings-nav-btn" style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', borderRadius: '8px', fontWeight: '600', border: 'none', cursor: 'pointer', width: '100%' }} onClick={() => handleUpgrade("pro")}>Upgrade — ${proPrice}/mo</button>
+                        <button className="settings-nav-btn" style={{ padding: '10px', background: subscriptionPlan?.includes("Basic") ? 'transparent' : 'var(--text-primary)', color: subscriptionPlan?.includes("Basic") ? 'var(--text-secondary)' : 'var(--bg-primary)', border: subscriptionPlan?.includes("Basic") ? '1px solid var(--border-color)' : 'none', borderRadius: '8px', fontWeight: '600', cursor: subscriptionPlan?.includes("Basic") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center' }} onClick={() => { if (!subscriptionPlan?.includes("Basic")) handleUpgrade("basic"); }} disabled={subscriptionPlan?.includes("Basic")}>
+                          {subscriptionPlan?.includes("Basic") ? "Active Plan" : `Upgrade — $${basicPrice}/mo`}
+                        </button>
                       </div>
+
+                      {/* Pro Plan Card */}
+                      <div style={{ flex: '1', background: 'linear-gradient(to bottom right, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontSize: '0.7rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>POPULAR</div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <Sparkles size={20} style={{ color: '#8b5cf6' }} />
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>Pro</h3>
+                          </div>
+                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>For advanced users needing maximum power.</p>
+                          <ul style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <li>Unlimited messages</li>
+                            <li>Priority response speed</li>
+                            <li>Advanced models & reasoning</li>
+                            <li>Unlimited uploads & canvas</li>
+                          </ul>
+                        </div>
+                        <button className="settings-nav-btn" style={{ padding: '10px', background: subscriptionPlan?.includes("Pro") ? 'transparent' : 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: subscriptionPlan?.includes("Pro") ? '1px solid var(--border-color)' : 'none', borderRadius: '8px', fontWeight: '600', cursor: subscriptionPlan?.includes("Pro") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center' }} onClick={() => { if (!subscriptionPlan?.includes("Pro")) handleUpgrade("pro"); }} disabled={subscriptionPlan?.includes("Pro")}>
+                          {subscriptionPlan?.includes("Pro") ? "Active Plan" : `Upgrade — $${proPrice}/mo`}
+                        </button>
+                      </div>
+
+                      {/* Premium Plan Card */}
+                      <div style={{ flex: '1', background: 'linear-gradient(to bottom right, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1))', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', top: '12px', right: '12px', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', fontSize: '0.7rem', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>ELITE</div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                            <ShieldCheck size={20} style={{ color: '#f59e0b' }} />
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: '600' }}>Premium</h3>
+                          </div>
+                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>Complete access to all elite features.</p>
+                          <ul style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <li>Everything unlocked</li>
+                            <li>Maximum response speeds</li>
+                            <li>Early access to new features</li>
+                            <li>Premium 24/7 support</li>
+                          </ul>
+                        </div>
+                        <button className="settings-nav-btn" style={{ padding: '10px', background: subscriptionPlan?.includes("Premium") ? 'transparent' : 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', border: subscriptionPlan?.includes("Premium") ? '1px solid var(--border-color)' : 'none', borderRadius: '8px', fontWeight: '600', cursor: subscriptionPlan?.includes("Premium") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center' }} onClick={() => { if (!subscriptionPlan?.includes("Premium")) handleUpgrade("premium"); }} disabled={subscriptionPlan?.includes("Premium")}>
+                          {subscriptionPlan?.includes("Premium") ? "Active Plan" : `Upgrade — $${premiumPrice}/mo`}
+                        </button>
+                      </div>
+
                     </div>
                   </div>
                   <div className="settings-row border-top">
@@ -2438,7 +2494,7 @@ export default function Davora() {
       {/* Dynamic Feature Modals */}
       {activeModal && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', width: '90%' }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: activeModal === 'upgrade' ? '800px' : '600px', width: '90%' }}>
             <div className="modal-header">
               <h2>
                 {activeModal === 'library' && 'Prompt Library'}
@@ -2450,6 +2506,7 @@ export default function Davora() {
                 {activeModal === 'schedule' && 'Schedule Task'}
                 {activeModal === 'report' && 'Report Issue'}
                 {activeModal === 'share' && 'Share Chat'}
+                {activeModal === 'upgrade' && '💰 Choose Your Davora Plan'}
               </h2>
               <button className="icon-action-btn" onClick={() => setActiveModal(null)}><X size={20} /></button>
             </div>
@@ -2664,6 +2721,95 @@ export default function Davora() {
                         } catch (e) { showNotification('Error sharing chat.'); }
                       }}>Generate Link</button>
                     )}
+                  </div>
+                </div>
+              )}
+              {activeModal === 'upgrade' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '8px' }}>
+                    Choose the perfect plan to unlock advanced capabilities, raise limits, and continue your workflow.
+                  </p>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px', width: '100%' }}>
+                    
+                    {/* Free Card */}
+                    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <Compass size={18} style={{ color: 'var(--text-secondary)' }} />
+                          <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Free</h3>
+                        </div>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '12px' }}>Basic everyday features.</p>
+                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '16px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <li>20-30 messages / day</li>
+                          <li>4 photos / day</li>
+                          <li>Basic speed</li>
+                        </ul>
+                      </div>
+                      <button className="settings-nav-btn" style={{ padding: '8px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', borderRadius: '8px', fontWeight: '600', cursor: 'not-allowed', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem' }} disabled>
+                        {!subscriptionPlan || subscriptionPlan.includes("Free") ? "Active Plan" : "Included"}
+                      </button>
+                    </div>
+
+                    {/* Basic Card */}
+                    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <Zap size={18} style={{ color: '#10b981' }} />
+                          <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Basic</h3>
+                        </div>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '12px' }}>More limits, faster speeds.</p>
+                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '16px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <li>100 messages / day</li>
+                          <li>10 photos / day</li>
+                          <li>Slightly faster responses</li>
+                        </ul>
+                      </div>
+                      <button className="settings-nav-btn" style={{ padding: '8px', background: subscriptionPlan?.includes("Basic") ? 'transparent' : 'var(--text-primary)', color: subscriptionPlan?.includes("Basic") ? 'var(--text-secondary)' : 'var(--bg-primary)', border: subscriptionPlan?.includes("Basic") ? '1px solid var(--border-color)' : 'none', borderRadius: '8px', fontWeight: '600', cursor: subscriptionPlan?.includes("Basic") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem' }} onClick={() => { if (!subscriptionPlan?.includes("Basic")) { handleUpgrade("basic"); setActiveModal(null); } }} disabled={subscriptionPlan?.includes("Basic")}>
+                        {subscriptionPlan?.includes("Basic") ? "Active Plan" : `Upgrade — $${basicPrice}/mo`}
+                      </button>
+                    </div>
+
+                    {/* Pro Card */}
+                    <div style={{ background: 'linear-gradient(to bottom right, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px', position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>POPULAR</div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <Sparkles size={18} style={{ color: '#8b5cf6' }} />
+                          <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Pro</h3>
+                        </div>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '12px' }}>Maximum power & reasoning.</p>
+                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '16px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <li>Unlimited messages</li>
+                          <li>Priority speed & models</li>
+                          <li>Unlimited photo uploads</li>
+                        </ul>
+                      </div>
+                      <button className="settings-nav-btn" style={{ padding: '8px', background: subscriptionPlan?.includes("Pro") ? 'transparent' : 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: subscriptionPlan?.includes("Pro") ? '1px solid var(--border-color)' : 'none', borderRadius: '8px', fontWeight: '600', cursor: subscriptionPlan?.includes("Pro") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem' }} onClick={() => { if (!subscriptionPlan?.includes("Pro")) { handleUpgrade("pro"); setActiveModal(null); } }} disabled={subscriptionPlan?.includes("Pro")}>
+                        {subscriptionPlan?.includes("Pro") ? "Active Plan" : `Upgrade — $${proPrice}/mo`}
+                      </button>
+                    </div>
+
+                    {/* Premium Card */}
+                    <div style={{ background: 'linear-gradient(to bottom right, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1))', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px', position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>ELITE</div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <ShieldCheck size={18} style={{ color: '#f59e0b' }} />
+                          <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Premium</h3>
+                        </div>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '12px' }}>Complete ultimate features.</p>
+                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '16px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <li>Everything unlocked</li>
+                          <li>Max priority speed</li>
+                          <li>Early access & Support</li>
+                        </ul>
+                      </div>
+                      <button className="settings-nav-btn" style={{ padding: '8px', background: subscriptionPlan?.includes("Premium") ? 'transparent' : 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', border: subscriptionPlan?.includes("Premium") ? '1px solid var(--border-color)' : 'none', borderRadius: '8px', fontWeight: '600', cursor: subscriptionPlan?.includes("Premium") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem' }} onClick={() => { if (!subscriptionPlan?.includes("Premium")) { handleUpgrade("premium"); setActiveModal(null); } }} disabled={subscriptionPlan?.includes("Premium")}>
+                        {subscriptionPlan?.includes("Premium") ? "Active Plan" : `Upgrade — $${premiumPrice}/mo`}
+                      </button>
+                    </div>
+
                   </div>
                 </div>
               )}
