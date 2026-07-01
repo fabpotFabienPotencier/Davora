@@ -585,11 +585,12 @@ export default function Davora() {
 
     const isAuthenticated = document.cookie.includes('davora_auth=1');
     if (isAuthenticated) {
+      const token = localStorage.getItem('davora_token') || '';
       fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ',
+          'Authorization': `Bearer ${token}`,
           'ngrok-skip-browser-warning': 'true'
         },
         body: JSON.stringify(cleanSession)
@@ -616,7 +617,8 @@ export default function Davora() {
       };
 
       // fetch with keepalive: true and text/plain to bypass CORS preflight during page unload
-      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions/unload?token=', {
+      const token = localStorage.getItem('davora_token') || '';
+      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + `/api/sessions/unload?token=${token}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain' // Must be text/plain to prevent CORS preflight from being aborted
@@ -925,11 +927,12 @@ export default function Davora() {
     if (!isTemporary) {
       const isAuthenticated = document.cookie.includes('davora_auth=1');
       if (isAuthenticated) {
+        const token = localStorage.getItem('davora_token') || '';
         fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer '
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             id: targetSessionId,
