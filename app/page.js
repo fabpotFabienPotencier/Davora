@@ -1186,8 +1186,15 @@ export default function Davora() {
     if (!deleteConfirm) return;
     if (deleteConfirm.type === 'single') {
       const id = deleteConfirm.id;
-      setSessions(prev => prev.filter(s => s.id !== id));
-      if (activeSessionId === id) setActiveSessionId(null);
+      setSessions(prev => {
+        const updated = prev.filter(s => s.id !== id);
+        sessionsRef.current = updated;
+        return updated;
+      });
+      if (activeSessionId === id) {
+        setActiveSessionId(null);
+        activeSessionIdRef.current = null;
+      }
       showNotification("Chat deleted");
       const token = (localStorage.getItem('davora_token') || '');
       if (token) {
@@ -1198,7 +1205,9 @@ export default function Davora() {
       }
     } else if (deleteConfirm.type === 'all') {
       setSessions([]);
+      sessionsRef.current = [];
       setActiveSessionId(null);
+      activeSessionIdRef.current = null;
       showNotification("All chats cleared");
       setShowSettings(false);
       const token = (localStorage.getItem('davora_token') || '');
