@@ -1201,7 +1201,8 @@ export default function Davora() {
       const token = (localStorage.getItem('davora_token') || '');
       fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
+        headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+        keepalive: true
       }).catch(err => console.error("Delete sync error", err));
     } else if (deleteConfirm.type === 'all') {
       // Update refs synchronously to prevent race conditions during beforeunload or auto-sync
@@ -1215,7 +1216,8 @@ export default function Davora() {
       const token = (localStorage.getItem('davora_token') || '');
       fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions/all', {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
+        headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' },
+        keepalive: true
       }).catch(err => console.error("Clear all sync error", err));
     }
     setDeleteConfirm(null);
