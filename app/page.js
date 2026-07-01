@@ -647,6 +647,17 @@ export default function Davora() {
     syncMetadata({ canvas: JSON.stringify(canvasArtifacts) });
   }, [canvasArtifacts]);
 
+  const saveToCanvas = (content) => {
+    const newArtifact = {
+      id: Date.now().toString(),
+      date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      content: content
+    };
+    setCanvasArtifacts(prev => [newArtifact, ...prev]);
+    setCanvasOpen(true);
+    showNotification("Saved to Canvas!");
+  };
+
   const togglePin = (e, id) => {
     e.stopPropagation();
     setPinnedSessionIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
