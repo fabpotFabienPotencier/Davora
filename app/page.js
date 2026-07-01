@@ -1436,13 +1436,10 @@ export default function Davora() {
 
           {messages.map((msg, index) => (
             <div key={msg.id || index} className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'}`}>
-
-
               <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
-                <div className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
-
-                  {msg.role === 'user' ? (
-                    editingId === msg.id ? (
+                {msg.role === 'user' ? (
+                  editingId === msg.id ? (
+                    <div className="message-bubble bubble-user">
                       <div className="edit-mode-box">
                         <TextareaAutosize
                           value={editInput}
@@ -1454,68 +1451,73 @@ export default function Davora() {
                           <button onClick={() => submitEdit(msg.id)} className="edit-save">Resubmit Prompt</button>
                         </div>
                       </div>
-                    ) : (
-                      <>
-                        {(() => {
-                          if (!msg.image_url) return null;
-                          try {
-                            const parsed = JSON.parse(msg.image_url);
-                            if (Array.isArray(parsed) && parsed.length > 0) {
-                              const count = parsed.length;
-                              let gridStyle = { display: 'grid', gap: '8px', marginBottom: '12px' };
-                              let imgStyle = { width: '100%', borderRadius: '8px', objectFit: 'cover', cursor: 'zoom-in', transition: 'transform 0.15s ease' };
-
-                              if (count === 1) {
-                                gridStyle.gridTemplateColumns = '1fr';
-                                imgStyle.maxHeight = '220px';
-                                imgStyle.objectFit = 'contain';
-                                imgStyle.width = 'auto';
-                              } else if (count === 2) {
-                                gridStyle.gridTemplateColumns = 'repeat(2, 1fr)';
-                                imgStyle.aspectRatio = '16 / 10';
-                              } else {
-                                gridStyle.gridTemplateColumns = 'repeat(3, 1fr)';
-                                imgStyle.aspectRatio = '1 / 1';
-                              }
-
-                              return (
-                                <div style={gridStyle}>
-                                  {parsed.map((img, i) => (
-                                    <img 
-                                      key={i} 
-                                      src={img} 
-                                      alt="Attached image" 
-                                      onClick={() => setActiveLightboxImg(img)}
-                                      className="chat-attached-image"
-                                      style={imgStyle} 
-                                    />
-                                  ))}
-                                </div>
-                              );
-                            }
-                          } catch (e) { }
-                          return (
-                            <img 
-                              src={msg.image_url} 
-                              alt="Attached image" 
-                              onClick={() => setActiveLightboxImg(msg.image_url)}
-                              style={{ 
-                                maxWidth: '100%', 
-                                maxHeight: '220px', 
-                                borderRadius: '8px', 
-                                marginBottom: '12px', 
-                                objectFit: 'contain',
-                                cursor: 'zoom-in'
-                              }} 
-                            />
-                          );
-                        })()}
-                        {msg.content && <p className="user-text">{msg.content}</p>}
-                      </>
-                    )
+                    </div>
                   ) : (
-                    <div className="markdown-body">
+                    <div className="user-message-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', width: '100%' }}>
+                      {(() => {
+                        if (!msg.image_url) return null;
+                        try {
+                          const parsed = JSON.parse(msg.image_url);
+                          if (Array.isArray(parsed) && parsed.length > 0) {
+                            const count = parsed.length;
+                            let gridStyle = { display: 'grid', gap: '8px', width: 'fit-content', maxWidth: '100%' };
+                            let imgStyle = { width: 'auto', maxWidth: '100%', borderRadius: '12px', objectFit: 'cover', cursor: 'zoom-in', transition: 'transform 0.15s ease' };
 
+                            if (count === 1) {
+                              gridStyle.gridTemplateColumns = '1fr';
+                              imgStyle.maxHeight = '280px';
+                              imgStyle.objectFit = 'contain';
+                            } else if (count === 2) {
+                              gridStyle.gridTemplateColumns = 'repeat(2, 1fr)';
+                              imgStyle.aspectRatio = '16 / 10';
+                              imgStyle.width = '100%';
+                            } else {
+                              gridStyle.gridTemplateColumns = 'repeat(3, 1fr)';
+                              imgStyle.aspectRatio = '1 / 1';
+                              imgStyle.width = '100%';
+                            }
+
+                            return (
+                              <div style={gridStyle}>
+                                {parsed.map((img, i) => (
+                                  <img 
+                                    key={i} 
+                                    src={img} 
+                                    alt="Attached image" 
+                                    onClick={() => setActiveLightboxImg(img)}
+                                    className="chat-attached-image"
+                                    style={imgStyle} 
+                                  />
+                                ))}
+                              </div>
+                            );
+                          }
+                        } catch (e) { }
+                        return (
+                          <img 
+                            src={msg.image_url} 
+                            alt="Attached image" 
+                            onClick={() => setActiveLightboxImg(msg.image_url)}
+                            style={{ 
+                              maxWidth: '100%', 
+                              maxHeight: '280px', 
+                              borderRadius: '12px', 
+                              objectFit: 'contain',
+                              cursor: 'zoom-in'
+                            }} 
+                          />
+                        );
+                      })()}
+                      {msg.content && (
+                        <div className="message-bubble bubble-user">
+                          <p className="user-text">{msg.content}</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                ) : (
+                  <div className="message-bubble bubble-ai">
+                    <div className="markdown-body">
                       {(() => {
                         let contentToRender = msg.content || '';
                         let thinkContent = '';
