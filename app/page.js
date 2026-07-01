@@ -2676,7 +2676,7 @@ export default function Davora() {
                 {activeModal === 'schedule' && 'Schedule Task'}
                 {activeModal === 'report' && 'Report Issue'}
                 {activeModal === 'share' && 'Share Chat'}
-                {activeModal === 'upgrade' && '💰 Choose Your Davora Plan'}
+                {activeModal === 'upgrade' && 'Upgrade Your Workspace'}
               </h2>
               <button className="icon-action-btn" onClick={() => setActiveModal(null)}><X size={20} /></button>
             </div>
@@ -2895,91 +2895,105 @@ export default function Davora() {
                 </div>
               )}
               {activeModal === 'upgrade' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', color: '#fff' }}>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '8px' }}>
-                    Choose the perfect plan to unlock advanced capabilities, raise limits, and continue your workflow.
+                    Choose the subscription tier that matches your intelligence requirements.
                   </p>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '12px', width: '100%' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px', width: '100%' }}>
                     
                     {/* Free Card */}
-                    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px' }}>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '280px', transition: 'all 0.3s' }} className="pricing-card">
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <Compass size={18} style={{ color: 'var(--text-secondary)' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                          <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(255, 255, 255, 0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Compass size={18} style={{ color: '#9ca3af' }} />
+                          </div>
                           <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Free</h3>
                         </div>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '12px' }}>Basic everyday features.</p>
-                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '16px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <li>20-30 messages / day</li>
-                          <li>4 photos / day</li>
-                          <li>Basic speed</li>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '14px' }}>Explore core capabilities.</p>
+                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', listStyleType: 'none', paddingLeft: '0', display: 'flex', flexDirection: 'column', gap: '8px', margin: '0 0 16px 0' }}>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#9ca3af' }}>✓</span> 20-30 chats / day</li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#9ca3af' }}>✓</span> 4 images / day</li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#9ca3af' }}>✓</span> Standard API speed</li>
                         </ul>
                       </div>
-                      <button className="settings-nav-btn" style={{ padding: '8px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', borderRadius: '8px', fontWeight: '600', cursor: 'not-allowed', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem' }} disabled>
+                      <button className="settings-nav-btn" style={{ padding: '10px', background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.08)', color: 'rgba(255, 255, 255, 0.3)', borderRadius: '10px', fontWeight: '600', cursor: 'not-allowed', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem' }} disabled>
                         {!subscriptionPlan || subscriptionPlan.includes("Free") ? "Active Plan" : "Included"}
                       </button>
                     </div>
 
                     {/* Basic Card */}
-                    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px' }}>
+                    <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '280px', transition: 'all 0.3s' }} className="pricing-card">
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <Zap size={18} style={{ color: '#10b981' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                          <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Zap size={18} style={{ color: '#10b981' }} />
+                          </div>
                           <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Basic</h3>
                         </div>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '12px' }}>More limits, faster speeds.</p>
-                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '16px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <li>100 messages / day</li>
-                          <li>10 photos / day</li>
-                          <li>Slightly faster responses</li>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '14px' }}>More limits, faster responses.</p>
+                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', listStyleType: 'none', paddingLeft: '0', display: 'flex', flexDirection: 'column', gap: '8px', margin: '0 0 16px 0' }}>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#10b981' }}>✓</span> 100 messages / day</li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#10b981' }}>✓</span> 10 photos / day</li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#10b981' }}>✓</span> Priority API speed</li>
                         </ul>
                       </div>
-                      <button className="settings-nav-btn" style={{ padding: '8px', background: subscriptionPlan?.includes("Basic") ? 'transparent' : 'var(--text-primary)', color: subscriptionPlan?.includes("Basic") ? 'var(--text-secondary)' : 'var(--bg-primary)', border: subscriptionPlan?.includes("Basic") ? '1px solid var(--border-color)' : 'none', borderRadius: '8px', fontWeight: '600', cursor: subscriptionPlan?.includes("Basic") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem' }} onClick={() => { if (!subscriptionPlan?.includes("Basic")) { handleUpgrade("basic"); setActiveModal(null); } }} disabled={subscriptionPlan?.includes("Basic")}>
+                      <button className="settings-nav-btn" style={{ padding: '10px', background: subscriptionPlan?.includes("Basic") ? 'transparent' : 'var(--text-primary)', color: subscriptionPlan?.includes("Basic") ? 'var(--text-secondary)' : 'var(--bg-primary)', border: subscriptionPlan?.includes("Basic") ? '1px solid rgba(255, 255, 255, 0.08)' : 'none', borderRadius: '10px', fontWeight: '600', cursor: subscriptionPlan?.includes("Basic") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem' }} onClick={() => { if (!subscriptionPlan?.includes("Basic")) { handleUpgrade("basic"); setActiveModal(null); } }} disabled={subscriptionPlan?.includes("Basic")}>
                         {subscriptionPlan?.includes("Basic") ? "Active Plan" : `Upgrade — $${basicPrice}/mo`}
                       </button>
                     </div>
 
                     {/* Pro Card */}
-                    <div style={{ background: 'linear-gradient(to bottom right, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1))', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px', position: 'relative', overflow: 'hidden' }}>
-                      <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>POPULAR</div>
+                    <div style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05))', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '280px', position: 'relative', overflow: 'hidden', transition: 'all 0.3s' }} className="pricing-card popular">
+                      <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', fontSize: '0.65rem', padding: '3px 8px', borderRadius: '20px', fontWeight: 'bold' }}>POPULAR</div>
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <Sparkles size={18} style={{ color: '#8b5cf6' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                          <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(139, 92, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Sparkles size={18} style={{ color: '#8b5cf6' }} />
+                          </div>
                           <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Pro</h3>
                         </div>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '12px' }}>Maximum power & reasoning.</p>
-                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '16px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <li>Unlimited messages</li>
-                          <li>Priority speed & models</li>
-                          <li>Unlimited photo uploads</li>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '14px' }}>Maximum power & reasoning.</p>
+                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', listStyleType: 'none', paddingLeft: '0', display: 'flex', flexDirection: 'column', gap: '8px', margin: '0 0 16px 0' }}>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#8b5cf6' }}>✓</span> Unlimited messages</li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#8b5cf6' }}>✓</span> Priority model access</li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#8b5cf6' }}>✓</span> Unlimited photos</li>
                         </ul>
                       </div>
-                      <button className="settings-nav-btn" style={{ padding: '8px', background: subscriptionPlan?.includes("Pro") ? 'transparent' : 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: subscriptionPlan?.includes("Pro") ? '1px solid var(--border-color)' : 'none', borderRadius: '8px', fontWeight: '600', cursor: subscriptionPlan?.includes("Pro") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem' }} onClick={() => { if (!subscriptionPlan?.includes("Pro")) { handleUpgrade("pro"); setActiveModal(null); } }} disabled={subscriptionPlan?.includes("Pro")}>
+                      <button className="settings-nav-btn" style={{ padding: '10px', background: subscriptionPlan?.includes("Pro") ? 'transparent' : 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: subscriptionPlan?.includes("Pro") ? '1px solid rgba(255, 255, 255, 0.08)' : 'none', borderRadius: '10px', fontWeight: '600', cursor: subscriptionPlan?.includes("Pro") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem', boxShadow: subscriptionPlan?.includes("Pro") ? 'none' : '0 4px 12px rgba(99, 102, 241, 0.2)' }} onClick={() => { if (!subscriptionPlan?.includes("Pro")) { handleUpgrade("pro"); setActiveModal(null); } }} disabled={subscriptionPlan?.includes("Pro")}>
                         {subscriptionPlan?.includes("Pro") ? "Active Plan" : `Upgrade — $${proPrice}/mo`}
                       </button>
                     </div>
 
                     {/* Premium Card */}
-                    <div style={{ background: 'linear-gradient(to bottom right, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1))', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '16px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '260px', position: 'relative', overflow: 'hidden' }}>
-                      <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>ELITE</div>
+                    <div style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(239, 68, 68, 0.05))', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '280px', position: 'relative', overflow: 'hidden', transition: 'all 0.3s' }} className="pricing-card elite">
+                      <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', fontSize: '0.65rem', padding: '3px 8px', borderRadius: '20px', fontWeight: 'bold' }}>ELITE</div>
                       <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                          <ShieldCheck size={18} style={{ color: '#f59e0b' }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                          <div style={{ padding: '6px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <ShieldCheck size={18} style={{ color: '#f59e0b' }} />
+                          </div>
                           <h3 style={{ fontSize: '1.1rem', fontWeight: '600' }}>Premium</h3>
                         </div>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '12px' }}>Complete ultimate features.</p>
-                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '16px', paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <li>Everything unlocked</li>
-                          <li>Max priority speed</li>
-                          <li>Early access & Support</li>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '14px' }}>Complete ultimate features.</p>
+                        <ul style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', listStyleType: 'none', paddingLeft: '0', display: 'flex', flexDirection: 'column', gap: '8px', margin: '0 0 16px 0' }}>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#f59e0b' }}>✓</span> Everything unlocked</li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#f59e0b' }}>✓</span> Max priority speeds</li>
+                          <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#f59e0b' }}>✓</span> Early support & access</li>
                         </ul>
                       </div>
-                      <button className="settings-nav-btn" style={{ padding: '8px', background: subscriptionPlan?.includes("Premium") ? 'transparent' : 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', border: subscriptionPlan?.includes("Premium") ? '1px solid var(--border-color)' : 'none', borderRadius: '8px', fontWeight: '600', cursor: subscriptionPlan?.includes("Premium") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem' }} onClick={() => { if (!subscriptionPlan?.includes("Premium")) { handleUpgrade("premium"); setActiveModal(null); } }} disabled={subscriptionPlan?.includes("Premium")}>
+                      <button className="settings-nav-btn" style={{ padding: '10px', background: subscriptionPlan?.includes("Premium") ? 'transparent' : 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white', border: subscriptionPlan?.includes("Premium") ? '1px solid rgba(255, 255, 255, 0.08)' : 'none', borderRadius: '10px', fontWeight: '600', cursor: subscriptionPlan?.includes("Premium") ? 'not-allowed' : 'pointer', width: '100%', textAlign: 'center', justifyContent: 'center', fontSize: '0.8rem', boxShadow: subscriptionPlan?.includes("Premium") ? 'none' : '0 4px 12px rgba(245, 158, 11, 0.2)' }} onClick={() => { if (!subscriptionPlan?.includes("Premium")) { handleUpgrade("premium"); setActiveModal(null); } }} disabled={subscriptionPlan?.includes("Premium")}>
                         {subscriptionPlan?.includes("Premium") ? "Active Plan" : `Upgrade — $${premiumPrice}/mo`}
                       </button>
                     </div>
 
+                  </div>
+                  
+                  {/* Footer Disclaimer */}
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '16px', fontSize: '0.75rem', color: '#6b7280', marginTop: '8px' }}>
+                    <span>🔒 Secure checkout via Flutterwave</span>
+                    <span>⚡ Cancel subscription anytime</span>
                   </div>
                 </div>
               )}
