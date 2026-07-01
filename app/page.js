@@ -1186,15 +1186,17 @@ export default function Davora() {
     if (!deleteConfirm) return;
     if (deleteConfirm.type === 'single') {
       const id = deleteConfirm.id;
-      setSessions(prev => {
-        const updated = prev.filter(s => s.id !== id);
-        sessionsRef.current = updated;
-        return updated;
-      });
-      if (activeSessionId === id) {
-        setActiveSessionId(null);
+      
+      // Update refs synchronously to prevent race conditions during beforeunload or auto-sync
+      if (activeSessionIdRef.current === id) {
         activeSessionIdRef.current = null;
       }
+      if (sessionsRef.current) {
+        sessionsRef.current = sessionsRef.current.filter(s => s.id !== id);
+      }
+
+      setSessions(prev => prev.filter(s => s.id !== id));
+      if (activeSessionId === id) setActiveSessionId(null);
       showNotification("Chat deleted");
       const token = (localStorage.getItem('davora_token') || '');
       if (token) {
@@ -1204,10 +1206,12 @@ export default function Davora() {
         }).catch(err => console.error("Delete sync error", err));
       }
     } else if (deleteConfirm.type === 'all') {
-      setSessions([]);
-      sessionsRef.current = [];
-      setActiveSessionId(null);
+      // Update refs synchronously to prevent race conditions during beforeunload or auto-sync
       activeSessionIdRef.current = null;
+      sessionsRef.current = [];
+
+      setSessions([]);
+      setActiveSessionId(null);
       showNotification("All chats cleared");
       setShowSettings(false);
       const token = (localStorage.getItem('davora_token') || '');
