@@ -1436,11 +1436,28 @@ export default function Davora() {
 
           {messages.map((msg, index) => (
             <div key={msg.id || index} className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'}`}>
+
+
               <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
-                {msg.role === 'user' ? (
-                  editingId === msg.id ? (
-                    <div className="message-bubble bubble-user">
-                      <div className="edit-mode-box">
+                <div 
+                  className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}
+                  style={msg.role === 'user' && msg.image_url ? { 
+                    padding: 0, 
+                    overflow: 'hidden', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    maxWidth: '350px',
+                    width: '100%',
+                    border: 'none',
+                    background: 'var(--user-bubble)',
+                    borderRadius: '18px',
+                    borderBottomRightRadius: '4px'
+                  } : {}}
+                >
+
+                  {msg.role === 'user' ? (
+                    editingId === msg.id ? (
+                      <div className="edit-mode-box" style={{ margin: msg.image_url ? '12px' : 0 }}>
                         <TextareaAutosize
                           value={editInput}
                           onChange={(e) => setEditInput(e.target.value)}
@@ -1451,73 +1468,71 @@ export default function Davora() {
                           <button onClick={() => submitEdit(msg.id)} className="edit-save">Resubmit Prompt</button>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="user-message-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', width: '100%' }}>
-                      {(() => {
-                        if (!msg.image_url) return null;
-                        try {
-                          const parsed = JSON.parse(msg.image_url);
-                          if (Array.isArray(parsed) && parsed.length > 0) {
-                            const count = parsed.length;
-                            let gridStyle = { display: 'grid', gap: '8px', width: 'fit-content', maxWidth: '100%' };
-                            let imgStyle = { width: 'auto', maxWidth: '100%', borderRadius: '12px', objectFit: 'cover', cursor: 'zoom-in', transition: 'transform 0.15s ease' };
+                    ) : (
+                      <>
+                        {(() => {
+                          if (!msg.image_url) return null;
+                          try {
+                            const parsed = JSON.parse(msg.image_url);
+                            if (Array.isArray(parsed) && parsed.length > 0) {
+                              const count = parsed.length;
+                              let gridStyle = { display: 'grid', gap: '4px', width: '100%' };
+                              let imgStyle = { width: '100%', objectFit: 'cover', cursor: 'zoom-in', transition: 'transform 0.15s ease', display: 'block' };
 
-                            if (count === 1) {
-                              gridStyle.gridTemplateColumns = '1fr';
-                              imgStyle.maxHeight = '280px';
-                              imgStyle.objectFit = 'contain';
-                            } else if (count === 2) {
-                              gridStyle.gridTemplateColumns = 'repeat(2, 1fr)';
-                              imgStyle.aspectRatio = '16 / 10';
-                              imgStyle.width = '100%';
-                            } else {
-                              gridStyle.gridTemplateColumns = 'repeat(3, 1fr)';
-                              imgStyle.aspectRatio = '1 / 1';
-                              imgStyle.width = '100%';
+                              if (count === 1) {
+                                gridStyle.gridTemplateColumns = '1fr';
+                                imgStyle.maxHeight = '280px';
+                              } else if (count === 2) {
+                                gridStyle.gridTemplateColumns = 'repeat(2, 1fr)';
+                                imgStyle.aspectRatio = '16 / 10';
+                                imgStyle.maxHeight = '200px';
+                              } else {
+                                gridStyle.gridTemplateColumns = 'repeat(3, 1fr)';
+                                imgStyle.aspectRatio = '1 / 1';
+                                imgStyle.maxHeight = '150px';
+                              }
+
+                              return (
+                                <div style={gridStyle}>
+                                  {parsed.map((img, i) => (
+                                    <img 
+                                      key={i} 
+                                      src={img} 
+                                      alt="Attached image" 
+                                      onClick={() => setActiveLightboxImg(img)}
+                                      className="chat-attached-image"
+                                      style={imgStyle} 
+                                    />
+                                  ))}
+                                </div>
+                              );
                             }
-
-                            return (
-                              <div style={gridStyle}>
-                                {parsed.map((img, i) => (
-                                  <img 
-                                    key={i} 
-                                    src={img} 
-                                    alt="Attached image" 
-                                    onClick={() => setActiveLightboxImg(img)}
-                                    className="chat-attached-image"
-                                    style={imgStyle} 
-                                  />
-                                ))}
-                              </div>
-                            );
-                          }
-                        } catch (e) { }
-                        return (
-                          <img 
-                            src={msg.image_url} 
-                            alt="Attached image" 
-                            onClick={() => setActiveLightboxImg(msg.image_url)}
-                            style={{ 
-                              maxWidth: '100%', 
-                              maxHeight: '280px', 
-                              borderRadius: '12px', 
-                              objectFit: 'contain',
-                              cursor: 'zoom-in'
-                            }} 
-                          />
-                        );
-                      })()}
-                      {msg.content && (
-                        <div className="message-bubble bubble-user">
-                          <p className="user-text">{msg.content}</p>
-                        </div>
-                      )}
-                    </div>
-                  )
-                ) : (
-                  <div className="message-bubble bubble-ai">
+                          } catch (e) { }
+                          return (
+                            <img 
+                              src={msg.image_url} 
+                              alt="Attached image" 
+                              onClick={() => setActiveLightboxImg(msg.image_url)}
+                              style={{ 
+                                width: '100%', 
+                                maxHeight: '280px', 
+                                objectFit: 'cover',
+                                cursor: 'zoom-in',
+                                display: 'block'
+                              }} 
+                            />
+                          );
+                        })()}
+                        {msg.content && (
+                          <div style={{ padding: '12px 16px', fontSize: '1rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
+                            {msg.content}
+                          </div>
+                        )}
+                      </>
+                    )
+                  ) : (
                     <div className="markdown-body">
+
                       {(() => {
                         let contentToRender = msg.content || '';
                         let thinkContent = '';
