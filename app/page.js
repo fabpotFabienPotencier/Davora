@@ -1199,12 +1199,10 @@ export default function Davora() {
       if (activeSessionId === id) setActiveSessionId(null);
       showNotification("Chat deleted");
       const token = (localStorage.getItem('davora_token') || '');
-      if (token) {
-        fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${id}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
-        }).catch(err => console.error("Delete sync error", err));
-      }
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
+      }).catch(err => console.error("Delete sync error", err));
     } else if (deleteConfirm.type === 'all') {
       // Update refs synchronously to prevent race conditions during beforeunload or auto-sync
       activeSessionIdRef.current = null;
@@ -1215,12 +1213,10 @@ export default function Davora() {
       showNotification("All chats cleared");
       setShowSettings(false);
       const token = (localStorage.getItem('davora_token') || '');
-      if (token) {
-        fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions/all', {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
-        }).catch(err => console.error("Clear all sync error", err));
-      }
+      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions/all', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }
+      }).catch(err => console.error("Clear all sync error", err));
     }
     setDeleteConfirm(null);
   };
