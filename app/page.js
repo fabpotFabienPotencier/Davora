@@ -12,7 +12,7 @@ import {
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight, ShieldCheck,
   VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert, Ghost,
   Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint,
-  Bell, Grid, CreditCard, HardDrive, Users, UserPlus
+  Bell, Grid, CreditCard, HardDrive, Users, UserPlus, Key
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -164,6 +164,10 @@ export default function Davora() {
   const [greeting, setGreeting] = useState("How can I help you today?");
   const [scheduledTasks, setScheduledTasks] = useState([]);
   const [issueReports, setIssueReports] = useState([]);
+  const [developerKeys, setDeveloperKeys] = useState([]);
+  const [newKeyName, setNewKeyName] = useState("");
+  const [generatedKey, setGeneratedKey] = useState(null);
+  const [keyCopied, setKeyCopied] = useState(false);
 
   useEffect(() => {
     if (settingsTab === 'Tasks') {
@@ -175,6 +179,11 @@ export default function Davora() {
       fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/report', {
         headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' }
       }).then(r => r.json()).then(data => setIssueReports(data || []));
+    }
+    if (settingsTab === 'Developer') {
+      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/developer/keys', {
+        headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' }
+      }).then(r => r.json()).then(data => setDeveloperKeys(data || []));
     }
   }, [settingsTab]);
 
@@ -292,6 +301,55 @@ export default function Davora() {
     } catch (err) {
       setIsDeleting(false);
       setDeleteMessage(err.message);
+    }
+  };
+
+  const handleGenerateApiKey = async () => {
+    if (!newKeyName.trim()) return;
+    try {
+      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + `/api/developer/keys?name=${encodeURIComponent(newKeyName)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setGeneratedKey(data.api_key);
+        setNewKeyName('');
+        // Refresh list
+        const resList = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/developer/keys', {
+          headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' }
+        });
+        const listData = await resList.json();
+        setDeveloperKeys(listData || []);
+        showNotification("API Key generated successfully!");
+      } else {
+        showNotification("Failed to generate API Key");
+      }
+    } catch (err) {
+      showNotification("Failed to generate API Key");
+    }
+  };
+
+  const handleRevokeApiKey = async (keyId) => {
+    try {
+      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + `/api/developer/keys/${keyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
+          'ngrok-skip-browser-warning': 'true'
+        }
+      });
+      if (res.ok) {
+        setDeveloperKeys(developerKeys.filter(k => k.id !== keyId));
+        showNotification("API Key revoked");
+      } else {
+        showNotification("Failed to revoke API Key");
+      }
+    } catch (err) {
+      showNotification("Failed to revoke API Key");
     }
   };
 
@@ -1893,6 +1951,7 @@ export default function Davora() {
                 <button className={`settings-nav-btn ${settingsTab === 'Account' ? 'active' : ''}`} onClick={() => { setSettingsTab('Account'); setMobileSettingsView('pane'); }}><User size={18} /> Account</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Tasks' ? 'active' : ''}`} onClick={() => { setSettingsTab('Tasks'); setMobileSettingsView('pane'); }}><Activity size={18} /> Scheduled Tasks</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Reports' ? 'active' : ''}`} onClick={() => { setSettingsTab('Reports'); setMobileSettingsView('pane'); }}><Shield size={18} /> Bug Reports</button>
+                <button className={`settings-nav-btn ${settingsTab === 'Developer' ? 'active' : ''}`} onClick={() => { setSettingsTab('Developer'); setMobileSettingsView('pane'); }}><Key size={18} /> Developer keys</button>
               </div>
             </div>
 
@@ -2371,6 +2430,85 @@ export default function Davora() {
                     <div className="settings-info">
                       <label>Payment method</label>
                       <p>No payment method on file.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {settingsTab === 'Developer' && (
+                <div className="settings-pane">
+                  <div className="settings-row" style={{ flexDirection: 'column', gap: '16px', alignItems: 'flex-start', width: '100%' }}>
+                    <div className="settings-info" style={{ width: '100%' }}>
+                      <label>Developer API Keys</label>
+                      <p>Generate server-side API keys to securely authenticate external systems or mobile apps using the Davora platform.</p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px', width: '100%', maxWidth: '500px' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Key name (e.g. My Mobile App)" 
+                        value={newKeyName}
+                        onChange={e => setNewKeyName(e.target.value)}
+                        style={{ flex: 1, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '10px 12px', borderRadius: '6px', fontSize: '0.9rem' }}
+                      />
+                      <button 
+                        onClick={handleGenerateApiKey}
+                        style={{ padding: '10px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: '600' }}
+                      >
+                        Generate
+                      </button>
+                    </div>
+
+                    {generatedKey && (
+                      <div style={{ width: '100%', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '16px', borderRadius: '8px', marginTop: '12px' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: '600', display: 'block', marginBottom: '8px' }}>KEY GENERATED SUCCESSFULLY</span>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Please copy this API key now. For security reasons, it will not be shown again.</p>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--bg-primary)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                          <code style={{ flex: 1, color: 'var(--text-primary)', fontSize: '0.9rem', wordBreak: 'break-all' }}>{generatedKey}</code>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(generatedKey);
+                              setKeyCopied(true);
+                              showNotification("API Key copied to clipboard!");
+                              setTimeout(() => setKeyCopied(false), 2000);
+                            }}
+                            style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}
+                          >
+                            {keyCopied ? <Check size={18} style={{ color: '#10b981' }} /> : <Copy size={18} />}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ width: '100%', marginTop: '24px' }}>
+                      <h4 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '12px', color: 'var(--text-primary)' }}>Your Active API Keys</h4>
+                      {developerKeys.length === 0 ? (
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>You don't have any active API Keys yet.</p>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                          {developerKeys.map(k => (
+                            <div key={k.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                              <div>
+                                <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{k.name}</strong>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                  <code>{k.masked_key}</code> • Created: {new Date(k.created_at).toLocaleDateString()}
+                                </div>
+                                {k.last_used && (
+                                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                                    Last used: {new Date(k.last_used).toLocaleString()}
+                                  </div>
+                                )}
+                              </div>
+                              <button 
+                                onClick={() => handleRevokeApiKey(k.id)}
+                                style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '6px 12px', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: '500' }}
+                              >
+                                Revoke
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
