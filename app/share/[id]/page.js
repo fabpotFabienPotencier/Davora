@@ -19,7 +19,7 @@ export default function SharedChat() {
   useEffect(() => {
     async function fetchSharedChat() {
       try {
-        const res = await fetch(`https://blatancy-barrack-spelling.ngrok-free.dev/api/share/${id}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/share/${id}`, {
           headers: { 'ngrok-skip-browser-warning': 'true' }
         });
         if (!res.ok) {
@@ -71,34 +71,91 @@ export default function SharedChat() {
               {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
             </div>
             <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
-              <div className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
-                {msg.role === 'user' ? (
-                  <>
-                    {msg.image_url && <img src={msg.image_url} alt="Attached" style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '8px', marginBottom: '12px' }} />}
-                    <p className="user-text">{msg.content}</p>
-                  </>
-                ) : (
-                  <div className="markdown-body">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        code({ node, inline, className, children, ...props }) {
-                          const match = /language-(\w+)/.exec(className || '');
-                          return !inline && match ? (
-                            <SyntaxHighlighter style={vscDarkPlus} language={match[1]} PreTag="div" {...props}>
-                              {String(children).replace(/\n$/, '')}
-                            </SyntaxHighlighter>
-                          ) : (
-                            <code className={className} {...props}>{children}</code>
-                          );
+              {msg.role === 'user' && msg.image_url && (
+                <div className="user-image-attachments" style={{ marginBottom: msg.content ? '8px' : '0', display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '350px' }}>
+                  {(() => {
+                    try {
+                      const parsed = JSON.parse(msg.image_url);
+                      if (Array.isArray(parsed) && parsed.length > 0) {
+                        const count = parsed.length;
+                        let gridStyle = { display: 'grid', gap: '8px', width: '100%' };
+                        let imgStyle = { width: '100%', borderRadius: '16px', objectFit: 'cover', display: 'block' };
+
+                        if (count === 1) {
+                          gridStyle.gridTemplateColumns = '1fr';
+                          imgStyle.maxHeight = '280px';
+                          imgStyle.objectFit = 'contain';
+                          imgStyle.width = 'auto';
+                          imgStyle.maxWidth = '100%';
+                        } else if (count === 2) {
+                          gridStyle.gridTemplateColumns = 'repeat(2, 1fr)';
+                          imgStyle.aspectRatio = '16 / 10';
+                          imgStyle.maxHeight = '200px';
+                        } else {
+                          gridStyle.gridTemplateColumns = 'repeat(3, 1fr)';
+                          imgStyle.aspectRatio = '1 / 1';
+                          imgStyle.maxHeight = '150px';
                         }
-                      }}
-                    >
-                      {msg.content}
-                    </ReactMarkdown>
-                  </div>
-                )}
-              </div>
+
+                        return (
+                          <div style={gridStyle}>
+                            {parsed.map((img, i) => (
+                              <img 
+                                key={i} 
+                                src={img} 
+                                alt="Attached image" 
+                                className="chat-attached-image"
+                                style={imgStyle} 
+                              />
+                            ))}
+                          </div>
+                        );
+                      }
+                    } catch (e) { }
+                    return (
+                      <img 
+                        src={msg.image_url} 
+                        alt="Attached image" 
+                        style={{ 
+                          maxWidth: '100%', 
+                          maxHeight: '280px', 
+                          objectFit: 'contain',
+                          borderRadius: '16px',
+                          display: 'block'
+                        }} 
+                      />
+                    );
+                  })()}
+                </div>
+              )}
+
+              {(msg.role !== 'user' || msg.content) && (
+                <div className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
+                  {msg.role === 'user' ? (
+                    <p className="user-text">{msg.content}</p>
+                  ) : (
+                    <div className="markdown-body">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          code({ node, inline, className, children, ...props }) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline && match ? (
+                              <SyntaxHighlighter style={vscDarkPlus} language={match[1]} PreTag="div" {...props}>
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className={className} {...props}>{children}</code>
+                            );
+                          }
+                        }}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              )}
               <span className="message-timestamp">{msg.timestamp || ""}</span>
             </div>
           </div>

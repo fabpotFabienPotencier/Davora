@@ -1439,189 +1439,178 @@ export default function Davora() {
 
 
               <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
-                <div 
-                  className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}
-                  style={msg.role === 'user' && msg.image_url ? { 
-                    padding: 0, 
-                    overflow: 'hidden', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    maxWidth: '350px',
-                    width: '100%',
-                    border: 'none',
-                    background: 'var(--user-bubble)',
-                    borderRadius: '18px',
-                    borderBottomRightRadius: '4px'
-                  } : {}}
-                >
+                {msg.role === 'user' && msg.image_url && (
+                  <div className="user-image-attachments" style={{ marginBottom: msg.content ? '8px' : '0', display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '350px' }}>
+                    {(() => {
+                      try {
+                        const parsed = JSON.parse(msg.image_url);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                          const count = parsed.length;
+                          let gridStyle = { display: 'grid', gap: '8px', width: '100%' };
+                          let imgStyle = { width: '100%', borderRadius: '16px', objectFit: 'cover', cursor: 'zoom-in', transition: 'transform 0.15s ease', display: 'block' };
 
-                  {msg.role === 'user' ? (
-                    editingId === msg.id ? (
-                      <div className="edit-mode-box" style={{ margin: msg.image_url ? '12px' : 0 }}>
-                        <TextareaAutosize
-                          value={editInput}
-                          onChange={(e) => setEditInput(e.target.value)}
-                          className="edit-textarea"
-                        />
-                        <div className="edit-actions">
-                          <button onClick={() => setEditingId(null)} className="edit-cancel">Cancel</button>
-                          <button onClick={() => submitEdit(msg.id)} className="edit-save">Resubmit Prompt</button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        {(() => {
-                          if (!msg.image_url) return null;
-                          try {
-                            const parsed = JSON.parse(msg.image_url);
-                            if (Array.isArray(parsed) && parsed.length > 0) {
-                              const count = parsed.length;
-                              let gridStyle = { display: 'grid', gap: '4px', width: '100%' };
-                              let imgStyle = { width: '100%', objectFit: 'cover', cursor: 'zoom-in', transition: 'transform 0.15s ease', display: 'block' };
+                          if (count === 1) {
+                            gridStyle.gridTemplateColumns = '1fr';
+                            imgStyle.maxHeight = '280px';
+                            imgStyle.objectFit = 'contain';
+                            imgStyle.width = 'auto';
+                            imgStyle.maxWidth = '100%';
+                          } else if (count === 2) {
+                            gridStyle.gridTemplateColumns = 'repeat(2, 1fr)';
+                            imgStyle.aspectRatio = '16 / 10';
+                            imgStyle.maxHeight = '200px';
+                          } else {
+                            gridStyle.gridTemplateColumns = 'repeat(3, 1fr)';
+                            imgStyle.aspectRatio = '1 / 1';
+                            imgStyle.maxHeight = '150px';
+                          }
 
-                              if (count === 1) {
-                                gridStyle.gridTemplateColumns = '1fr';
-                                imgStyle.maxHeight = '280px';
-                              } else if (count === 2) {
-                                gridStyle.gridTemplateColumns = 'repeat(2, 1fr)';
-                                imgStyle.aspectRatio = '16 / 10';
-                                imgStyle.maxHeight = '200px';
-                              } else {
-                                gridStyle.gridTemplateColumns = 'repeat(3, 1fr)';
-                                imgStyle.aspectRatio = '1 / 1';
-                                imgStyle.maxHeight = '150px';
-                              }
-
-                              return (
-                                <div style={gridStyle}>
-                                  {parsed.map((img, i) => (
-                                    <img 
-                                      key={i} 
-                                      src={img} 
-                                      alt="Attached image" 
-                                      onClick={() => setActiveLightboxImg(img)}
-                                      className="chat-attached-image"
-                                      style={imgStyle} 
-                                    />
-                                  ))}
-                                </div>
-                              );
-                            }
-                          } catch (e) { }
                           return (
-                            <img 
-                              src={msg.image_url} 
-                              alt="Attached image" 
-                              onClick={() => setActiveLightboxImg(msg.image_url)}
-                              style={{ 
-                                width: '100%', 
-                                maxHeight: '280px', 
-                                objectFit: 'cover',
-                                cursor: 'zoom-in',
-                                display: 'block'
-                              }} 
-                            />
+                            <div style={gridStyle}>
+                              {parsed.map((img, i) => (
+                                <img 
+                                  key={i} 
+                                  src={img} 
+                                  alt="Attached image" 
+                                  onClick={() => setActiveLightboxImg(img)}
+                                  className="chat-attached-image"
+                                  style={imgStyle} 
+                                />
+                              ))}
+                            </div>
+                          );
+                        }
+                      } catch (e) { }
+                      return (
+                        <img 
+                          src={msg.image_url} 
+                          alt="Attached image" 
+                          onClick={() => setActiveLightboxImg(msg.image_url)}
+                          style={{ 
+                            maxWidth: '100%', 
+                            maxHeight: '280px', 
+                            objectFit: 'contain',
+                            borderRadius: '16px',
+                            cursor: 'zoom-in',
+                            display: 'block'
+                          }} 
+                        />
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {(msg.role !== 'user' || msg.content || editingId === msg.id) && (
+                  <div className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
+                    {msg.role === 'user' ? (
+                      editingId === msg.id ? (
+                        <div className="edit-mode-box">
+                          <TextareaAutosize
+                            value={editInput}
+                            onChange={(e) => setEditInput(e.target.value)}
+                            className="edit-textarea"
+                          />
+                          <div className="edit-actions">
+                            <button onClick={() => setEditingId(null)} className="edit-cancel">Cancel</button>
+                            <button onClick={() => submitEdit(msg.id)} className="edit-save">Resubmit Prompt</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="user-text">{msg.content}</p>
+                      )
+                    ) : (
+                      <div className="markdown-body">
+
+                        {(() => {
+                          let contentToRender = msg.content || '';
+                          let thinkContent = '';
+                          const thinkMatch = contentToRender.match(/<think>([\s\S]*?)(<\/think>|$)/);
+                          if (thinkMatch) {
+                            thinkContent = thinkMatch[1].trim();
+                            contentToRender = contentToRender.replace(/<think>[\s\S]*?(<\/think>|$)/, '');
+                          }
+
+                          return (
+                            <>
+                              {thinkContent && (
+                                <details className="reasoning-path" open={!contentToRender.trim()}>
+                                  <summary><BrainCircuit size={14} className="text-purple-400" /> Deep Think Process</summary>
+                                  <div className="reasoning-content">{thinkContent}</div>
+                                </details>
+                              )}
+                              {contentToRender.trim() && (
+                                <ReactMarkdown
+                                  remarkPlugins={[remarkGfm]}
+                                  components={{
+                                    code({ node, inline, className, children, ...props }) {
+                                      const match = /language-(\w+)/.exec(className || '');
+                                      return !inline && match ? (
+                                        <div className="code-block-wrapper">
+                                          <div className="code-header">
+                                            <span className="code-lang">{match[1]}</span>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                              <button
+                                                onClick={async () => {
+                                                  try {
+                                                    const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', {
+                                                      method: 'POST',
+                                                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
+                                                      body: JSON.stringify({ title: `Snippet from ${new Date().toLocaleDateString()}`, language: match[1], code: String(children).replace(/\n$/, '') })
+                                                    });
+                                                    if (res.ok) {
+                                                      const data = await res.json();
+                                                      if (data.status === 'flagged') {
+                                                        showNotification('Saved to Codex (Warning: Flagged as unsafe)');
+                                                      } else {
+                                                        showNotification('Saved to Codex!');
+                                                      }
+                                                      // Refresh codex
+                                                      const codexRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', { headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' } });
+                                                      if (codexRes.ok) setCodexSnippets(await codexRes.json());
+                                                    }
+                                                  } catch (e) { showNotification('Failed to save to Codex'); }
+                                                }}
+                                                className="copy-code-btn"
+                                              >
+                                                <Bookmark size={14} /> Save
+                                              </button>
+                                              <button
+                                                onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), `${msg.id}-${match[1]}`)}
+                                                className="copy-code-btn"
+                                              >
+                                                {copiedId === `${msg.id}-${match[1]}` ? <Check size={14} /> : <Copy size={14} />}
+                                                {copiedId === `${msg.id}-${match[1]}` ? 'Copied!' : 'Copy'}
+                                              </button>
+                                            </div>
+                                          </div>
+                                          <SyntaxHighlighter
+                                            {...props}
+                                            style={prefs.theme === 'light' ? vs : vscDarkPlus}
+                                            language={match[1]}
+                                            PreTag="div"
+                                            className="syntax-highlighter"
+                                          >
+                                            {String(children).replace(/\n$/, '')}
+                                          </SyntaxHighlighter>
+                                        </div>
+                                      ) : (
+                                        <code {...props} className="inline-code">
+                                          {children}
+                                        </code>
+                                      )
+                                    }
+                                  }}
+                                >
+                                  {contentToRender}
+                                </ReactMarkdown>
+                              )}
+                            </>
                           );
                         })()}
-                        {msg.content && (
-                          <div style={{ padding: '12px 16px', fontSize: '1rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>
-                            {msg.content}
-                          </div>
-                        )}
-                      </>
-                    )
-                  ) : (
-                    <div className="markdown-body">
-
-                      {(() => {
-                        let contentToRender = msg.content || '';
-                        let thinkContent = '';
-                        const thinkMatch = contentToRender.match(/<think>([\s\S]*?)(<\/think>|$)/);
-                        if (thinkMatch) {
-                          thinkContent = thinkMatch[1].trim();
-                          contentToRender = contentToRender.replace(/<think>[\s\S]*?(<\/think>|$)/, '');
-                        }
-
-                        return (
-                          <>
-                            {thinkContent && (
-                              <details className="reasoning-path" open={!contentToRender.trim()}>
-                                <summary><BrainCircuit size={14} className="text-purple-400" /> Deep Think Process</summary>
-                                <div className="reasoning-content">{thinkContent}</div>
-                              </details>
-                            )}
-                            {contentToRender.trim() && (
-                              <ReactMarkdown
-                                remarkPlugins={[remarkGfm]}
-                                components={{
-                                  code({ node, inline, className, children, ...props }) {
-                                    const match = /language-(\w+)/.exec(className || '');
-                                    return !inline && match ? (
-                                      <div className="code-block-wrapper">
-                                        <div className="code-header">
-                                          <span className="code-lang">{match[1]}</span>
-                                          <div style={{ display: 'flex', gap: '8px' }}>
-                                            <button
-                                              onClick={async () => {
-                                                try {
-                                                  const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', {
-                                                    method: 'POST',
-                                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
-                                                    body: JSON.stringify({ title: `Snippet from ${new Date().toLocaleDateString()}`, language: match[1], code: String(children).replace(/\n$/, '') })
-                                                  });
-                                                  if (res.ok) {
-                                                    const data = await res.json();
-                                                    if (data.status === 'flagged') {
-                                                      showNotification('Saved to Codex (Warning: Flagged as unsafe)');
-                                                    } else {
-                                                      showNotification('Saved to Codex!');
-                                                    }
-                                                    // Refresh codex
-                                                    const codexRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', { headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' } });
-                                                    if (codexRes.ok) setCodexSnippets(await codexRes.json());
-                                                  }
-                                                } catch (e) { showNotification('Failed to save to Codex'); }
-                                              }}
-                                              className="copy-code-btn"
-                                            >
-                                              <Bookmark size={14} /> Save
-                                            </button>
-                                            <button
-                                              onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), `${msg.id}-${match[1]}`)}
-                                              className="copy-code-btn"
-                                            >
-                                              {copiedId === `${msg.id}-${match[1]}` ? <Check size={14} /> : <Copy size={14} />}
-                                              {copiedId === `${msg.id}-${match[1]}` ? 'Copied!' : 'Copy'}
-                                            </button>
-                                          </div>
-                                        </div>
-                                        <SyntaxHighlighter
-                                          {...props}
-                                          style={prefs.theme === 'light' ? vs : vscDarkPlus}
-                                          language={match[1]}
-                                          PreTag="div"
-                                          className="syntax-highlighter"
-                                        >
-                                          {String(children).replace(/\n$/, '')}
-                                        </SyntaxHighlighter>
-                                      </div>
-                                    ) : (
-                                      <code {...props} className="inline-code">
-                                        {children}
-                                      </code>
-                                    )
-                                  }
-                                }}
-                              >
-                                {contentToRender}
-                              </ReactMarkdown>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {!isTyping && (
                   <div className={`message-toolbar ${msg.role === 'user' ? 'toolbar-user' : 'toolbar-ai'}`}>
