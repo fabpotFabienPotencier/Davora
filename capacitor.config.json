@@ -1,0 +1,6 @@
+{
+  "appId": "xyz.davora.chatdave",
+  "appName": "Davora",
+  "webDir": "out",
+  "bundledWebRuntime": false
+}
