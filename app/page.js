@@ -356,6 +356,58 @@ export default function Davora() {
   const handleUpgrade = async (tier) => {
     if (typeof window === "undefined") return;
     
+    const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+
+    if (isMobile) {
+      showNotification(`Connecting to Google Play Store...`);
+      try {
+        const productMap = {
+          basic: "davora_sub_basic",
+          pro: "davora_sub_pro",
+          premium: "davora_sub_premium"
+        };
+        const productId = productMap[tier];
+
+        const { PlayBilling } = await import('@capacitor-community/play-billing');
+
+        await PlayBilling.initialize();
+
+        const billingResult = await PlayBilling.launchBillingFlow({
+          productId: productId,
+          type: 'subs'
+        });
+
+        if (billingResult && billingResult.purchaseToken) {
+          showNotification("Purchase successful! Verifying subscription...");
+          
+          const verifyRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/subscription/verify-google', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
+              'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify({
+              productId: productId,
+              purchaseToken: billingResult.purchaseToken,
+              packageName: "xyz.davora.chatdave"
+            })
+          });
+
+          if (verifyRes.ok) {
+            showNotification("Subscription active! Enjoy your benefits.");
+            window.location.reload();
+          } else {
+            showNotification("Verification failed. Please contact support.");
+          }
+        }
+      } catch (err) {
+        console.error("Google Play Billing Error", err);
+        showNotification(`Billing Error: ${err.message || 'Payment Cancelled'}`);
+      }
+      return;
+    }
+
     showNotification(`Initiating secure checkout for Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)}...`);
     try {
       const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/checkout/initiate', {
