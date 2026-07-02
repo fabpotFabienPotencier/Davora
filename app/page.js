@@ -430,8 +430,13 @@ export default function Davora() {
         document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;";
         setToast("Session expired. Please log in again.");
         setTimeout(() => {
-          const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-          window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+          const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+          if (isMobile) {
+            router.push('/login');
+          } else {
+            const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+            window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+          }
         }, 1500);
       }
       return response;
@@ -450,10 +455,18 @@ export default function Davora() {
     
     // Fallback client-side auth check (middleware handles this server-side,
     // but this catches mid-session cookie expiry)
-    if (!document.cookie.includes('davora_auth=1')) {
-      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-      window.location.href = `${window.location.protocol}//login.${baseDomain}`;
-      return;
+    const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+    if (isMobile) {
+      if (!localStorage.getItem('davora_token')) {
+        router.push('/login');
+        return;
+      }
+    } else {
+      if (!document.cookie.includes('davora_auth=1')) {
+        const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+        window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+        return;
+      }
     }
     setUserEmail(email || "User");
 
