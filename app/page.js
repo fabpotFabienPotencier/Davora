@@ -368,16 +368,17 @@ export default function Davora() {
         };
         const productId = productMap[tier];
 
-        const { PlayBilling } = await import('@capacitor-community/play-billing');
+        const { NativePurchases } = await import('@capgo/native-purchases');
 
-        await PlayBilling.initialize();
-
-        const billingResult = await PlayBilling.launchBillingFlow({
-          productId: productId,
-          type: 'subs'
+        const billingResult = await NativePurchases.purchaseProduct({
+          productIdentifier: productId,
+          productType: 'SUBS',
+          quantity: 1
         });
 
-        if (billingResult && billingResult.purchaseToken) {
+        const token = billingResult.purchaseToken || billingResult.transactionId;
+
+        if (token) {
           showNotification("Purchase successful! Verifying subscription...");
           
           const verifyRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/subscription/verify-google', {
@@ -389,7 +390,7 @@ export default function Davora() {
             },
             body: JSON.stringify({
               productId: productId,
-              purchaseToken: billingResult.purchaseToken,
+              purchaseToken: token,
               packageName: "xyz.davora.chatdave"
             })
           });
