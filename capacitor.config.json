@@ -2,5 +2,9 @@
   "appId": "xyz.davora.chatdave",
   "appName": "Davora",
   "webDir": "out",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://chat.davora.xyz",
+    "cleartext": true
+  }
 }
