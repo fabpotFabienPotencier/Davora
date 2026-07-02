@@ -72,8 +72,12 @@ export default function Signup() {
       
       localStorage.setItem('davora_token', data.access_token);
       localStorage.setItem('davora_email', email);
-      const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-      window.location.href = `${window.location.protocol}//chat.${baseDomain}`;
+      if (window.Capacitor || window.location.hostname === 'localhost') {
+        router.push('/');
+      } else {
+        const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+        window.location.href = `${window.location.protocol}//chat.${baseDomain}`;
+      }
     } catch (err) {
       setError(err.message);
     } finally {
