@@ -42,14 +42,12 @@ jobs:
 
     - name: Update Android SDK Configuration
       run: |
-        if [ ! -f android/variables.gradle ]; then
-          mkdir -p android
-          echo "ext {
-              minSdkVersion = 21
-              targetSdkVersion = 36
-              compileSdkVersion = 36
-          }" > android/variables.gradle
-        fi
+        mkdir -p android
+        echo "ext {
+            minSdkVersion = 21
+            targetSdkVersion = 35
+            compileSdkVersion = 35
+        }" > android/variables.gradle
 
     - name: Upgrade Gradle Wrapper to 8.5
       run: |
