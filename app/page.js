@@ -549,6 +549,10 @@ export default function Davora() {
         }
       } catch (err) {
         console.error("Failed to fetch from DB", err);
+        const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+        if (isMobile && !localStorage.getItem('davora_token')) {
+          router.push('/login');
+        }
       }
     };
     fetchSessions();
