@@ -5,6 +5,10 @@
   "bundledWebRuntime": false,
   "server": {
     "url": "https://chat.davora.xyz",
-    "cleartext": true
+    "cleartext": true,
+    "allowNavigation": [
+      "*.davora.xyz",
+      "davora.xyz"
+    ]
   }
 }
