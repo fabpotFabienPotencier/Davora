@@ -33,12 +33,23 @@ jobs:
         EXPORT_MOBILE: 'true'
 
     - name: Install Capacitor Core & Android
-      run: npm install @capacitor/core @capacitor/cli @capacitor/android
+      run: npm install @capacitor/core @capacitor/cli @capacitor/android@latest
 
     - name: Add and Sync Android Platform
       run: |
         npx cap add android
         npx cap sync android
+
+    - name: Update Android SDK Configuration
+      run: |
+        if [ ! -f android/variables.gradle ]; then
+          mkdir -p android
+          echo "ext {
+    minSdkVersion = 21
+    targetSdkVersion = 36
+    compileSdkVersion = 36
+}" > android/variables.gradle
+        fi
 
     - name: Upgrade Gradle Wrapper to 8.5
       run: |
