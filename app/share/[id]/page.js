@@ -1,7 +1,7 @@
 import SharedChatClient from "./SharedChatClient";
 
 export async function generateStaticParams() {
-  return [];
+  return [{ id: "default" }];
 }
 
 export default function SharedChatPage() {
