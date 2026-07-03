@@ -709,11 +709,13 @@ export default function Davora() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
+        recognitionRef.current.continuous = true;
         recognitionRef.current.interimResults = true;
         recognitionRef.current.onresult = (event) => {
           let transcript = "";
-          for (let i = event.resultIndex; i < event.results.length; i++) transcript += event.results[i][0].transcript;
+          for (let i = 0; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+          }
           setInput(transcript);
         };
         recognitionRef.current.onerror = () => setIsListening(false);
