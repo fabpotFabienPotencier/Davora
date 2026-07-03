@@ -858,7 +858,17 @@ body {
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-  .message-toolbar { opacity: 1 !important; }
+  .message-toolbar {
+    opacity: 0 !important;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform: translateY(5px);
+  }
+  .message-row.long-pressed .message-toolbar {
+    opacity: 1 !important;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
   .chat-box { padding: 16px; }
   .input-wrapper { padding: 12px 16px; }
   .hide-on-mobile { display: none; }
@@ -884,6 +894,24 @@ body {
   .mobile-view-pane .settings-sidebar { display: none !important; }
   .mobile-view-pane .settings-body { display: flex !important; height: 100%; }
   .settings-body { overflow-y: auto; padding-bottom: 40px; }
+
+  /* Modal responsive constraints */
+  .modal-content {
+    max-height: 85vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin: 16px !important;
+    overflow: hidden !important;
+  }
+  .modal-body {
+    overflow-y: auto !important;
+    max-height: 100% !important;
+    padding: 16px !important;
+  }
+  .pricing-card {
+    padding: 16px !important;
+    min-height: auto !important;
+  }
 }
 
 /* Incognito Theme */

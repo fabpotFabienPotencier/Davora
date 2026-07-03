@@ -33,7 +33,7 @@ jobs:
         EXPORT_MOBILE: 'true'
 
     - name: Install Capacitor Core & Android
-      run: npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+      run: npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/browser@6
 
     - name: Add and Sync Android Platform
       run: |

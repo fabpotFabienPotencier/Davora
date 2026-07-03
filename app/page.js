@@ -51,6 +51,9 @@ export default function Davora() {
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
   const [openMoreMenuId, setOpenMoreMenuId] = useState(null);
+  const [longPressMessageId, setLongPressMessageId] = useState(null);
+  const touchTimerRef = useRef(null);
+  const touchStartRef = useRef({ x: 0, y: 0 });
   const [pinnedSessionIds, setPinnedSessionIds] = useState([]);
 
   // Voice, Edit, TTS, and Rating states
@@ -168,6 +171,52 @@ export default function Davora() {
   const [newKeyName, setNewKeyName] = useState("");
   const [generatedKey, setGeneratedKey] = useState(null);
   const [keyCopied, setKeyCopied] = useState(false);
+
+  const handleTouchStart = (msgId, e) => {
+    if (!e.touches || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+
+    if (touchTimerRef.current) clearTimeout(touchTimerRef.current);
+
+    touchTimerRef.current = setTimeout(() => {
+      setLongPressMessageId(msgId);
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        try { navigator.vibrate(40); } catch (err) {}
+      }
+    }, 500);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (touchTimerRef.current && e.touches && e.touches.length > 0) {
+      const touch = e.touches[0];
+      const diffX = Math.abs(touch.clientX - touchStartRef.current.x);
+      const diffY = Math.abs(touch.clientY - touchStartRef.current.y);
+      if (diffX > 10 || diffY > 10) {
+        clearTimeout(touchTimerRef.current);
+        touchTimerRef.current = null;
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleDismissLongPress = () => {
+      setLongPressMessageId(null);
+    };
+    window.addEventListener('click', handleDismissLongPress);
+    window.addEventListener('touchstart', handleDismissLongPress);
+    return () => {
+      window.removeEventListener('click', handleDismissLongPress);
+      window.removeEventListener('touchstart', handleDismissLongPress);
+    };
+  }, []);
 
   useEffect(() => {
     if (settingsTab === 'Tasks') {
@@ -358,6 +407,69 @@ export default function Davora() {
     
     const isMobile = window.Capacitor || window.location.hostname === 'localhost';
 
+    const runWebCheckout = async () => {
+      showNotification(`Initiating secure checkout for Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)}...`);
+      try {
+        const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/checkout/initiate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
+            'ngrok-skip-browser-warning': 'true'
+          },
+          body: JSON.stringify({ tier: tier })
+        });
+        
+        const data = await res.json();
+        
+        if (data.status === "success" && data.payment_link) {
+          if (window.Capacitor) {
+            const { Browser } = await import('@capacitor/browser');
+            await Browser.open({ url: data.payment_link });
+          } else {
+            window.location.href = data.payment_link;
+          }
+        } else if (data.status === "fallback") {
+          const makePayment = () => {
+            window.FlutterwaveCheckout({
+              public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY,
+              tx_ref: data.tx_ref,
+              amount: parseFloat(data.amount),
+              currency: data.currency,
+              payment_options: "card, mobilemoneyghana, ussd",
+              customer: { email: userEmail, name: "Davora User" },
+              customizations: { title: `Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)}`, description: "Premium AI Access" },
+              callback: async function (cbData) {
+                try {
+                  await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
+                    body: JSON.stringify({ tx_ref: cbData.tx_ref, transaction_id: String(cbData.transaction_id) })
+                  });
+                  setSubscriptionPlan(`Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)} Active`);
+                  showNotification(`Upgraded to Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)} successfully!`);
+                } catch (e) { showNotification("Payment verification failed."); }
+              },
+              onclose: function () { }
+            });
+          };
+
+          if (!window.FlutterwaveCheckout) {
+            const script = document.createElement("script");
+            script.src = "https://checkout.flutterwave.com/v3.js";
+            script.onload = makePayment;
+            document.body.appendChild(script);
+          } else {
+            makePayment();
+          }
+        } else {
+          showNotification("Failed to initiate checkout.");
+        }
+      } catch (e) {
+        showNotification("Server error during checkout initiation.");
+      }
+    };
+
     if (isMobile) {
       showNotification(`Connecting to Google Play Store...`);
       try {
@@ -369,6 +481,21 @@ export default function Davora() {
         const productId = productMap[tier];
 
         const { NativePurchases } = await import('@capgo/native-purchases');
+
+        // Gracefully query billing support to avoid native app crashes on unpublished devices
+        let isBillingSupported = false;
+        try {
+          const support = await NativePurchases.isBillingSupported();
+          isBillingSupported = support?.isBillingSupported;
+        } catch (e) {
+          console.warn("Billing support check caught native exception:", e);
+        }
+
+        if (!isBillingSupported) {
+          showNotification("Google Play Billing not active on this device. Using web checkout...");
+          await runWebCheckout();
+          return;
+        }
 
         const billingResult = await NativePurchases.purchaseProduct({
           productIdentifier: productId,
@@ -403,69 +530,13 @@ export default function Davora() {
           }
         }
       } catch (err) {
-        console.error("Google Play Billing Error", err);
-        showNotification(`Billing Error: ${err.message || 'Payment Cancelled'}`);
+        console.warn("Google Play Billing error occurred, fallback to web:", err);
+        await runWebCheckout();
       }
       return;
     }
 
-    showNotification(`Initiating secure checkout for Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)}...`);
-    try {
-      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/checkout/initiate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
-          'ngrok-skip-browser-warning': 'true'
-        },
-        body: JSON.stringify({ tier: tier })
-      });
-      
-      const data = await res.json();
-      
-      if (data.status === "success" && data.payment_link) {
-        // Secure Server-to-Server Checkout
-        window.location.href = data.payment_link;
-      } else if (data.status === "fallback") {
-        // Inline Checkout Fallback using Server-Calculated Amount & Currency
-        const makePayment = () => {
-          window.FlutterwaveCheckout({
-            public_key: process.env.NEXT_PUBLIC_FLUTTERWAVE_PUBLIC_KEY,
-            tx_ref: data.tx_ref,
-            amount: parseFloat(data.amount),
-            currency: data.currency,
-            payment_options: "card, mobilemoneyghana, ussd",
-            customer: { email: userEmail, name: "Davora User" },
-            customizations: { title: `Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)}`, description: "Premium AI Access" },
-            callback: async function (cbData) {
-              try {
-                await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/verify-payment', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
-                  body: JSON.stringify({ tx_ref: cbData.tx_ref, transaction_id: String(cbData.transaction_id) })
-                });
-                setSubscriptionPlan(`Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)} Active`);
-                showNotification(`Upgraded to Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)} successfully!`);
-              } catch (e) { showNotification("Payment verification failed."); }
-            },
-            onclose: function () { }
-          });
-        };
-
-        if (!window.FlutterwaveCheckout) {
-          const script = document.createElement("script");
-          script.src = "https://checkout.flutterwave.com/v3.js";
-          script.onload = makePayment;
-          document.body.appendChild(script);
-        } else {
-          makePayment();
-        }
-      } else {
-        showNotification("Failed to initiate checkout.");
-      }
-    } catch (e) {
-      showNotification("Server error during checkout initiation.");
-    }
+    await runWebCheckout();
   };
 
   // Global Fetch Interceptor to catch 401 Unauthorized and add credentials
@@ -1565,7 +1636,13 @@ export default function Davora() {
           )}
 
           {messages.map((msg, index) => (
-            <div key={msg.id || index} className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'}`}>
+            <div 
+              key={msg.id || index} 
+              className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'} ${longPressMessageId === msg.id ? 'long-pressed' : ''}`}
+              onTouchStart={(e) => handleTouchStart(msg.id, e)}
+              onTouchEnd={handleTouchEnd}
+              onTouchMove={handleTouchMove}
+            >
 
 
               <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
@@ -1743,21 +1820,19 @@ export default function Davora() {
                 )}
 
                 {!isTyping && (
-                  <div className={`message-toolbar ${msg.role === 'user' ? 'toolbar-user' : 'toolbar-ai'}`}>
-                    {msg.timestamp && (
-                      <span className="msg-timestamp">
-                        <Clock size={10} /> {msg.timestamp}
-                      </span>
-                    )}
-
+                  <div 
+                    className={`message-toolbar ${msg.role === 'user' ? 'toolbar-user' : 'toolbar-ai'}`}
+                    onClick={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                  >
                     {msg.role === 'user' ? (
                       !editingId && (
                         <>
                           <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
-                            {copiedId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />} Copy
+                            {copiedId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                           </button>
                           <button onClick={() => { setEditingId(msg.id); setEditInput(msg.content); }} className="toolbar-btn" title="Edit Prompt">
-                            <Edit2 size={14} /> Edit
+                            <Edit2 size={14} />
                           </button>
                         </>
                       )
@@ -1785,7 +1860,7 @@ export default function Davora() {
                         <div className="toolbar-divider"></div>
                         {index === messages.length - 1 && (
                           <button onClick={regenerateResponse} className="toolbar-btn" title="Regenerate Response">
-                            <RefreshCw size={12} /> Regenerate
+                            <RefreshCw size={12} />
                           </button>
                         )}
                         <div className="more-menu-wrapper">
