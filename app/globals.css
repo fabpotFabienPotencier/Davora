@@ -85,11 +85,13 @@ body {
 
 /* Font Size Classes */
 .font-size-small { font-size: 0.9rem; }
-.font-size-small .message-bubble, .font-size-small .markdown-body { font-size: 0.9rem; }
+.font-size-small .message-bubble, .font-size-small .markdown-body, .font-size-small input, .font-size-small textarea, .font-size-small button, .font-size-small p { font-size: 0.9rem; }
 .font-size-medium { font-size: 1rem; }
-.font-size-medium .message-bubble, .font-size-medium .markdown-body { font-size: 1rem; }
-.font-size-large { font-size: 1.15rem; }
-.font-size-large .message-bubble, .font-size-large .markdown-body { font-size: 1.15rem; }
+.font-size-medium .message-bubble, .font-size-medium .markdown-body, .font-size-medium input, .font-size-medium textarea, .font-size-medium button, .font-size-medium p { font-size: 1rem; }
+.font-size-large { font-size: 1.18rem; }
+.font-size-large .message-bubble, .font-size-large .markdown-body, .font-size-large input, .font-size-large textarea, .font-size-large button, .font-size-large p { font-size: 1.18rem; }
+.font-size-extra-large { font-size: 1.35rem; }
+.font-size-extra-large .message-bubble, .font-size-extra-large .markdown-body, .font-size-extra-large input, .font-size-extra-large textarea, .font-size-extra-large button, .font-size-extra-large p { font-size: 1.35rem; }
 
 /* Layout Grid */
 .app-layout { display: flex; width: 100vw; height: 100vh; overflow: hidden; position: relative; }

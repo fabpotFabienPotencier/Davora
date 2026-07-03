@@ -12,7 +12,7 @@ import {
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight, ShieldCheck,
   VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert, Ghost,
   Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint,
-  Bell, Grid, CreditCard, HardDrive, Users, UserPlus, Key
+  Bell, Grid, CreditCard, HardDrive, Users, UserPlus, Key, FolderPlus, Link2, Link2Off, Type, LogOut
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -1563,7 +1563,7 @@ export default function Davora() {
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); setMobileSettingsView('menu'); }}><Settings size={16} /> Settings</button>
                 <div className="popover-divider"></div>
                 <button className="popover-item"><TriangleAlert size={16} /> Help</button>
-                <button className="popover-item" onClick={() => { document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;"; const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}><span style={{ transform: 'rotate(180deg)', display: 'inline-block' }}><ChevronRight size={16} /></span> Log out</button>
+                <button className="popover-item" onClick={() => { document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;"; const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }}><LogOut size={16} /> Log out</button>
               </div>
             </div>
           )}
@@ -2312,11 +2312,13 @@ export default function Davora() {
                   <div className="settings-row">
                     <div className="settings-info">
                       <label>Font Size</label>
+                      <p>Adjust text size for better readability.</p>
                     </div>
-                    <div className="toggle-btns compact">
-                      <button onClick={() => setPrefs({ ...prefs, fontSize: 'small' })} className={prefs.fontSize === 'small' ? 'active' : ''}>Small</button>
-                      <button onClick={() => setPrefs({ ...prefs, fontSize: 'medium' })} className={prefs.fontSize === 'medium' ? 'active' : ''}>Medium</button>
-                      <button onClick={() => setPrefs({ ...prefs, fontSize: 'large' })} className={prefs.fontSize === 'large' ? 'active' : ''}>Large</button>
+                    <div className="toggle-btns compact" style={{ flexWrap: 'wrap', gap: '4px' }}>
+                      <button onClick={() => setPrefs({ ...prefs, fontSize: 'small' })} className={prefs.fontSize === 'small' ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>Small</button>
+                      <button onClick={() => setPrefs({ ...prefs, fontSize: 'medium' })} className={prefs.fontSize === 'medium' ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>Medium</button>
+                      <button onClick={() => setPrefs({ ...prefs, fontSize: 'large' })} className={prefs.fontSize === 'large' ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>Large</button>
+                      <button onClick={() => setPrefs({ ...prefs, fontSize: 'extra-large' })} className={prefs.fontSize === 'extra-large' ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>Extra Large</button>
                     </div>
                   </div>
                   <div className="settings-row border-top">
@@ -3065,7 +3067,7 @@ export default function Davora() {
                             {activeSessionId && (
                               <button 
                                 className="outline-btn" 
-                                style={{ fontSize: '0.8rem', padding: '4px 12px' }}
+                                style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
                                 onClick={async () => {
                                   try {
                                     await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${activeSessionId}/project`, {
@@ -3078,7 +3080,15 @@ export default function Davora() {
                                   } catch (e) { showNotification('Failed to link chat.'); }
                                 }}
                               >
-                                {isLinked ? 'Unlink' : 'Link Chat'}
+                                {isLinked ? (
+                                  <>
+                                    <Link2Off size={14} /> Unlink
+                                  </>
+                                ) : (
+                                  <>
+                                    <Link2 size={14} /> Link Chat
+                                  </>
+                                )}
                               </button>
                             )}
                           </div>
@@ -3094,7 +3104,7 @@ export default function Davora() {
                   )}
                   <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
                     <input type="text" className="sidebar-search-input" style={{ flex: 1, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} placeholder="New Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
-                    <button className="send-btn" style={{ padding: '8px 16px' }} onClick={async () => {
+                    <button className="send-btn" style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={async () => {
                       if (!projectName) return;
                       try {
                         const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/projects', {
@@ -3109,7 +3119,7 @@ export default function Davora() {
                           showNotification('Project created!');
                         }
                       } catch (e) { showNotification('Failed to create project'); }
-                    }}>Create</button>
+                    }}><FolderPlus size={16} /> Create</button>
                   </div>
                 </div>
               )}
