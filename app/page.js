@@ -2938,13 +2938,52 @@ export default function Davora() {
               )}
 
               {settingsTab === 'Reports' && (
-                <div className="settings-pane">
+                <div className="settings-pane" style={{ gap: '20px' }}>
                   <div className="settings-row">
                     <div className="settings-info">
-                      <label>Bug Reports</label>
-                      <p>Your submitted issue reports.</p>
+                      <label>Feedback & Bug Reports</label>
+                      <p>Share your ideas, suggestions, or report any issues directly to the team.</p>
                     </div>
                   </div>
+                  
+                  <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '10px' }}>
+                    <textarea 
+                      placeholder="Got suggestions, feedback or found a bug? Tell us here..." 
+                      className="custom-instructions-input" 
+                      style={{ width: '100%', minHeight: '80px', borderRadius: '8px', padding: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', resize: 'vertical' }}
+                      value={reportText} 
+                      onChange={e => setReportText(e.target.value)} 
+                    />
+                    <button 
+                      className="settings-nav-btn" 
+                      style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                      onClick={async () => {
+                        if (!reportText.trim()) return;
+                        try {
+                          const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/report', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
+                            body: JSON.stringify({ description: reportText })
+                          });
+                          if (res.ok) {
+                            const newReport = await res.json();
+                            setIssueReports(prev => [{ id: newReport.id, description: reportText }, ...prev]);
+                            setReportText("");
+                            showNotification('Feedback submitted! Thank you.');
+                          }
+                        } catch (e) { showNotification('Failed to submit feedback.'); }
+                      }}
+                    >
+                      Submit Feedback
+                    </button>
+                  </div>
+
+                  <div style={{ height: '1px', background: 'var(--border-color)', margin: '10px 0' }}></div>
+
+                  <div className="settings-info">
+                    <label style={{ fontSize: '0.95rem' }}>Your past submissions</label>
+                  </div>
+
                   {issueReports.length === 0 ? (
                     <div className="settings-row"><p style={{ color: 'var(--text-secondary)' }}>No reports submitted.</p></div>
                   ) : (
