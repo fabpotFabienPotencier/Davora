@@ -119,6 +119,7 @@ export default function Davora() {
   const [schedulePrompt, setSchedulePrompt] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [reportText, setReportText] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [shareLink, setShareLink] = useState("");
   const [codexSnippets, setCodexSnippets] = useState([]);
 
@@ -2952,29 +2953,47 @@ export default function Davora() {
                       className="custom-instructions-input" 
                       style={{ width: '100%', minHeight: '80px', borderRadius: '8px', padding: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', resize: 'vertical' }}
                       value={reportText} 
-                      onChange={e => setReportText(e.target.value)} 
+                      onChange={e => setReportText(e.target.value)}
+                      disabled={isSubmittingReport}
                     />
                     <button 
                       className="settings-nav-btn" 
-                      style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                      style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none', borderRadius: '8px', cursor: isSubmittingReport ? 'not-allowed' : 'pointer', fontWeight: '600', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: isSubmittingReport ? 0.6 : 1 }} 
+                      disabled={isSubmittingReport}
                       onClick={async () => {
                         if (!reportText.trim()) return;
+                        setIsSubmittingReport(true);
                         try {
                           const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/report', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
                             body: JSON.stringify({ description: reportText })
                           });
-                          if (res.ok) {
+                          
+                          if (res.status === 429) {
+                            showNotification("Too many submissions. Please try again in an hour.");
+                          } else if (res.ok) {
                             const newReport = await res.json();
-                            setIssueReports(prev => [{ id: newReport.id, description: reportText }, ...prev]);
+                            setIssueReports(prev => [{ id: newReport.id, ticket_code: newReport.ticket_code, description: reportText }, ...prev]);
                             setReportText("");
                             showNotification('Feedback submitted! Thank you.');
+                          } else {
+                            showNotification('Failed to submit feedback.');
                           }
-                        } catch (e) { showNotification('Failed to submit feedback.'); }
+                        } catch (e) { 
+                          showNotification('Failed to submit feedback.'); 
+                        } finally {
+                          setIsSubmittingReport(false);
+                        }
                       }}
                     >
-                      Submit Feedback
+                      {isSubmittingReport ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" /> Submitting...
+                        </>
+                      ) : (
+                        "Submit Feedback"
+                      )}
                     </button>
                   </div>
 
@@ -2990,7 +3009,7 @@ export default function Davora() {
                     issueReports.map(r => (
                       <div className="settings-row" key={r.id}>
                         <p>{r.description}</p>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Ticket #{r.id}</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Ticket: {r.ticket_code || `TICK-${r.id}`}</span>
                       </div>
                     ))
                   )}
@@ -3182,22 +3201,56 @@ export default function Davora() {
                   }} style={{ padding: '12px' }}>Confirm Schedule</button>
                 </div>
               )}
-              {activeModal === 'report' && (
+               {activeModal === 'report' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <textarea rows={4} placeholder="Describe the issue..." className="custom-instructions-input" value={reportText} onChange={e => setReportText(e.target.value)} />
-                  <button className="danger-btn" onClick={async () => {
-                    if (!reportText) return;
-                    try {
-                      await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/report', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
-                        body: JSON.stringify({ description: reportText })
-                      });
-                      setActiveModal(null);
-                      setReportText("");
-                      showNotification('Issue reported to engineering.');
-                    } catch (e) { showNotification('Report failed'); }
-                  }}>Submit Report</button>
+                  <textarea 
+                    rows={4} 
+                    placeholder="Describe the issue..." 
+                    className="custom-instructions-input" 
+                    value={reportText} 
+                    onChange={e => setReportText(e.target.value)} 
+                    disabled={isSubmittingReport}
+                  />
+                  <button 
+                    className="danger-btn" 
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: isSubmittingReport ? 0.6 : 1, cursor: isSubmittingReport ? 'not-allowed' : 'pointer' }}
+                    disabled={isSubmittingReport}
+                    onClick={async () => {
+                      if (!reportText) return;
+                      setIsSubmittingReport(true);
+                      try {
+                        const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/report', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
+                          body: JSON.stringify({ description: reportText })
+                        });
+                        
+                        if (res.status === 429) {
+                          showNotification("Too many submissions. Please try again in an hour.");
+                        } else if (res.ok) {
+                          const newReport = await res.json();
+                          setIssueReports(prev => [{ id: newReport.id, ticket_code: newReport.ticket_code, description: reportText }, ...prev]);
+                          setActiveModal(null);
+                          setReportText("");
+                          showNotification('Issue reported to engineering.');
+                        } else {
+                          showNotification('Failed to submit report.');
+                        }
+                      } catch (e) { 
+                        showNotification('Report failed'); 
+                      } finally {
+                        setIsSubmittingReport(false);
+                      }
+                    }}
+                  >
+                    {isSubmittingReport ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" /> Reporting...
+                      </>
+                    ) : (
+                      "Submit Report"
+                    )}
+                  </button>
                 </div>
               )}
               {activeModal === 'share' && (
