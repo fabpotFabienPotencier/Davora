@@ -1,4 +1,4 @@
-name: Build Android App (APK)
+name: Build Android App (APK & AAB Bundle)
 
 on:
   push:
@@ -50,14 +50,28 @@ jobs:
       run: |
         sed -i 's/gradle-8.2.1-all.zip/gradle-8.5-all.zip/g' android/gradle/wrapper/gradle-wrapper.properties
 
-    - name: Build Android Debug APK
+    - name: Build Android Binaries
       run: |
         cd android
         chmod +x gradlew
         ./gradlew assembleDebug
+        ./gradlew bundleDebug
+        ./gradlew bundleRelease
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
         name: davora-android-apk
         path: android/app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Upload Debug AAB Bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: davora-android-debug-aab
+        path: android/app/build/outputs/bundle/debug/app-debug.aab
+
+    - name: Upload Release AAB Bundle
+      uses: actions/upload-artifact@v4
+      with:
+        name: davora-android-release-aab
+        path: android/app/build/outputs/bundle/release/app-release-aab
