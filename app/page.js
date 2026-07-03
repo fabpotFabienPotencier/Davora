@@ -539,7 +539,7 @@ export default function Davora() {
     await runWebCheckout();
   };
 
-  // Global Fetch Interceptor to catch 401 Unauthorized and add credentials
+  // Global Fetch Interceptor to catch 401 Unauthorized, handle server errors, and catch network drops
   useEffect(() => {
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
@@ -549,21 +549,40 @@ export default function Davora() {
         config.credentials = 'include';
         args = [resource, config];
       }
-      const response = await originalFetch(...args);
-      if (response.status === 401) {
-        document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;";
-        setToast("Session expired. Please log in again.");
-        setTimeout(() => {
-          const isMobile = window.Capacitor || window.location.hostname === 'localhost';
-          if (isMobile) {
-            router.push('/login');
-          } else {
-            const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-            window.location.href = `${window.location.protocol}//login.${baseDomain}`;
-          }
-        }, 1500);
+      
+      try {
+        const response = await originalFetch(...args);
+        
+        if (response.status >= 500) {
+          console.warn(`Interventions: Infrastructure Error ${response.status} on ${resource}`);
+          return new Response(JSON.stringify({ detail: "An unexpected server error occurred. Please try again later." }), {
+            status: response.status,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        
+        if (response.status === 401) {
+          document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;";
+          setToast("Session expired. Please log in again.");
+          setTimeout(() => {
+            const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+            if (isMobile) {
+              router.push('/login');
+            } else {
+              const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+              window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+            }
+          }, 1500);
+        }
+        return response;
+      } catch (err) {
+        console.error("Network Fetch Failure intercepted:", err);
+        showNotification("Connection lost. Please check your internet connection.");
+        return new Response(JSON.stringify({ detail: "Connection lost. Please try again." }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
-      return response;
     };
     return () => {
       window.fetch = originalFetch;
