@@ -3064,33 +3064,58 @@ export default function Davora() {
                         return (
                           <div key={proj.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px', border: isLinked ? '1px solid #10b981' : '1px solid var(--border-color)' }}>
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}><Folder size={18} /> {proj.name}</div>
-                            {activeSessionId && (
-                              <button 
-                                className="outline-btn" 
-                                style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              {activeSessionId && (
+                                <button 
+                                  className="outline-btn" 
+                                  style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                  onClick={async () => {
+                                    try {
+                                      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${activeSessionId}/project`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
+                                        body: JSON.stringify({ project_id: isLinked ? null : proj.id })
+                                      });
+                                      setSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, project_id: isLinked ? null : proj.id } : s));
+                                      showNotification(isLinked ? 'Chat unlinked.' : 'Chat linked to project!');
+                                    } catch (e) { showNotification('Failed to link chat.'); }
+                                  }}
+                                >
+                                  {isLinked ? (
+                                    <>
+                                      <Link2Off size={14} /> Unlink
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Link2 size={14} /> Link Chat
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                              <button
+                                className="icon-action-btn delete"
+                                style={{ padding: '6px', color: '#ef4444', border: '1px solid var(--border-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                 onClick={async () => {
+                                  if (!confirm("Are you sure you want to delete this project? Any linked chats will be unlinked.")) return;
                                   try {
-                                    await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${activeSessionId}/project`, {
-                                      method: 'PUT',
-                                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
-                                      body: JSON.stringify({ project_id: isLinked ? null : proj.id })
+                                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/projects/${proj.id}`, {
+                                      method: 'DELETE',
+                                      headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` }
                                     });
-                                    setSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, project_id: isLinked ? null : proj.id } : s));
-                                    showNotification(isLinked ? 'Chat unlinked.' : 'Chat linked to project!');
-                                  } catch (e) { showNotification('Failed to link chat.'); }
+                                    if (res.ok) {
+                                      setProjectsList(prev => prev.filter(p => p.id !== proj.id));
+                                      setSessions(prev => prev.map(s => s.project_id === proj.id ? { ...s, project_id: null } : s));
+                                      showNotification('Project deleted!');
+                                    } else {
+                                      showNotification('Failed to delete project.');
+                                    }
+                                  } catch (e) { showNotification('Failed to delete project.'); }
                                 }}
+                                title="Delete Project"
                               >
-                                {isLinked ? (
-                                  <>
-                                    <Link2Off size={14} /> Unlink
-                                  </>
-                                ) : (
-                                  <>
-                                    <Link2 size={14} /> Link Chat
-                                  </>
-                                )}
+                                <Trash2 size={14} />
                               </button>
-                            )}
+                            </div>
                           </div>
                         );
                       })}
