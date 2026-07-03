@@ -3103,7 +3103,7 @@ export default function Davora() {
                     </div>
                   )}
                   <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-                    <input type="text" className="sidebar-search-input" style={{ flex: 1, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} placeholder="New Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+                    <input type="text" className="sidebar-search-input" style={{ flex: 1, minWidth: 0, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} placeholder="New Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
                     <button 
                       style={{ 
                         padding: '10px 20px', 
@@ -3116,7 +3116,8 @@ export default function Davora() {
                         display: 'flex', 
                         alignItems: 'center', 
                         gap: '6px',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0
                       }} 
                       onClick={async () => {
                         if (!projectName) return;
