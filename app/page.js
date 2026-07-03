@@ -3051,7 +3051,9 @@ export default function Davora() {
                       <Bot size={16} /> {role}
                     </button>
                   ))}
-                </div>              {activeModal === 'projects' && (
+                </div>
+              )}
+              {activeModal === 'projects' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {projectsList.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
