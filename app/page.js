@@ -3051,9 +3051,7 @@ export default function Davora() {
                       <Bot size={16} /> {role}
                     </button>
                   ))}
-                </div>
-              )}
-              {activeModal === 'projects' && (
+                </div>              {activeModal === 'projects' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {projectsList.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -3104,22 +3102,39 @@ export default function Davora() {
                   )}
                   <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
                     <input type="text" className="sidebar-search-input" style={{ flex: 1, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} placeholder="New Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
-                    <button className="send-btn" style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={async () => {
-                      if (!projectName) return;
-                      try {
-                        const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/projects', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
-                          body: JSON.stringify({ name: projectName })
-                        });
-                        if (res.ok) {
-                          const newProj = await res.json();
-                          setProjectsList(prev => [...prev, newProj]);
-                          setProjectName("");
-                          showNotification('Project created!');
-                        }
-                      } catch (e) { showNotification('Failed to create project'); }
-                    }}><FolderPlus size={16} /> Create</button>
+                    <button 
+                      style={{ 
+                        padding: '10px 20px', 
+                        background: 'var(--text-primary)', 
+                        color: 'var(--bg-primary)', 
+                        border: 'none', 
+                        borderRadius: '8px', 
+                        cursor: 'pointer', 
+                        fontWeight: '600', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '6px',
+                        whiteSpace: 'nowrap'
+                      }} 
+                      onClick={async () => {
+                        if (!projectName) return;
+                        try {
+                          const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/projects', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
+                            body: JSON.stringify({ name: projectName })
+                          });
+                          if (res.ok) {
+                            const newProj = await res.json();
+                            setProjectsList(prev => [...prev, newProj]);
+                            setProjectName("");
+                            showNotification('Project created!');
+                          }
+                        } catch (e) { showNotification('Failed to create project'); }
+                      }}
+                    >
+                      <FolderPlus size={16} /> Create
+                    </button>
                   </div>
                 </div>
               )}
