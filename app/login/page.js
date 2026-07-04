@@ -249,8 +249,8 @@ export default function Login() {
                       fontSize: '0.95rem', 
                       cursor: 'pointer', 
                       display: 'flex', 
-                      justify-content: 'center', 
-                      align-items: 'center', 
+                      justifyContent: 'center', 
+                      alignItems: 'center', 
                       gap: '8px' 
                     }}
                   >
