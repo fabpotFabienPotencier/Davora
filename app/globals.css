@@ -44,6 +44,28 @@ body.light-theme {
   --ambient-header: rgba(255, 255, 255, 0.85);
 }
 
+body.amoled-theme {
+  --bg-primary: #000000;
+  --bg-secondary: #000000;
+  --bg-sidebar: #000000;
+  --text-primary: #ffffff;
+  --text-secondary: #888888;
+  --border-color: #111111;
+  --user-bubble: #111111;
+  --ai-bubble: transparent;
+  --modal-bg: #000000;
+  --code-bg: #050505;
+  --inline-code-bg: #111111;
+  --accent-color: #ffffff;
+  --accent-hover: #dddddd;
+  --header-bg: rgba(0, 0, 0, 0.95);
+  --ai-avatar-bg: #ffffff;
+  --ai-avatar-color: #000000;
+  --surface-bg: rgba(255, 255, 255, 0.03);
+  --ambient-overlay: rgba(0, 0, 0, 0.6);
+  --ambient-header: rgba(0, 0, 0, 0.9);
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {

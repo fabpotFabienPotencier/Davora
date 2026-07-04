@@ -18,6 +18,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
+  const [hasBiometrics, setHasBiometrics] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -31,6 +32,58 @@ export default function Login() {
       })
       .catch(() => { });
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.PublicKeyCredential && localStorage.getItem('davora_biometric_token')) {
+      setHasBiometrics(true);
+    }
+  }, []);
+
+  const handleBiometricLogin = async () => {
+    setError('');
+    setIsLoading(true);
+    try {
+      const challenge = new Uint8Array(32);
+      window.crypto.getRandomValues(challenge);
+      const options = {
+        publicKey: {
+          challenge,
+          rp: { name: "Davora Workspace" },
+          allowCredentials: [],
+          userVerification: "required",
+          timeout: 60000
+        }
+      };
+      const assertion = await navigator.credentials.get(options);
+      if (assertion) {
+        const token = localStorage.getItem('davora_biometric_token');
+        if (token) {
+          localStorage.setItem('davora_token', token);
+          const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'ngrok-skip-browser-warning': 'true'
+            }
+          });
+          if (res.ok) {
+            if (window.Capacitor || window.location.hostname === 'localhost') {
+              router.push('/');
+            } else {
+              const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+              window.location.href = `${window.location.protocol}//chat.${baseDomain}`;
+            }
+            return;
+          }
+        }
+        setError("Biometric session expired. Please log in with password.");
+      }
+    } catch (err) {
+      console.error("Biometric login failed:", err);
+      setError("Biometric verification failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleResendVerification = async () => {
     setIsResending(true);
@@ -176,6 +229,38 @@ export default function Login() {
                       {resendMessage && <div style={{ marginTop: '8px', color: resendMessage.includes('sent') ? '#10b981' : '#ef4444' }}>{resendMessage}</div>}
                     </div>
                   )}
+                </div>
+              )}
+
+              {hasBiometrics && !requires2FA && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                  <button 
+                    type="button" 
+                    onClick={handleBiometricLogin} 
+                    disabled={isLoading}
+                    style={{ 
+                      width: '100%', 
+                      background: 'rgba(168, 85, 247, 0.1)', 
+                      color: '#a855f7', 
+                      border: '1px solid rgba(168, 85, 247, 0.3)', 
+                      padding: '14px', 
+                      borderRadius: '9999px', 
+                      fontWeight: '600', 
+                      fontSize: '0.95rem', 
+                      cursor: 'pointer', 
+                      display: 'flex', 
+                      justify-content: 'center', 
+                      align-items: 'center', 
+                      gap: '8px' 
+                    }}
+                  >
+                    <Shield size={18} /> Sign in with Biometrics (TouchID / FaceID)
+                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                    <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.05)' }}></div>
+                    <span style={{ fontSize: '0.8rem', color: '#666' }}>or</span>
+                    <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.05)' }}></div>
+                  </div>
                 </div>
               )}
 

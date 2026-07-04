@@ -106,6 +106,9 @@ export default function Davora() {
   const [userEmail, setUserEmail] = useState("");
   const [activeModal, setActiveModal] = useState(null);
   const [canvasArtifacts, setCanvasArtifacts] = useState([]);
+  const [selectedArtifactId, setSelectedArtifactId] = useState(null);
+  const [editCanvasText, setEditCanvasText] = useState("");
+  const [artifactVersions, setArtifactVersions] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [basicPrice, setBasicPrice] = useState("3");
   const [proPrice, setProPrice] = useState("7");
@@ -139,6 +142,7 @@ export default function Davora() {
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
+  const audioRef = useRef(null);
   const plusMenuRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -548,6 +552,27 @@ export default function Davora() {
       if (resource && (resource.includes('api.davora.xyz') || resource.includes('localhost') || resource.includes('ngrok'))) {
         config = config || {};
         config.credentials = 'include';
+        
+        // Strip stale user tokens on production web to force fallback to the secure HTTPOnly cookie
+        const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+        if (!isMobile && config.headers) {
+          let authVal = '';
+          if (typeof config.headers.get === 'function') {
+            authVal = config.headers.get('Authorization') || config.headers.get('authorization') || '';
+          } else {
+            authVal = config.headers['Authorization'] || config.headers['authorization'] || '';
+          }
+          if (authVal && !authVal.includes('dev_sk_davora_')) {
+            if (typeof config.headers.delete === 'function') {
+              config.headers.delete('Authorization');
+              config.headers.delete('authorization');
+            } else {
+              delete config.headers['Authorization'];
+              delete config.headers['authorization'];
+            }
+          }
+        }
+        
         args = [resource, config];
       }
       
@@ -589,17 +614,21 @@ export default function Davora() {
       window.fetch = originalFetch;
     };
   }, []);
-
+ 
   // Initialization & DB Fetching
   useEffect(() => {
     // Read email from cross-subdomain cookie set by the backend
     const emailCookie = document.cookie.split('; ').find(c => c.startsWith('davora_email='));
     const email = emailCookie ? decodeURIComponent(emailCookie.split('=')[1]) : null;
-    const token = (localStorage.getItem('davora_token') || '');
+    
+    const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+    if (!isMobile) {
+      localStorage.removeItem('davora_token'); // Clear stale localStorage token on production web
+    }
+    const token = isMobile ? (localStorage.getItem('davora_token') || '') : '';
     
     // Fallback client-side auth check (middleware handles this server-side,
     // but this catches mid-session cookie expiry)
-    const isMobile = window.Capacitor || window.location.hostname === 'localhost';
     if (isMobile) {
       if (!localStorage.getItem('davora_token')) {
         router.push('/login');
@@ -854,8 +883,12 @@ export default function Davora() {
 
   useEffect(() => {
     syncMetadata({ prefs: JSON.stringify(prefs) });
-    if (prefs.theme === 'light') document.body.classList.add('light-theme');
-    else document.body.classList.remove('light-theme');
+    document.body.classList.remove('light-theme', 'amoled-theme');
+    if (prefs.theme === 'light') {
+      document.body.classList.add('light-theme');
+    } else if (prefs.theme === 'amoled') {
+      document.body.classList.add('amoled-theme');
+    }
   }, [prefs]);
 
   useEffect(() => {
@@ -871,11 +904,22 @@ export default function Davora() {
   }, [canvasArtifacts]);
 
   const saveToCanvas = (content) => {
+    const artifactId = Date.now().toString();
     const newArtifact = {
-      id: Date.now().toString(),
+      id: artifactId,
       date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       content: content
     };
+    
+    setArtifactVersions(prev => ({
+      ...prev,
+      [artifactId]: [{
+        versionId: Date.now().toString(),
+        content: content,
+        date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]
+    }));
+
     setCanvasArtifacts(prev => [newArtifact, ...prev]);
     setCanvasOpen(true);
     showNotification("Saved to Canvas!");
@@ -919,22 +963,31 @@ export default function Davora() {
         setIsTyping(false);
         setTimeout(() => inputRef.current?.focus(), 100);
         // Auto-read aloud if enabled
-        if (prefs.autoReadAloud && synthRef.current) {
+        if (prefs.autoReadAloud) {
           const allSessions = sessionsRef.current || [];
           const session = allSessions.find(s => s.id === activeSessionIdRef.current);
           if (session) {
             const lastMsg = session.messages[session.messages.length - 1];
             if (lastMsg && lastMsg.role === "ai") {
-              synthRef.current.cancel();
-              const cleanText = lastMsg.content.replace(/[*#`_~]/g, '');
-              const utterance = new SpeechSynthesisUtterance(cleanText);
-              utterance.onend = () => setSpeakingId(null);
-              utterance.onerror = () => setSpeakingId(null);
-              const voices = synthRef.current.getVoices();
-              const goodVoice = voices.find(v => v.lang.includes('en-') && (v.name.includes('Google') || v.name.includes('Natural')));
-              if (goodVoice) utterance.voice = goodVoice;
+              if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+              }
               setSpeakingId(lastMsg.id);
-              synthRef.current.speak(utterance);
+              const token = localStorage.getItem('davora_token') || '';
+              const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(lastMsg.content)}&token=${encodeURIComponent(token)}`;
+              const audio = new Audio(url);
+              audioRef.current = audio;
+              audio.onended = () => {
+                setSpeakingId(null);
+              };
+              audio.onerror = () => {
+                setSpeakingId(null);
+              };
+              audio.play().catch(err => {
+                console.warn("Auto-read audio playback failed:", err);
+                setSpeakingId(null);
+              });
             }
           }
         }
@@ -972,8 +1025,150 @@ export default function Davora() {
     return () => {
       if (ws.current) ws.current.close();
       if (synthRef.current) synthRef.current.cancel();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
     };
   }, []);
+
+  const [isOnline, setIsOnline] = useState(true);
+  const offlineQueueRef = useRef([]);
+
+  const processOfflineQueue = async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+    const savedQueue = localStorage.getItem('davora_offline_queue');
+    if (!savedQueue) return;
+    
+    let queue = [];
+    try {
+      queue = JSON.parse(savedQueue);
+    } catch (e) {
+      queue = [];
+    }
+    
+    if (queue.length === 0) return;
+    
+    showNotification(`Syncing ${queue.length} offline message(s)...`);
+    
+    for (const item of queue) {
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+        ws.current.send(JSON.stringify(item.payload));
+      } else {
+        connectWebSocket();
+        await new Promise(r => setTimeout(r, 1000));
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+          ws.current.send(JSON.stringify(item.payload));
+        } else {
+          break;
+        }
+      }
+      
+      setSessions(prev => prev.map(s => {
+        if (s.id === item.sessionId) {
+          return {
+            ...s,
+            messages: s.messages.map(m => m.id === item.messageId ? { ...m, isPending: false } : m)
+          };
+        }
+        return s;
+      }));
+    }
+    
+    localStorage.removeItem('davora_offline_queue');
+    offlineQueueRef.current = [];
+  };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsOnline(navigator.onLine);
+      const savedQueue = localStorage.getItem('davora_offline_queue');
+      if (savedQueue) {
+        try {
+          offlineQueueRef.current = JSON.parse(savedQueue);
+        } catch (e) {
+          offlineQueueRef.current = [];
+        }
+      }
+      
+      const handleOnline = () => {
+        setIsOnline(true);
+        showNotification("Connection restored. Syncing offline messages...");
+        if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+          connectWebSocket();
+        }
+        setTimeout(() => {
+          processOfflineQueue();
+        }, 1000);
+      };
+      
+      const handleOffline = () => {
+        setIsOnline(false);
+        showNotification("You are offline. Messages will be queued and sent when connection returns.");
+      };
+      
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && prefs.pushNotifications) {
+      Notification.requestPermission().then(async (permission) => {
+        if (permission === 'granted') {
+          try {
+            let fcmToken = localStorage.getItem('davora_fcm_token');
+            if (!fcmToken && window.PushNotifications) {
+              window.PushNotifications.addListener('registration', (token) => {
+                fcmToken = token.value;
+                localStorage.setItem('davora_fcm_token', fcmToken);
+              });
+              window.PushNotifications.register();
+            }
+            if (!fcmToken) {
+              fcmToken = 'web_push_' + Math.random().toString(36).substring(2, 15);
+              localStorage.setItem('davora_fcm_token', fcmToken);
+            }
+            const token = localStorage.getItem('davora_token');
+            if (token && fcmToken) {
+              await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/notifications/subscribe', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                  'ngrok-skip-browser-warning': 'true'
+                },
+                body: JSON.stringify({ token: fcmToken })
+              });
+            }
+          } catch (e) {
+            console.warn("FCM Subscription error:", e);
+          }
+        }
+      });
+    }
+  }, [prefs.pushNotifications]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedVersions = localStorage.getItem('davora_canvas_versions');
+      if (savedVersions) {
+        try {
+          setArtifactVersions(JSON.parse(savedVersions));
+        } catch (e) {}
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && Object.keys(artifactVersions).length > 0) {
+      localStorage.setItem('davora_canvas_versions', JSON.stringify(artifactVersions));
+    }
+  }, [artifactVersions]);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
@@ -1112,6 +1307,10 @@ export default function Davora() {
     }
 
     if (synthRef.current) synthRef.current.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
     setSpeakingId(null);
 
     let targetSessionId = activeSessionId;
@@ -1121,6 +1320,61 @@ export default function Davora() {
 
     // Convert attachments array into a single JSON string if there are any
     const imageUrls = attachments.length > 0 ? JSON.stringify(attachments.map(a => a.url)) : null;
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      const newMessage = {
+        id: Date.now(), role: "user", content: textToSend, image_url: imageUrls,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isPending: true
+      };
+      setSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newMessage] } : s));
+      
+      const currentSession = sessions.find(s => s.id === targetSessionId) || (sessionsRef.current || []).find(s => s.id === targetSessionId);
+      const activeMessages = currentSession ? [...currentSession.messages, newMessage] : [newMessage];
+
+      const payloadObj = {
+        message: textToSend,
+        history: activeMessages,
+        mode: inputMode,
+        model: selectedModel,
+        isTemporary: isTemporary,
+        customInstructions: prefs.customInstructions,
+        baseStyle: prefs.baseStyle,
+        characteristicsWarm: prefs.characteristicsWarm,
+        characteristicsEnthusiastic: prefs.characteristicsEnthusiastic,
+        characteristicsHeaders: prefs.characteristicsHeaders,
+        characteristicsEmoji: prefs.characteristicsEmoji,
+        fastAnswers: prefs.fastAnswers,
+        nickname: prefs.nickname,
+        occupation: prefs.occupation,
+        aboutYou: prefs.aboutYou,
+        referenceMemories: prefs.referenceMemories,
+        referenceHistory: prefs.referenceHistory,
+        strictMarkdown: prefs.strictMarkdown,
+        token: (localStorage.getItem('davora_token') || '')
+      };
+      
+      if (attachments.length > 0) {
+        payloadObj.image_urls = attachments.map(a => a.publicUrl).filter(Boolean);
+        payloadObj.image_data_array = attachments.map(a => a.base64).filter(Boolean);
+      }
+      
+      const queueItem = {
+        sessionId: targetSessionId,
+        messageId: newMessage.id,
+        payload: payloadObj
+      };
+      
+      const currentQueue = JSON.parse(localStorage.getItem('davora_offline_queue') || '[]');
+      currentQueue.push(queueItem);
+      localStorage.setItem('davora_offline_queue', JSON.stringify(currentQueue));
+      offlineQueueRef.current = currentQueue;
+      
+      setInput("");
+      setAttachments([]);
+      showNotification("You are offline. Message queued for automatic sync.");
+      return;
+    }
 
     const newMessage = {
       id: Date.now(), role: "user", content: textToSend, image_url: imageUrls,
@@ -1236,6 +1490,10 @@ export default function Davora() {
 
     setIsTyping(true);
     if (synthRef.current) synthRef.current.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
     setSpeakingId(null);
 
     const jsonPayload = JSON.stringify({
@@ -1328,21 +1586,31 @@ export default function Davora() {
   };
 
   const toggleTextToSpeech = (text, id) => {
-    if (!synthRef.current) return;
-    if (speakingId === id) {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    if (synthRef.current) {
       synthRef.current.cancel();
+    }
+    if (speakingId === id) {
       setSpeakingId(null);
     } else {
-      synthRef.current.cancel();
-      const cleanText = text.replace(/[*#`_~]/g, '');
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.onend = () => setSpeakingId(null);
-      utterance.onerror = () => setSpeakingId(null);
-      const voices = synthRef.current.getVoices();
-      const goodVoice = voices.find(v => v.lang.includes('en-') && (v.name.includes('Google') || v.name.includes('Natural')));
-      if (goodVoice) utterance.voice = goodVoice;
       setSpeakingId(id);
-      synthRef.current.speak(utterance);
+      const token = localStorage.getItem('davora_token') || '';
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(text)}&token=${encodeURIComponent(token)}`;
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => {
+        setSpeakingId(null);
+      };
+      audio.onerror = () => {
+        setSpeakingId(null);
+      };
+      audio.play().catch(err => {
+        console.warn("Audio playback failed:", err);
+        setSpeakingId(null);
+      });
     }
   };
 
@@ -1745,7 +2013,14 @@ export default function Davora() {
                           </div>
                         </div>
                       ) : (
-                        <p className="user-text">{msg.content}</p>
+                        <p className="user-text" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {msg.content}
+                        {msg.isPending && (
+                          <span title="Pending connection sync" style={{ opacity: 0.5, display: 'inline-flex', alignItems: 'center' }}>
+                            <Clock size={14} style={{ animation: 'spin 2s linear infinite' }} />
+                          </span>
+                        )}
+                      </p>
                       )
                     ) : (
                       <div className="markdown-body">
@@ -2307,8 +2582,9 @@ export default function Davora() {
                       <p>Customize the UI color mode.</p>
                     </div>
                     <div className="toggle-btns compact">
-                      <button onClick={() => setPrefs({ ...prefs, theme: 'light' })} className={prefs.theme === 'light' ? 'active' : ''} style={{ padding: '6px 16px' }}><Sun size={14} /> Light</button>
-                      <button onClick={() => setPrefs({ ...prefs, theme: 'dark' })} className={prefs.theme === 'dark' ? 'active' : ''} style={{ padding: '6px 16px' }}><Moon size={14} /> Dark</button>
+                      <button onClick={() => setPrefs({ ...prefs, theme: 'light' })} className={prefs.theme === 'light' ? 'active' : ''} style={{ padding: '6px 12px' }}><Sun size={14} /> Light</button>
+                      <button onClick={() => setPrefs({ ...prefs, theme: 'dark' })} className={prefs.theme === 'dark' ? 'active' : ''} style={{ padding: '6px 12px' }}><Moon size={14} /> Dark</button>
+                      <button onClick={() => setPrefs({ ...prefs, theme: 'amoled' })} className={prefs.theme === 'amoled' ? 'active' : ''} style={{ padding: '6px 12px' }}><Zap size={14} /> OLED</button>
                     </div>
                   </div>
                   <div className="settings-row">
@@ -2448,6 +2724,37 @@ export default function Davora() {
                       <input type="checkbox" id="email-notif-toggle" checked={prefs.emailNotifications} onChange={e => setPrefs({ ...prefs, emailNotifications: e.target.checked })} />
                       <label htmlFor="email-notif-toggle"></label>
                     </div>
+                  </div>
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Test Push Notifications</label>
+                      <p>Trigger a test notification to verify delivery.</p>
+                    </div>
+                    <button 
+                      className="outline-btn" 
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem('davora_token');
+                          const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/notifications/test', {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${token}`,
+                              'ngrok-skip-browser-warning': 'true'
+                            }
+                          });
+                          const data = await res.json();
+                          if (data.status === "success" || data.status === "info") {
+                            showNotification(data.message || "Test notification sent successfully!");
+                          } else {
+                            showNotification(data.message || "Failed to send test notification.");
+                          }
+                        } catch (e) {
+                          showNotification("Failed to send test notification.");
+                        }
+                      }}
+                    >
+                      Send Test
+                    </button>
                   </div>
                 </div>
               )}
@@ -2856,6 +3163,63 @@ export default function Davora() {
                       }}>Save Password</button>
                     </div>
                   )}
+
+                  <div className="settings-row border-top">
+                    <div className="settings-info">
+                      <label>Biometric Unlock (FaceID / TouchID)</label>
+                      <p>Securely unlock your workspace using your device's biometrics.</p>
+                    </div>
+                    <div className="toggle-switch">
+                      <input 
+                        type="checkbox" 
+                        id="biometric-login-toggle" 
+                        checked={prefs.biometricLogin || false} 
+                        onChange={async (e) => {
+                          const active = e.target.checked;
+                          if (active) {
+                            try {
+                              if (!window.PublicKeyCredential) {
+                                showNotification("Biometrics not supported on this device/browser.");
+                                return;
+                              }
+                              const challenge = new Uint8Array(32);
+                              window.crypto.getRandomValues(challenge);
+                              const options = {
+                                publicKey: {
+                                  challenge,
+                                  rp: { name: "Davora Workspace" },
+                                  user: {
+                                    id: new Uint8Array(16),
+                                    name: userEmail || "user@davora.xyz",
+                                    displayName: userEmail || "User"
+                                  },
+                                  pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+                                  authenticatorSelection: { userVerification: "required" },
+                                  timeout: 60000
+                                }
+                              };
+                              const credential = await navigator.credentials.create(options);
+                              if (credential) {
+                                const currentToken = localStorage.getItem('davora_token') || '';
+                                localStorage.setItem('davora_biometric_token', currentToken);
+                                setPrefs({ ...prefs, biometricLogin: true });
+                                showNotification("Biometrics enabled successfully!");
+                              }
+                            } catch (err) {
+                              console.error("Biometric registration failed:", err);
+                              showNotification("Biometric verification canceled or failed.");
+                            }
+                          } else {
+                            localStorage.removeItem('davora_biometric_token');
+                            setPrefs({ ...prefs, biometricLogin: false });
+                            showNotification("Biometrics disabled.");
+                          }
+                        }} 
+                      />
+                      <label htmlFor="biometric-login-toggle"></label>
+                    </div>
+                  </div>
+
                   <div className="settings-row border-top">
                     <button className="danger-btn" onClick={async () => {
                       try {
@@ -3461,33 +3825,171 @@ export default function Davora() {
           <button onClick={() => setCanvasOpen(false)} className="icon-action-btn"><X size={18} /></button>
         </div>
         <div className="canvas-body">
-          {canvasArtifacts.length === 0 ? (
-            <div className="canvas-empty-state">
-              <Bookmark size={32} className="text-secondary mb-4" />
-              <h3>No Artifacts Saved</h3>
-              <p>Click the bookmark icon on any AI message to save it to your persistent Canvas workspace.</p>
-            </div>
-          ) : (
-            <div className="canvas-artifacts-list">
-              {canvasArtifacts.map(artifact => (
-                <div key={artifact.id} className="canvas-artifact-card" style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {selectedArtifactId ? (
+            (() => {
+              const artifact = canvasArtifacts.find(a => a.id === selectedArtifactId);
+              if (!artifact) {
+                setSelectedArtifactId(null);
+                return null;
+              }
+              const versions = artifactVersions[selectedArtifactId] || [];
+              
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px', padding: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{artifact.date}</span>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button onClick={() => copyToClipboard(artifact.content, `canvas-${artifact.id}`)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                        {copiedId === `canvas-${artifact.id}` ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                      </button>
-                      <button onClick={() => setCanvasArtifacts(prev => prev.filter(a => a.id !== artifact.id))} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
-                        <Trash2 size={14} />
-                      </button>
+                    <button 
+                      onClick={() => setSelectedArtifactId(null)} 
+                      style={{ 
+                        background: 'transparent', 
+                        border: '1px solid var(--border-color)', 
+                        borderRadius: '6px', 
+                        padding: '6px 12px', 
+                        color: 'var(--text-primary)', 
+                        fontSize: '0.8rem', 
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      ← Back
+                    </button>
+                    <span className="canvas-version-badge" style={{ fontSize: '0.75rem', background: 'rgba(168,85,247,0.1)', color: '#a855f7', padding: '4px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <FileClock size={12} /> v{versions.length}.0
+                    </span>
+                  </div>
+                  
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Content Editor</label>
+                    <textarea
+                      value={editCanvasText}
+                      onChange={(e) => setEditCanvasText(e.target.value)}
+                      style={{
+                        width: '100%',
+                        flex: 1,
+                        background: 'rgba(255,255,255,0.03)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        fontFamily: 'monospace',
+                        fontSize: '0.85rem',
+                        minHeight: '260px',
+                        resize: 'none',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        const newVersion = {
+                          versionId: Date.now().toString(),
+                          content: editCanvasText,
+                          date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        };
+                        setArtifactVersions(prev => ({
+                          ...prev,
+                          [selectedArtifactId]: [newVersion, ...(prev[selectedArtifactId] || [])]
+                        }));
+                        setCanvasArtifacts(prev => prev.map(a => a.id === selectedArtifactId ? { ...a, content: editCanvasText } : a));
+                        showNotification("New version saved!");
+                      }}
+                      style={{ 
+                        alignSelf: 'flex-end', 
+                        background: '#ffffff', 
+                        color: '#000000', 
+                        border: 'none', 
+                        borderRadius: '6px', 
+                        padding: '8px 16px', 
+                        fontWeight: '600', 
+                        fontSize: '0.85rem', 
+                        cursor: 'pointer' 
+                      }}
+                    >
+                      Save Version
+                    </button>
+                  </div>
+                  
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <FileClock size={14} /> History Timeline
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
+                      {versions.map((ver, idx) => (
+                        <button
+                          key={ver.versionId}
+                          onClick={() => {
+                            setEditCanvasText(ver.content);
+                            showNotification(`Loaded version from ${ver.date}`);
+                          }}
+                          style={{
+                            flexShrink: 0,
+                            background: editCanvasText === ver.content ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255,255,255,0.03)',
+                            border: editCanvasText === ver.content ? '1px solid #a855f7' : '1px solid var(--border-color)',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            color: editCanvasText === ver.content ? '#a855f7' : 'var(--text-primary)',
+                            fontSize: '0.75rem',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px'
+                          }}
+                        >
+                          <strong>v{versions.length - idx}.0</strong>
+                          <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>{ver.date.split(' ')[1]}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
-                  <div style={{ fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto' }}>
-                    {artifact.content.substring(0, 300)}{artifact.content.length > 300 ? '...' : ''}
-                  </div>
                 </div>
-              ))}
-            </div>
+              );
+            })()
+          ) : (
+            canvasArtifacts.length === 0 ? (
+              <div className="canvas-empty-state">
+                <Bookmark size={32} className="text-secondary mb-4" />
+                <h3>No Artifacts Saved</h3>
+                <p>Click the bookmark icon on any AI message to save it to your persistent Canvas workspace.</p>
+              </div>
+            ) : (
+              <div className="canvas-artifacts-list">
+                {canvasArtifacts.map(artifact => (
+                  <div key={artifact.id} className="canvas-artifact-card" style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{artifact.date}</span>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => copyToClipboard(artifact.content, `canvas-${artifact.id}`)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                          {copiedId === `canvas-${artifact.id}` ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                        </button>
+                        <button onClick={() => setCanvasArtifacts(prev => prev.filter(a => a.id !== artifact.id))} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                    <div 
+                      onClick={() => {
+                        setSelectedArtifactId(artifact.id);
+                        setEditCanvasText(artifact.content);
+                        if (!artifactVersions[artifact.id]) {
+                          setArtifactVersions(prev => ({
+                            ...prev,
+                            [artifact.id]: [{
+                              versionId: artifact.id,
+                              content: artifact.content,
+                              date: artifact.date
+                            }]
+                          }));
+                        }
+                      }}
+                      style={{ fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', maxHeight: '200px', overflowY: 'auto', cursor: 'pointer' }}
+                    >
+                      {artifact.content.substring(0, 300)}{artifact.content.length > 300 ? '...' : ''}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           )}
         </div>
       </aside>
