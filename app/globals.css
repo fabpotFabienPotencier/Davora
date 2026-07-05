@@ -124,7 +124,7 @@ body {
 }
 .sidebar.closed { transform: translateX(-100%); position: absolute; }
 
-.sidebar-header { padding: 12px 16px 8px 16px; display: flex; justify-content: space-between; align-items: center; }
+.sidebar-header { padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 8px 16px; display: flex; justify-content: space-between; align-items: center; }
 
 /* Sidebar Nav Group */
 .sidebar-nav-group { padding: 0 12px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 2px; }
@@ -186,7 +186,7 @@ body {
 .action-icon-btn.delete:hover { color: #ef4444; }
 
 /* Sidebar Footer (Profile) */
-.sidebar-footer { padding: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: none; }
+.sidebar-footer { padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px)) 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: none; }
 
 /* Profile Popover */
 .profile-popover {
@@ -296,7 +296,7 @@ body {
 .main-content.sidebar-closed { width: 100vw; margin-left: 0; }
 
 /* Header */
-.header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--header-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); z-index: 50; position: sticky; top: 0; left: 0; width: 100%; }
+.header { display: flex; align-items: center; justify-content: space-between; padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px 16px; background: var(--header-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color); z-index: 50; position: sticky; top: 0; left: 0; width: 100%; }
 .logo-section { display: flex; align-items: center; gap: 8px; }
 .model-selector-wrapper { position: relative; cursor: pointer; }
 .model-dropdown { position: absolute; top: 100%; left: 0; margin-top: 8px; width: 280px; background: var(--modal-bg); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); z-index: 100; overflow: hidden; animation: slideDown 0.2s ease-out; }
@@ -894,7 +894,7 @@ body {
     transform: translateY(0);
   }
   .chat-box { padding: 16px; }
-  .input-wrapper { padding: 12px 16px; }
+  .input-wrapper { padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)) 16px; }
   .hide-on-mobile { display: none; }
   .suggestion-chips { display: flex !important; flex-direction: column !important; align-items: stretch !important; }
   .sidebar { width: 80%; max-width: 320px; position: fixed; left: 0; top: 0; z-index: 100; box-shadow: 4px 0 24px rgba(0,0,0,0.5); height: 100vh; }
