@@ -617,11 +617,14 @@ export default function Davora() {
  
   // Initialization & DB Fetching
   useEffect(() => {
-    // Read email from cross-subdomain cookie set by the backend
-    const emailCookie = document.cookie.split('; ').find(c => c.startsWith('davora_email='));
-    const email = emailCookie ? decodeURIComponent(emailCookie.split('=')[1]) : null;
-    
     const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+    const emailCookie = document.cookie.split('; ').find(c => c.startsWith('davora_email='));
+    let email = emailCookie ? decodeURIComponent(emailCookie.split('=')[1]) : null;
+    if (!email && isMobile) {
+      email = localStorage.getItem('davora_email');
+    }
+    const cleanEmail = email ? email.replace(/^"+|"+$/g, '') : "User";
+    
     if (!isMobile) {
       localStorage.removeItem('davora_token'); // Clear stale localStorage token on production web
     }
@@ -641,7 +644,7 @@ export default function Davora() {
         return;
       }
     }
-    setUserEmail(email || "User");
+    setUserEmail(cleanEmail);
 
     const fetchSessions = async () => {
       try {
@@ -1724,7 +1727,7 @@ export default function Davora() {
 
       {/* Sidebar for Chat History */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
-        <div className="sidebar-header" style={{ padding: '16px 12px 12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="flex items-center" style={{ color: 'var(--text-primary)', display: 'flex', gap: '8px' }}>
             {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: 22, height: 22, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={22} />}
           </div>
