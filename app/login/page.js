@@ -152,9 +152,9 @@ export default function Login() {
     <>
       <style dangerouslySetInnerHTML={{
         __html: `
-        .auth-container { display: flex; width: 100vw; height: 100vh; background: #000000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #ffffff; }
+        .auth-container { display: flex; width: 100vw; height: 100dvh; background: #000000; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #ffffff; }
         .auth-form-side { flex: 1; display: flex; flex-direction: column; padding: 24px; position: relative; z-index: 10; background: #161616; border-right: 1px solid rgba(255,255,255,0.05); }
-        .auth-form-side-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 24px; position: absolute; top: 0; left: 0; }
+        .auth-form-side-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: calc(12px + env(safe-area-inset-top, 0px)) 24px 12px 24px; position: absolute; top: 0; left: 0; }
         .auth-pill { background: transparent; border: 1px solid rgba(255,255,255,0.2); padding: 6px 16px; border-radius: 9999px; font-size: 0.85rem; color: #aaa; display: flex; align-items: center; gap: 8px; }
         
         .auth-form-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; }
@@ -175,11 +175,11 @@ export default function Login() {
         
         .auth-btn-secondary { width: 100%; background: transparent; color: #ffffff; padding: 14px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.2); font-weight: 600; font-size: 0.95rem; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: background 0.2s; margin-top: 8px; }
         .auth-btn-secondary:hover { background: rgba(255,255,255,0.05); }
-
+ 
         .auth-link { color: #ffffff; text-decoration: none; font-weight: 600; }
         .auth-link:hover { text-decoration: underline; }
         
-        .terms-text { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; color: #666; text-align: center; width: 100%; }
+        .terms-text { position: absolute; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); font-size: 0.75rem; color: #666; text-align: center; width: 100%; }
         .terms-text a { color: #aaa; text-decoration: none; font-weight: 500; }
         .terms-text a:hover { text-decoration: underline; color: #ddd; }
 
