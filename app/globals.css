@@ -1005,3 +1005,24 @@ body {
 .active-chat-dropdown-item.delete-item:hover {
   background: rgba(239, 68, 68, 0.1);
 }
+
+.primary-action-btn {
+  background: var(--accent-color);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 12px 24px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.primary-action-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+.primary-action-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}

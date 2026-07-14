@@ -3751,10 +3751,10 @@ export default function Davora() {
                     {shareLink ? (
                       <>
                         <input type="text" readOnly value={shareLink} style={{ flex: 1, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                        <button className="send-btn" onClick={() => { navigator.clipboard.writeText(shareLink); showNotification('Link copied!'); setActiveModal(null); setShareLink(''); }}>Copy</button>
+                        <button className="primary-action-btn" onClick={() => { navigator.clipboard.writeText(shareLink); showNotification('Link copied!'); setActiveModal(null); setShareLink(''); }}>Copy</button>
                       </>
                     ) : (
-                      <button className="send-btn" style={{ width: '100%', padding: '12px' }} onClick={async () => {
+                      <button className="primary-action-btn" style={{ width: '100%', padding: '12px' }} onClick={async () => {
                         if (!activeSessionId) {
                           showNotification('No active chat to share.');
                           return;
@@ -3767,7 +3767,8 @@ export default function Davora() {
                           });
                           if (res.ok) {
                             const data = await res.json();
-                            setShareLink(`https://davora-b5rw.vercel.app/share/${data.share_id}`);
+                            const origin = typeof window !== 'undefined' ? window.location.origin : 'https://chat.davora.xyz';
+                            setShareLink(`${origin}/share/${data.share_id}`);
                             showNotification('Share link generated!');
                           } else {
                             showNotification('Failed to generate share link.');
