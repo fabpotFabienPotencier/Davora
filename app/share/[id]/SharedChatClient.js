@@ -40,15 +40,10 @@ export default function SharedChatClient() {
   if (loading) return <div className="app-layout" style={{ justifyContent: 'center', alignItems: 'center' }}>Loading shared conversation...</div>;
   if (error) return <div className="app-layout" style={{ justifyContent: 'center', alignItems: 'center', color: '#ef4444' }}>{error}</div>;
 
-  let messages = [];
-  try {
-    messages = JSON.parse(chat.messages_json);
-  } catch (e) {
-    messages = [];
-  }
+  const messages = chat?.messages || [];
 
   return (
-    <div className="app-layout">
+    <div className="app-layout" style={{ flexDirection: 'column' }}>
       <div style={{ padding: '16px 24px', background: 'var(--surface-bg)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ background: '#a855f7', padding: '8px', borderRadius: '12px' }}>
