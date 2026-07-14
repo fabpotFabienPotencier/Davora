@@ -12,9 +12,31 @@ import '../../globals.css';
 export default function SharedChatClient() {
   const { id } = useParams();
   const router = useRouter();
-  const [chat, setChat] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [logoUrl, setLogoUrl] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cachedLogo = localStorage.getItem('davora_logo_url');
+      if (cachedLogo) {
+        setLogoUrl(cachedLogo);
+      }
+    }
+    async function fetchConfig() {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/config`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.logo_url) {
+            setLogoUrl(data.logo_url);
+            localStorage.setItem('davora_logo_url', data.logo_url);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to fetch system config:", e);
+      }
+    }
+    fetchConfig();
+  }, []);
 
   useEffect(() => {
     async function fetchSharedChat() {
@@ -63,7 +85,15 @@ export default function SharedChatClient() {
         {messages.map((msg, index) => (
           <div key={index} className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'}`}>
             <div className={`avatar ${msg.role === 'user' ? 'avatar-user' : 'avatar-ai'}`}>
-              {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
+              {msg.role === 'user' ? (
+                <User size={20} />
+              ) : (
+                logoUrl ? (
+                  <img src={logoUrl} alt="AI" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'contain' }} />
+                ) : (
+                  <Bot size={20} />
+                )
+              )}
             </div>
             <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
               {msg.role === 'user' && msg.image_url && (
