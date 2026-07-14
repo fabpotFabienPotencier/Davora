@@ -12,6 +12,9 @@ import '../../globals.css';
 export default function SharedChatClient() {
   const { id } = useParams();
   const router = useRouter();
+  const [chat, setChat] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [logoUrl, setLogoUrl] = useState(null);
 
   useEffect(() => {
