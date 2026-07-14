@@ -59,7 +59,7 @@ export default function SharedChatClient() {
         </button>
       </div>
       
-      <main className="chat-box" style={{ maxWidth: '800px', margin: '0 auto', paddingTop: '24px', width: '100%', height: 'calc(100vh - 75px)', overflowY: 'auto' }}>
+      <main className="chat-box" style={{ height: 'calc(100vh - 75px)' }}>
         {messages.map((msg, index) => (
           <div key={index} className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'}`}>
             <div className={`avatar ${msg.role === 'user' ? 'avatar-user' : 'avatar-ai'}`}>
