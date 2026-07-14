@@ -51,6 +51,7 @@ export default function Davora() {
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
   const [openMoreMenuId, setOpenMoreMenuId] = useState(null);
+  const [showActiveChatMenu, setShowActiveChatMenu] = useState(false);
   const [longPressMessageId, setLongPressMessageId] = useState(null);
   const touchTimerRef = useRef(null);
   const touchStartRef = useRef({ x: 0, y: 0 });
@@ -799,6 +800,9 @@ export default function Davora() {
       }
       if (!event.target.closest('.more-menu-wrapper')) {
         setOpenMoreMenuId(null);
+      }
+      if (!event.target.closest('.active-chat-menu-wrapper')) {
+        setShowActiveChatMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -1922,31 +1926,46 @@ export default function Davora() {
                 <Ghost size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
               </button>
             ) : (
-              <>
-                <button
-                  className="icon-action-btn"
-                  onClick={(e) => togglePin(e, activeSessionId)}
-                  title={pinnedSessionIds.includes(activeSessionId) ? "Unpin Chat" : "Pin Chat"}
-                  style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }}
-                >
-                  <Pin size={16} />
-                </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button
                   className="icon-action-btn"
                   onClick={() => setActiveModal('share')}
-                  title="Share Chat"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', color: 'var(--text-primary)' }}
                 >
                   <Share size={16} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>Share</span>
                 </button>
-                <button
-                  className="icon-action-btn"
-                  onClick={(e) => deleteSession(e, activeSessionId)}
-                  title="Delete Chat"
-                  style={{ color: '#ef4444' }}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </>
+                
+                <div className="active-chat-menu-wrapper" style={{ position: 'relative' }}>
+                  <button
+                    className="icon-action-btn"
+                    onClick={() => setShowActiveChatMenu(!showActiveChatMenu)}
+                    title="More actions"
+                    style={{ padding: '8px', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  >
+                    <MoreHorizontal size={18} />
+                  </button>
+                  
+                  {showActiveChatMenu && (
+                    <div className="active-chat-dropdown" style={{ position: 'absolute', right: 0, top: '100%', marginTop: '6px', background: 'var(--bg-sidebar)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '4px', width: '160px', display: 'flex', flexDirection: 'column', gap: '2px', zIndex: 100, boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
+                      <button
+                        className="active-chat-dropdown-item"
+                        onClick={(e) => { togglePin(e, activeSessionId); setShowActiveChatMenu(false); }}
+                      >
+                        <Pin size={14} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
+                        <span>{pinnedSessionIds.includes(activeSessionId) ? 'Unpin chat' : 'Pin chat'}</span>
+                      </button>
+                      <button
+                        className="active-chat-dropdown-item delete-item"
+                        onClick={(e) => { deleteSession(e, activeSessionId); setShowActiveChatMenu(false); }}
+                      >
+                        <Trash2 size={14} />
+                        <span>Delete chat</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </header>
