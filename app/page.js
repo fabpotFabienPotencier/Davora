@@ -101,7 +101,8 @@ export default function Davora() {
     safeSearch: true,
     requirePin: false,
     strictTimeLimits: false,
-    recoveryEmail: ""
+    recoveryEmail: "",
+    profilePictureUrl: ""
   });
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [userEmail, setUserEmail] = useState("");
@@ -987,7 +988,7 @@ export default function Davora() {
               }
               setSpeakingId(lastMsg.id);
               const token = localStorage.getItem('davora_token') || '';
-              const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(lastMsg.content)}&token=${encodeURIComponent(token)}`;
+              const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(lastMsg.content)}&token=${encodeURIComponent(token)}&voice=${encodeURIComponent(prefs.voiceProfile || 'Alloy')}&ngrok-skip-browser-warning=true`;
               const audio = new Audio(url);
               audioRef.current = audio;
               audio.onended = () => {
@@ -1625,7 +1626,7 @@ export default function Davora() {
     } else {
       setSpeakingId(id);
       const token = localStorage.getItem('davora_token') || '';
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(text)}&token=${encodeURIComponent(token)}`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(text)}&token=${encodeURIComponent(token)}&voice=${encodeURIComponent(prefs.voiceProfile || 'Alloy')}&ngrok-skip-browser-warning=true`;
       const audio = new Audio(url);
       audioRef.current = audio;
       audio.onended = () => {
@@ -1848,7 +1849,11 @@ export default function Davora() {
             <div className="profile-popover">
               <div className="popover-header">
                 <div className="user-avatar-small" style={{ background: '#f87171' }}>
-                  {userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'}
+                  {prefs.profilePictureUrl ? (
+                    <img src={prefs.profilePictureUrl} alt="User Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'
+                  )}
                 </div>
                 <div className="popover-user-info">
                   <span className="user-name">{userEmail.split('@')[0] || "User"}</span>
@@ -1868,7 +1873,11 @@ export default function Davora() {
           )}
           <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="user-profile-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '12px', gap: '12px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '8px' }}>
             <div className="user-avatar-small" style={{ width: '32px', height: '32px', background: '#f87171', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '600' }}>
-              {userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'}
+              {prefs.profilePictureUrl ? (
+                <img src={prefs.profilePictureUrl} alt="User Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'
+              )}
             </div>
             <div className="user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, overflow: 'hidden' }}>
               <span className="user-name" style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.85rem', width: '100%', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{userEmail.split('@')[0] || "User"}</span>
@@ -2679,6 +2688,87 @@ export default function Davora() {
               {settingsTab === 'Account' && (
                 <div className="settings-pane">
                   <div className="settings-row">
+                    <div className="settings-info">
+                      <label>Profile Picture</label>
+                      <p>Upload a custom profile picture to personalize your account.</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px' }}>
+                        <div className="user-avatar-small" style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f87171', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.2rem', fontWeight: '600', border: '1px solid var(--border-color)' }}>
+                          {prefs.profilePictureUrl ? (
+                            <img src={prefs.profilePictureUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            userEmail ? userEmail.substring(0, 2).toUpperCase() : 'U'
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button 
+                            className="primary-action-btn" 
+                            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                            onClick={() => document.getElementById('profile-pic-file-input').click()}
+                          >
+                            Upload Photo
+                          </button>
+                          {prefs.profilePictureUrl && (
+                            <button 
+                              className="settings-nav-btn" 
+                              style={{ padding: '8px 16px', fontSize: '0.85rem', color: '#ef4444' }}
+                              onClick={() => {
+                                setPrefs(prev => ({ ...prev, profilePictureUrl: "" }));
+                              }}
+                            >
+                              Remove
+                            </button>
+                          )}
+                          <input 
+                            id="profile-pic-file-input" 
+                            type="file" 
+                            accept="image/*" 
+                            style={{ display: 'none' }}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              
+                              const reader = new FileReader();
+                              reader.onload = async (event) => {
+                                const base64 = event.target.result;
+                                setPrefs(prev => ({ ...prev, profilePictureUrl: base64 }));
+                                
+                                try {
+                                  const token = localStorage.getItem('davora_token') || '';
+                                  const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/images/presigned-url', {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': 'Bearer ' + token
+                                    },
+                                    body: JSON.stringify({
+                                      filename: file.name,
+                                      content_type: file.type
+                                    })
+                                  });
+                                  if (res.ok) {
+                                    const data = await res.json();
+                                    const { upload_url, public_url } = data;
+                                    const uploadRes = await fetch(upload_url, {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': file.type },
+                                      body: file
+                                    });
+                                    if (uploadRes.ok) {
+                                      setPrefs(prev => ({ ...prev, profilePictureUrl: public_url }));
+                                    }
+                                  }
+                                } catch (err) {
+                                  console.warn("R2 upload fallback to base64:", err);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="settings-row border-top">
                     <div className="settings-info">
                       <label>Email address</label>
                       <p>{userEmail}</p>

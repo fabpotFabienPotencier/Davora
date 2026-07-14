@@ -271,6 +271,7 @@ body {
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 1px;
+  overflow: hidden;
 }
 
 .user-info { display: flex; flex-direction: column; gap: 2px; }
