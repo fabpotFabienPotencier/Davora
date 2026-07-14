@@ -993,7 +993,9 @@ export default function Davora() {
                 setSpeakingId(null);
               };
               audio.play().catch(err => {
-                console.warn("Auto-read audio playback failed:", err);
+                if (err.name !== 'AbortError') {
+                  console.warn("Auto-read audio playback failed:", err);
+                }
                 setSpeakingId(null);
               });
             }
@@ -1629,7 +1631,9 @@ export default function Davora() {
         setSpeakingId(null);
       };
       audio.play().catch(err => {
-        console.warn("Audio playback failed:", err);
+        if (err.name !== 'AbortError') {
+          console.warn("Audio playback failed:", err);
+        }
         setSpeakingId(null);
       });
     }
@@ -1908,8 +1912,8 @@ export default function Davora() {
               )}
             </div>
           </div>
-          <div className="header-actions">
-            {messages.length === 0 && (
+          <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {messages.length === 0 ? (
               <button
                 className={`temporary-chat-toggle ${isTemporary ? 'active' : ''}`}
                 onClick={() => { setIsTemporary(!isTemporary); showNotification(isTemporary ? "Temporary Chat Disabled" : "Temporary Chat Enabled. History won't be saved."); }}
@@ -1917,6 +1921,32 @@ export default function Davora() {
               >
                 <Ghost size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
               </button>
+            ) : (
+              <>
+                <button
+                  className="icon-action-btn"
+                  onClick={(e) => togglePin(e, activeSessionId)}
+                  title={pinnedSessionIds.includes(activeSessionId) ? "Unpin Chat" : "Pin Chat"}
+                  style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }}
+                >
+                  <Pin size={16} />
+                </button>
+                <button
+                  className="icon-action-btn"
+                  onClick={() => setActiveModal('share')}
+                  title="Share Chat"
+                >
+                  <Share size={16} />
+                </button>
+                <button
+                  className="icon-action-btn"
+                  onClick={(e) => deleteSession(e, activeSessionId)}
+                  title="Delete Chat"
+                  style={{ color: '#ef4444' }}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </>
             )}
           </div>
         </header>
