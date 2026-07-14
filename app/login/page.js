@@ -11,18 +11,8 @@ export default function Login() {
   const [requires2FA, setRequires2FA] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [logoUrl, setLogoUrl] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('davora_logo_url') || null;
-    }
-    return null;
-  });
-  const [platformName, setPlatformName] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('davora_platform_name') || 'Davora';
-    }
-    return 'Davora';
-  });
+  const [logoUrl, setLogoUrl] = useState(null);
+  const [platformName, setPlatformName] = useState('Davora');
   const [termsUrl, setTermsUrl] = useState('/terms');
   const [privacyUrl, setPrivacyUrl] = useState('/privacy');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +22,13 @@ export default function Login() {
   const router = useRouter();
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const cachedLogo = localStorage.getItem('davora_logo_url');
+      if (cachedLogo) setLogoUrl(cachedLogo);
+      const cachedPlatform = localStorage.getItem('davora_platform_name');
+      if (cachedPlatform) setPlatformName(cachedPlatform);
+    }
+
     fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } })
       .then(res => res.json())
       .then(cfg => {

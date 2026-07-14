@@ -114,12 +114,7 @@ export default function Davora() {
   const [proPrice, setProPrice] = useState("7");
   const [premiumPrice, setPremiumPrice] = useState("15");
   const [subscriptionPlan, setSubscriptionPlan] = useState("Davora Free");
-  const [logoUrl, setLogoUrl] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('davora_logo_url') || null;
-    }
-    return null;
-  });
+  const [logoUrl, setLogoUrl] = useState(null);
 
   // Modals inputs
   const [projectName, setProjectName] = useState("");
@@ -622,6 +617,8 @@ export default function Davora() {
 
   // Initialization & DB Fetching
   useEffect(() => {
+    const cachedLogo = localStorage.getItem('davora_logo_url');
+    if (cachedLogo) setLogoUrl(cachedLogo);
     const isMobile = window.Capacitor || window.location.hostname === 'localhost';
     const emailCookie = document.cookie.split('; ').find(c => c.startsWith('davora_email='));
     let email = emailCookie ? decodeURIComponent(emailCookie.split('=')[1]) : null;
