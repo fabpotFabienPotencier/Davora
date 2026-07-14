@@ -114,7 +114,12 @@ export default function Davora() {
   const [proPrice, setProPrice] = useState("7");
   const [premiumPrice, setPremiumPrice] = useState("15");
   const [subscriptionPlan, setSubscriptionPlan] = useState("Davora Free");
-  const [logoUrl, setLogoUrl] = useState(null);
+  const [logoUrl, setLogoUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('davora_logo_url') || null;
+    }
+    return null;
+  });
 
   // Modals inputs
   const [projectName, setProjectName] = useState("");
@@ -187,7 +192,7 @@ export default function Davora() {
     touchTimerRef.current = setTimeout(() => {
       setLongPressMessageId(msgId);
       if (typeof navigator !== "undefined" && navigator.vibrate) {
-        try { navigator.vibrate(40); } catch (err) {}
+        try { navigator.vibrate(40); } catch (err) { }
       }
     }, 500);
   };
@@ -253,14 +258,14 @@ export default function Davora() {
     };
     pickRandom();
     const interval = setInterval(pickRandom, 5000);
-    
+
     // Set dynamic greeting
     const hour = new Date().getHours();
     let timeOfDay = "day";
     if (hour < 12) timeOfDay = "morning";
     else if (hour < 17) timeOfDay = "afternoon";
     else timeOfDay = "evening";
-    
+
     const greetings = [
       `Hey there, good ${timeOfDay}`,
       `Hey, good ${timeOfDay}`,
@@ -346,7 +351,7 @@ export default function Davora() {
         }
       });
       if (!res.ok) throw new Error('Failed to delete account');
-      
+
       // Logout
       localStorage.removeItem('davora_token');
       localStorage.removeItem('davora_email');
@@ -409,7 +414,7 @@ export default function Davora() {
 
   const handleUpgrade = async (tier) => {
     if (typeof window === "undefined") return;
-    
+
     const isMobile = window.Capacitor || window.location.hostname === 'localhost';
 
     const runWebCheckout = async () => {
@@ -424,9 +429,9 @@ export default function Davora() {
           },
           body: JSON.stringify({ tier: tier })
         });
-        
+
         const data = await res.json();
-        
+
         if (data.status === "success" && data.payment_link) {
           if (window.Capacitor) {
             const { Browser } = await import('@capacitor/browser');
@@ -512,7 +517,7 @@ export default function Davora() {
 
         if (token) {
           showNotification("Purchase successful! Verifying subscription...");
-          
+
           const verifyRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/subscription/verify-google', {
             method: 'POST',
             headers: {
@@ -552,7 +557,7 @@ export default function Davora() {
       if (resource && (resource.includes('api.davora.xyz') || resource.includes('localhost') || resource.includes('ngrok'))) {
         config = config || {};
         config.credentials = 'include';
-        
+
         // Strip stale user tokens on production web to force fallback to the secure HTTPOnly cookie
         const isMobile = window.Capacitor || window.location.hostname === 'localhost';
         if (!isMobile && config.headers) {
@@ -572,13 +577,13 @@ export default function Davora() {
             }
           }
         }
-        
+
         args = [resource, config];
       }
-      
+
       try {
         const response = await originalFetch(...args);
-        
+
         if (response.status >= 500) {
           console.warn(`Interventions: Infrastructure Error ${response.status} on ${resource}`);
           return new Response(JSON.stringify({ detail: "An unexpected server error occurred. Please try again later." }), {
@@ -586,7 +591,7 @@ export default function Davora() {
             headers: { 'Content-Type': 'application/json' }
           });
         }
-        
+
         if (response.status === 401) {
           document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;";
           setToast("Session expired. Please log in again.");
@@ -614,7 +619,7 @@ export default function Davora() {
       window.fetch = originalFetch;
     };
   }, []);
- 
+
   // Initialization & DB Fetching
   useEffect(() => {
     const isMobile = window.Capacitor || window.location.hostname === 'localhost';
@@ -624,12 +629,12 @@ export default function Davora() {
       email = localStorage.getItem('davora_email');
     }
     const cleanEmail = email ? email.replace(/^"+|"+$/g, '') : "User";
-    
+
     if (!isMobile) {
       localStorage.removeItem('davora_token'); // Clear stale localStorage token on production web
     }
     const token = isMobile ? (localStorage.getItem('davora_token') || '') : '';
-    
+
     // Fallback client-side auth check (middleware handles this server-side,
     // but this catches mid-session cookie expiry)
     if (isMobile) {
@@ -711,12 +716,15 @@ export default function Davora() {
 
           try {
             const configRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' }, cache: 'no-store' });
-            if (configRes.ok) { 
-              const cfg = await configRes.json(); 
+            if (configRes.ok) {
+              const cfg = await configRes.json();
               setBasicPrice(cfg.basic_price || "3");
               setProPrice(cfg.pro_price || "7");
               setPremiumPrice(cfg.premium_price || "15");
-              if (cfg.logo_url) setLogoUrl(cfg.logo_url);
+              if (cfg.logo_url) {
+                setLogoUrl(cfg.logo_url);
+                localStorage.setItem('davora_logo_url', cfg.logo_url);
+              }
             }
 
             const subRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/subscription', { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }, cache: 'no-store' });
@@ -858,7 +866,7 @@ export default function Davora() {
       if (!sessionId) return;
       const isAuthenticated = document.cookie.includes('davora_auth=1');
       if (!isAuthenticated) return;
-      
+
       // Use sessionsRef to get latest state
       const allSessions = sessionsRef.current || [];
       const currentSession = allSessions.find(s => s.id === sessionId);
@@ -913,7 +921,7 @@ export default function Davora() {
       date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       content: content
     };
-    
+
     setArtifactVersions(prev => ({
       ...prev,
       [artifactId]: [{
@@ -953,14 +961,14 @@ export default function Davora() {
             if (quotaData.quota_error === "UNAUTHORIZED") msg = "Authentication failed. Please log in.";
             else if (quotaData.quota_error === "IMAGE_LIMIT") msg = `Free image limit reached. Wait ${quotaData.wait_hours} hours or upgrade.`;
             else if (quotaData.quota_error === "CHAT_LIMIT") msg = `Free chat limit reached. Wait ${quotaData.wait_hours} hours or upgrade.`;
-            
+
             showNotification(msg);
             if (quotaData.quota_error.includes("LIMIT")) {
               setActiveModal("upgrade");
             }
             return;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
       if (data === "[DONE]") {
         setIsTyping(false);
@@ -1042,18 +1050,18 @@ export default function Davora() {
     if (typeof navigator !== 'undefined' && !navigator.onLine) return;
     const savedQueue = localStorage.getItem('davora_offline_queue');
     if (!savedQueue) return;
-    
+
     let queue = [];
     try {
       queue = JSON.parse(savedQueue);
     } catch (e) {
       queue = [];
     }
-    
+
     if (queue.length === 0) return;
-    
+
     showNotification(`Syncing ${queue.length} offline message(s)...`);
-    
+
     for (const item of queue) {
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.send(JSON.stringify(item.payload));
@@ -1066,7 +1074,7 @@ export default function Davora() {
           break;
         }
       }
-      
+
       setSessions(prev => prev.map(s => {
         if (s.id === item.sessionId) {
           return {
@@ -1077,7 +1085,7 @@ export default function Davora() {
         return s;
       }));
     }
-    
+
     localStorage.removeItem('davora_offline_queue');
     offlineQueueRef.current = [];
   };
@@ -1093,7 +1101,7 @@ export default function Davora() {
           offlineQueueRef.current = [];
         }
       }
-      
+
       const handleOnline = () => {
         setIsOnline(true);
         showNotification("Connection restored. Syncing offline messages...");
@@ -1104,12 +1112,12 @@ export default function Davora() {
           processOfflineQueue();
         }, 1000);
       };
-      
+
       const handleOffline = () => {
         setIsOnline(false);
         showNotification("You are offline. Messages will be queued and sent when connection returns.");
       };
-      
+
       window.addEventListener('online', handleOnline);
       window.addEventListener('offline', handleOffline);
       return () => {
@@ -1162,7 +1170,7 @@ export default function Davora() {
       if (savedVersions) {
         try {
           setArtifactVersions(JSON.parse(savedVersions));
-        } catch (e) {}
+        } catch (e) { }
       }
     }
   }, []);
@@ -1183,11 +1191,11 @@ export default function Davora() {
     const title = initialMsg.length > 25 ? initialMsg.substring(0, 25) + "..." : initialMsg;
     const newId = Date.now().toString();
     const newSession = { id: newId, title, messages: [], isTemporary };
-    
+
     // Synchronously update refs so beforeunload works immediately even before React re-renders
     activeSessionIdRef.current = newId;
     sessionsRef.current = [newSession, ...(sessionsRef.current || [])];
-    
+
     setSessions(prev => [newSession, ...prev]);
     setActiveSessionId(newId);
     return newId;
@@ -1196,7 +1204,7 @@ export default function Davora() {
   const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-    
+
     if (attachments.length + files.length > 3) {
       showNotification("You can only upload up to 3 images at once.");
       return;
@@ -1331,7 +1339,7 @@ export default function Davora() {
         isPending: true
       };
       setSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newMessage] } : s));
-      
+
       const currentSession = sessions.find(s => s.id === targetSessionId) || (sessionsRef.current || []).find(s => s.id === targetSessionId);
       const activeMessages = currentSession ? [...currentSession.messages, newMessage] : [newMessage];
 
@@ -1356,23 +1364,23 @@ export default function Davora() {
         strictMarkdown: prefs.strictMarkdown,
         token: (localStorage.getItem('davora_token') || '')
       };
-      
+
       if (attachments.length > 0) {
         payloadObj.image_urls = attachments.map(a => a.publicUrl).filter(Boolean);
         payloadObj.image_data_array = attachments.map(a => a.base64).filter(Boolean);
       }
-      
+
       const queueItem = {
         sessionId: targetSessionId,
         messageId: newMessage.id,
         payload: payloadObj
       };
-      
+
       const currentQueue = JSON.parse(localStorage.getItem('davora_offline_queue') || '[]');
       currentQueue.push(queueItem);
       localStorage.setItem('davora_offline_queue', JSON.stringify(currentQueue));
       offlineQueueRef.current = currentQueue;
-      
+
       setInput("");
       setAttachments([]);
       showNotification("You are offline. Message queued for automatic sync.");
@@ -1390,7 +1398,7 @@ export default function Davora() {
     // because `setSessions` is async and hasn't updated the state yet
     const currentSession = sessions.find(s => s.id === targetSessionId) || (sessionsRef.current || []).find(s => s.id === targetSessionId);
     let activeMessages = currentSession ? [...currentSession.messages, newMessage] : [newMessage];
-    
+
     // Synchronously update sessionsRef for beforeunload
     if (sessionsRef.current) {
       const sIdx = sessionsRef.current.findIndex(s => s.id === targetSessionId);
@@ -1398,7 +1406,7 @@ export default function Davora() {
         sessionsRef.current[sIdx] = { ...sessionsRef.current[sIdx], messages: activeMessages };
       }
     }
-    
+
     // IMMEDIATE SAVE: Securely save the user's message to the cloud instantly
     // This ensures that even if they refresh the page before the AI starts typing, 
     // the chat session is safely preserved in the database.
@@ -1421,7 +1429,7 @@ export default function Davora() {
         }).catch(err => console.error("Fast save failed", err));
       }
     }
-    
+
     const payloadObj = {
       message: textToSend,
       history: activeMessages,
@@ -1579,12 +1587,25 @@ export default function Davora() {
       return;
     }
     if (isListening) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch (err) {
+        console.error(err);
+      }
       setIsListening(false);
     } else {
       setInput("");
-      recognitionRef.current.start();
-      setIsListening(true);
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (err) {
+        console.error(err);
+        if (err.name === 'InvalidStateError') {
+          setIsListening(true);
+        } else {
+          showNotification("Failed to start voice input. Please try again.");
+        }
+      }
     }
   };
 
@@ -1678,7 +1699,7 @@ export default function Davora() {
     if (!deleteConfirm) return;
     if (deleteConfirm.type === 'single') {
       const id = deleteConfirm.id;
-      
+
       // Update refs synchronously to prevent race conditions during beforeunload or auto-sync
       if (activeSessionIdRef.current === id) {
         activeSessionIdRef.current = null;
@@ -1891,14 +1912,15 @@ export default function Davora() {
             </div>
           </div>
           <div className="header-actions">
-            <button
-              className={`temporary-chat-toggle ${isTemporary ? 'active' : ''}`}
-              onClick={() => { setIsTemporary(!isTemporary); showNotification(isTemporary ? "Temporary Chat Disabled" : "Temporary Chat Enabled. History won't be saved."); }}
-              title="Temporary Chat (Incognito)"
-            >
-              <Ghost size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
-            </button>
-
+            {messages.length === 0 && (
+              <button
+                className={`temporary-chat-toggle ${isTemporary ? 'active' : ''}`}
+                onClick={() => { setIsTemporary(!isTemporary); showNotification(isTemporary ? "Temporary Chat Disabled" : "Temporary Chat Enabled. History won't be saved."); }}
+                title="Temporary Chat (Incognito)"
+              >
+                <Ghost size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -1929,8 +1951,8 @@ export default function Davora() {
           )}
 
           {messages.map((msg, index) => (
-            <div 
-              key={msg.id || index} 
+            <div
+              key={msg.id || index}
               className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'} ${longPressMessageId === msg.id ? 'long-pressed' : ''}`}
               onTouchStart={(e) => handleTouchStart(msg.id, e)}
               onTouchEnd={handleTouchEnd}
@@ -1968,13 +1990,13 @@ export default function Davora() {
                           return (
                             <div style={gridStyle}>
                               {parsed.map((img, i) => (
-                                <img 
-                                  key={i} 
-                                  src={img} 
-                                  alt="Attached image" 
+                                <img
+                                  key={i}
+                                  src={img}
+                                  alt="Attached image"
                                   onClick={() => setActiveLightboxImg(img)}
                                   className="chat-attached-image"
-                                  style={imgStyle} 
+                                  style={imgStyle}
                                 />
                               ))}
                             </div>
@@ -1982,18 +2004,18 @@ export default function Davora() {
                         }
                       } catch (e) { }
                       return (
-                        <img 
-                          src={msg.image_url} 
-                          alt="Attached image" 
+                        <img
+                          src={msg.image_url}
+                          alt="Attached image"
                           onClick={() => setActiveLightboxImg(msg.image_url)}
-                          style={{ 
-                            maxWidth: '100%', 
-                            maxHeight: '280px', 
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '280px',
                             objectFit: 'contain',
                             borderRadius: '16px',
                             cursor: 'zoom-in',
                             display: 'block'
-                          }} 
+                          }}
                         />
                       );
                     })()}
@@ -2017,13 +2039,13 @@ export default function Davora() {
                         </div>
                       ) : (
                         <p className="user-text" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        {msg.content}
-                        {msg.isPending && (
-                          <span title="Pending connection sync" style={{ opacity: 0.5, display: 'inline-flex', alignItems: 'center' }}>
-                            <Clock size={14} style={{ animation: 'spin 2s linear infinite' }} />
-                          </span>
-                        )}
-                      </p>
+                          {msg.content}
+                          {msg.isPending && (
+                            <span title="Pending connection sync" style={{ opacity: 0.5, display: 'inline-flex', alignItems: 'center' }}>
+                              <Clock size={14} style={{ animation: 'spin 2s linear infinite' }} />
+                            </span>
+                          )}
+                        </p>
                       )
                     ) : (
                       <div className="markdown-body">
@@ -2120,7 +2142,7 @@ export default function Davora() {
                 )}
 
                 {!isTyping && (
-                  <div 
+                  <div
                     className={`message-toolbar ${msg.role === 'user' ? 'toolbar-user' : 'toolbar-ai'}`}
                     onClick={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
@@ -2253,16 +2275,16 @@ export default function Davora() {
                 <div className="attachment-preview" style={{ padding: '8px 16px', display: 'flex', gap: '8px', overflowX: 'auto' }}>
                   {attachments.map((att, idx) => (
                     <div key={idx} style={{ position: 'relative', display: 'inline-block', flexShrink: 0 }}>
-                      <img 
-                        src={att.url} 
-                        alt="Attachment" 
-                        style={{ 
-                          height: '60px', 
-                          borderRadius: '8px', 
+                      <img
+                        src={att.url}
+                        alt="Attachment"
+                        style={{
+                          height: '60px',
+                          borderRadius: '8px',
                           objectFit: 'cover',
                           opacity: att.uploading ? 0.5 : 1,
                           transition: 'opacity 0.2s'
-                        }} 
+                        }}
                       />
                       {att.uploading && (
                         <div style={{
@@ -2629,17 +2651,17 @@ export default function Davora() {
                       <p>Update your password to keep your account secure.</p>
                     </div>
                     <form onSubmit={handleChangePassword} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--surface-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                      <input 
-                        type="password" 
-                        placeholder="Current password" 
+                      <input
+                        type="password"
+                        placeholder="Current password"
                         required
                         value={changeOldPassword}
                         onChange={e => setChangeOldPassword(e.target.value)}
                         style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '10px 12px', borderRadius: '6px', fontSize: '0.9rem' }}
                       />
-                      <input 
-                        type="password" 
-                        placeholder="New password (min 6 chars)" 
+                      <input
+                        type="password"
+                        placeholder="New password (min 6 chars)"
                         required
                         value={changeNewPassword}
                         onChange={e => setChangeNewPassword(e.target.value)}
@@ -2661,17 +2683,17 @@ export default function Davora() {
                       <p>Permanently delete your account and all associated data.</p>
                     </div>
                     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(239, 68, 68, 0.05)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                      <input 
-                        type="password" 
-                        placeholder="Enter password to confirm deletion" 
+                      <input
+                        type="password"
+                        placeholder="Enter password to confirm deletion"
                         value={deleteAccountPassword}
                         onChange={e => setDeleteAccountPassword(e.target.value)}
                         style={{ background: 'var(--bg-primary)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'var(--text-primary)', padding: '10px 12px', borderRadius: '6px', fontSize: '0.9rem' }}
                       />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                         <span style={{ fontSize: '0.85rem', color: '#ef4444' }}>{deleteMessage}</span>
-                        <button 
-                          onClick={handleDeleteAccount} 
+                        <button
+                          onClick={handleDeleteAccount}
                           disabled={isDeleting || !deleteAccountPassword}
                           className="danger-btn"
                           style={{ opacity: (isDeleting || !deleteAccountPassword) ? 0.5 : 1 }}
@@ -2733,8 +2755,8 @@ export default function Davora() {
                       <label>Test Push Notifications</label>
                       <p>Trigger a test notification to verify delivery.</p>
                     </div>
-                    <button 
-                      className="outline-btn" 
+                    <button
+                      className="outline-btn"
                       onClick={async () => {
                         try {
                           const token = localStorage.getItem('davora_token');
@@ -2820,9 +2842,9 @@ export default function Davora() {
                       <label>Upgrade your Plan</label>
                       <p>Unlock advanced capabilities and higher limits.</p>
                     </div>
-                    
+
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', width: '100%', marginTop: '8px' }}>
-                      
+
                       {/* Free Plan Card */}
                       <div style={{ flex: '1', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '20px', borderRadius: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
@@ -2923,14 +2945,14 @@ export default function Davora() {
                     </div>
 
                     <div style={{ display: 'flex', gap: '12px', width: '100%', maxWidth: '500px' }}>
-                      <input 
-                        type="text" 
-                        placeholder="Key name (e.g. My Mobile App)" 
+                      <input
+                        type="text"
+                        placeholder="Key name (e.g. My Mobile App)"
                         value={newKeyName}
                         onChange={e => setNewKeyName(e.target.value)}
                         style={{ flex: 1, background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '10px 12px', borderRadius: '6px', fontSize: '0.9rem' }}
                       />
-                      <button 
+                      <button
                         onClick={handleGenerateApiKey}
                         style={{ padding: '10px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: '600' }}
                       >
@@ -2944,7 +2966,7 @@ export default function Davora() {
                         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>Please copy this API key now. For security reasons, it will not be shown again.</p>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', background: 'var(--bg-primary)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                           <code style={{ flex: 1, color: 'var(--text-primary)', fontSize: '0.9rem', wordBreak: 'break-all' }}>{generatedKey}</code>
-                          <button 
+                          <button
                             onClick={() => {
                               navigator.clipboard.writeText(generatedKey);
                               setKeyCopied(true);
@@ -2978,7 +3000,7 @@ export default function Davora() {
                                   </div>
                                 )}
                               </div>
-                              <button 
+                              <button
                                 onClick={() => handleRevokeApiKey(k.id)}
                                 style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '6px 12px', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer', fontWeight: '500' }}
                               >
@@ -3049,7 +3071,7 @@ export default function Davora() {
                     <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={async () => {
                       try {
                         const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/2fa/generate', {
-                          headers: { 
+                          headers: {
                             'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
                             'ngrok-skip-browser-warning': 'true'
                           }
@@ -3072,7 +3094,7 @@ export default function Davora() {
                         </div>
                         <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>Setup Authenticator</h4>
                       </div>
-                      
+
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px', width: '100%' }}>
                         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px', textAlign: 'center', maxWidth: '400px' }}>
                           Scan the QR code below with your authenticator app (e.g. Google Authenticator, Authy, 1Password).
@@ -3098,27 +3120,27 @@ export default function Davora() {
                       <div style={{ width: '100%', borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
                         <label style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '8px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verify Code</label>
                         <p style={{ marginBottom: '12px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>Enter the 6-digit code generated by your app to verify setup.</p>
-                        
+
                         <div style={{ display: 'flex', gap: '12px' }}>
-                          <input 
-                            type="text" 
-                            placeholder="000000" 
+                          <input
+                            type="text"
+                            placeholder="000000"
                             maxLength="6"
-                            value={twoFactorCode} 
+                            value={twoFactorCode}
                             onChange={e => setTwoFactorCode(e.target.value.replace(/[^0-9]/g, ''))}
                             style={{ flex: 1, padding: '14px', background: 'var(--bg-primary)', border: '2px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none', letterSpacing: '0.5em', textAlign: 'center', fontSize: '1.25rem', fontWeight: '600', fontFamily: 'monospace', transition: 'border-color 0.2s' }}
                             onFocus={(e) => e.target.style.borderColor = '#a855f7'}
                             onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                           />
-                          <button 
-                            className="send-btn" 
+                          <button
+                            className="send-btn"
                             disabled={twoFactorCode.length !== 6}
                             onClick={async () => {
                               try {
                                 const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/2fa/verify', {
                                   method: 'POST',
-                                  headers: { 
-                                    'Content-Type': 'application/json', 
+                                  headers: {
+                                    'Content-Type': 'application/json',
                                     'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
                                     'ngrok-skip-browser-warning': 'true'
                                   },
@@ -3153,8 +3175,8 @@ export default function Davora() {
                         try {
                           const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/password/update', {
                             method: 'POST',
-                            headers: { 
-                              'Content-Type': 'application/json', 
+                            headers: {
+                              'Content-Type': 'application/json',
                               'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`,
                               'ngrok-skip-browser-warning': 'true'
                             },
@@ -3173,10 +3195,10 @@ export default function Davora() {
                       <p>Securely unlock your workspace using your device's biometrics.</p>
                     </div>
                     <div className="toggle-switch">
-                      <input 
-                        type="checkbox" 
-                        id="biometric-login-toggle" 
-                        checked={prefs.biometricLogin || false} 
+                      <input
+                        type="checkbox"
+                        id="biometric-login-toggle"
+                        checked={prefs.biometricLogin || false}
                         onChange={async (e) => {
                           const active = e.target.checked;
                           if (active) {
@@ -3217,7 +3239,7 @@ export default function Davora() {
                             setPrefs({ ...prefs, biometricLogin: false });
                             showNotification("Biometrics disabled.");
                           }
-                        }} 
+                        }}
                       />
                       <label htmlFor="biometric-login-toggle"></label>
                     </div>
@@ -3226,11 +3248,11 @@ export default function Davora() {
                   <div className="settings-row border-top">
                     <button className="danger-btn" onClick={async () => {
                       try {
-                        await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/logout', { 
-                          method: 'POST', 
-                          headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' } 
+                        await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/logout', {
+                          method: 'POST',
+                          headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' }
                         });
-                      } catch (e) {}
+                      } catch (e) { }
                       localStorage.clear();
                       document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;";
                       const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`;
@@ -3299,7 +3321,7 @@ export default function Davora() {
                           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Scheduled for: {t.scheduled_for}</span>
                         </div>
                         <button className="danger-btn" style={{ padding: '6px 12px', width: 'auto' }} onClick={async () => {
-                          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/schedule/${t.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' }});
+                          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/schedule/${t.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' } });
                           setScheduledTasks(scheduledTasks.filter(st => st.id !== t.id));
                           showNotification('Task canceled successfully.');
                         }}>Cancel</button>
@@ -3317,19 +3339,19 @@ export default function Davora() {
                       <p>Share your ideas, suggestions, or report any issues directly to the team.</p>
                     </div>
                   </div>
-                  
+
                   <div className="settings-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '10px' }}>
-                    <textarea 
-                      placeholder="Got suggestions, feedback or found a bug? Tell us here..." 
-                      className="custom-instructions-input" 
+                    <textarea
+                      placeholder="Got suggestions, feedback or found a bug? Tell us here..."
+                      className="custom-instructions-input"
                       style={{ width: '100%', minHeight: '80px', borderRadius: '8px', padding: '10px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', resize: 'vertical' }}
-                      value={reportText} 
+                      value={reportText}
                       onChange={e => setReportText(e.target.value)}
                       disabled={isSubmittingReport}
                     />
-                    <button 
-                      className="settings-nav-btn" 
-                      style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none', borderRadius: '8px', cursor: isSubmittingReport ? 'not-allowed' : 'pointer', fontWeight: '600', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: isSubmittingReport ? 0.6 : 1 }} 
+                    <button
+                      className="settings-nav-btn"
+                      style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none', borderRadius: '8px', cursor: isSubmittingReport ? 'not-allowed' : 'pointer', fontWeight: '600', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: isSubmittingReport ? 0.6 : 1 }}
                       disabled={isSubmittingReport}
                       onClick={async () => {
                         if (!reportText.trim()) return;
@@ -3340,7 +3362,7 @@ export default function Davora() {
                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
                             body: JSON.stringify({ description: reportText })
                           });
-                          
+
                           if (res.status === 429) {
                             showNotification("Too many submissions. Please try again in an hour.");
                           } else if (res.ok) {
@@ -3351,8 +3373,8 @@ export default function Davora() {
                           } else {
                             showNotification('Failed to submit feedback.');
                           }
-                        } catch (e) { 
-                          showNotification('Failed to submit feedback.'); 
+                        } catch (e) {
+                          showNotification('Failed to submit feedback.');
                         } finally {
                           setIsSubmittingReport(false);
                         }
@@ -3435,8 +3457,8 @@ export default function Davora() {
                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}><Folder size={18} /> {proj.name}</div>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                               {activeSessionId && (
-                                <button 
-                                  className="outline-btn" 
+                                <button
+                                  className="outline-btn"
                                   style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
                                   onClick={async () => {
                                     try {
@@ -3498,21 +3520,21 @@ export default function Davora() {
                   )}
                   <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
                     <input type="text" className="sidebar-search-input" style={{ flex: 1, minWidth: 0, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} placeholder="New Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
-                    <button 
-                      style={{ 
-                        padding: '10px 20px', 
-                        background: 'var(--text-primary)', 
-                        color: 'var(--bg-primary)', 
-                        border: 'none', 
-                        borderRadius: '8px', 
-                        cursor: 'pointer', 
-                        fontWeight: '600', 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                    <button
+                      style={{
+                        padding: '10px 20px',
+                        background: 'var(--text-primary)',
+                        color: 'var(--bg-primary)',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: '6px',
                         whiteSpace: 'nowrap',
                         flexShrink: 0
-                      }} 
+                      }}
                       onClick={async () => {
                         if (!projectName) return;
                         try {
@@ -3623,18 +3645,18 @@ export default function Davora() {
                   }} style={{ padding: '12px' }}>Confirm Schedule</button>
                 </div>
               )}
-               {activeModal === 'report' && (
+              {activeModal === 'report' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <textarea 
-                    rows={4} 
-                    placeholder="Describe the issue..." 
-                    className="custom-instructions-input" 
-                    value={reportText} 
-                    onChange={e => setReportText(e.target.value)} 
+                  <textarea
+                    rows={4}
+                    placeholder="Describe the issue..."
+                    className="custom-instructions-input"
+                    value={reportText}
+                    onChange={e => setReportText(e.target.value)}
                     disabled={isSubmittingReport}
                   />
-                  <button 
-                    className="danger-btn" 
+                  <button
+                    className="danger-btn"
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: isSubmittingReport ? 0.6 : 1, cursor: isSubmittingReport ? 'not-allowed' : 'pointer' }}
                     disabled={isSubmittingReport}
                     onClick={async () => {
@@ -3646,7 +3668,7 @@ export default function Davora() {
                           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
                           body: JSON.stringify({ description: reportText })
                         });
-                        
+
                         if (res.status === 429) {
                           showNotification("Too many submissions. Please try again in an hour.");
                         } else if (res.ok) {
@@ -3658,8 +3680,8 @@ export default function Davora() {
                         } else {
                           showNotification('Failed to submit report.');
                         }
-                      } catch (e) { 
-                        showNotification('Report failed'); 
+                      } catch (e) {
+                        showNotification('Report failed');
                       } finally {
                         setIsSubmittingReport(false);
                       }
@@ -3688,8 +3710,8 @@ export default function Davora() {
                     ) : (
                       <button className="send-btn" style={{ width: '100%', padding: '12px' }} onClick={async () => {
                         if (!activeSessionId) {
-                           showNotification('No active chat to share.');
-                           return;
+                          showNotification('No active chat to share.');
+                          return;
                         }
                         try {
                           const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/share', {
@@ -3715,9 +3737,9 @@ export default function Davora() {
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textAlign: 'center', marginBottom: '8px' }}>
                     Choose the subscription tier that matches your intelligence requirements.
                   </p>
-                  
+
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px', width: '100%' }}>
-                    
+
                     {/* Free Card */}
                     <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', padding: '20px', borderRadius: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '280px', transition: 'all 0.3s' }} className="pricing-card">
                       <div>
@@ -3805,7 +3827,7 @@ export default function Davora() {
                     </div>
 
                   </div>
-                  
+
                   {/* Footer Disclaimer */}
                   <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '16px', fontSize: '0.75rem', color: '#6b7280', marginTop: '8px' }}>
                     <span>🔒 Secure checkout via Flutterwave</span>
@@ -3836,19 +3858,19 @@ export default function Davora() {
                 return null;
               }
               const versions = artifactVersions[selectedArtifactId] || [];
-              
+
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px', padding: '8px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <button 
-                      onClick={() => setSelectedArtifactId(null)} 
-                      style={{ 
-                        background: 'transparent', 
-                        border: '1px solid var(--border-color)', 
-                        borderRadius: '6px', 
-                        padding: '6px 12px', 
-                        color: 'var(--text-primary)', 
-                        fontSize: '0.8rem', 
+                    <button
+                      onClick={() => setSelectedArtifactId(null)}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.8rem',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -3861,7 +3883,7 @@ export default function Davora() {
                       <FileClock size={12} /> v{versions.length}.0
                     </span>
                   </div>
-                  
+
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Content Editor</label>
                     <textarea
@@ -3896,22 +3918,22 @@ export default function Davora() {
                         setCanvasArtifacts(prev => prev.map(a => a.id === selectedArtifactId ? { ...a, content: editCanvasText } : a));
                         showNotification("New version saved!");
                       }}
-                      style={{ 
-                        alignSelf: 'flex-end', 
-                        background: '#ffffff', 
-                        color: '#000000', 
-                        border: 'none', 
-                        borderRadius: '6px', 
-                        padding: '8px 16px', 
-                        fontWeight: '600', 
-                        fontSize: '0.85rem', 
-                        cursor: 'pointer' 
+                      style={{
+                        alignSelf: 'flex-end',
+                        background: '#ffffff',
+                        color: '#000000',
+                        border: 'none',
+                        borderRadius: '6px',
+                        padding: '8px 16px',
+                        fontWeight: '600',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer'
                       }}
                     >
                       Save Version
                     </button>
                   </div>
-                  
+
                   <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <FileClock size={14} /> History Timeline
@@ -3970,7 +3992,7 @@ export default function Davora() {
                         </button>
                       </div>
                     </div>
-                    <div 
+                    <div
                       onClick={() => {
                         setSelectedArtifactId(artifact.id);
                         setEditCanvasText(artifact.content);
@@ -4030,8 +4052,8 @@ export default function Davora() {
 
       {/* Lightbox Modal */}
       {activeLightboxImg && (
-        <div 
-          onClick={() => setActiveLightboxImg(null)} 
+        <div
+          onClick={() => setActiveLightboxImg(null)}
           style={{
             position: 'fixed',
             top: 0,
@@ -4046,16 +4068,16 @@ export default function Davora() {
             cursor: 'zoom-out'
           }}
         >
-          <img 
-            src={activeLightboxImg} 
-            alt="Enlarged view" 
+          <img
+            src={activeLightboxImg}
+            alt="Enlarged view"
             style={{
               maxWidth: '90%',
               maxHeight: '90%',
               borderRadius: '8px',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
               objectFit: 'contain'
-            }} 
+            }}
           />
         </div>
       )}

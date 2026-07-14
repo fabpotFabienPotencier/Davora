@@ -11,8 +11,18 @@ export default function Login() {
   const [requires2FA, setRequires2FA] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [logoUrl, setLogoUrl] = useState(null);
-  const [platformName, setPlatformName] = useState('Davora');
+  const [logoUrl, setLogoUrl] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('davora_logo_url') || null;
+    }
+    return null;
+  });
+  const [platformName, setPlatformName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('davora_platform_name') || 'Davora';
+    }
+    return 'Davora';
+  });
   const [termsUrl, setTermsUrl] = useState('/terms');
   const [privacyUrl, setPrivacyUrl] = useState('/privacy');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,8 +35,14 @@ export default function Login() {
     fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' } })
       .then(res => res.json())
       .then(cfg => {
-        if (cfg.logo_url) setLogoUrl(cfg.logo_url);
-        if (cfg.platform_name && cfg.platform_name !== 'Davora') setPlatformName(cfg.platform_name);
+        if (cfg.logo_url) {
+          setLogoUrl(cfg.logo_url);
+          localStorage.setItem('davora_logo_url', cfg.logo_url);
+        }
+        if (cfg.platform_name) {
+          setPlatformName(cfg.platform_name);
+          localStorage.setItem('davora_platform_name', cfg.platform_name);
+        }
         if (cfg.terms_url && cfg.terms_url !== '#') setTermsUrl(cfg.terms_url);
         if (cfg.privacy_url && cfg.privacy_url !== '#') setPrivacyUrl(cfg.privacy_url);
       })
