@@ -116,7 +116,7 @@ body {
 .font-size-extra-large .message-bubble, .font-size-extra-large .markdown-body, .font-size-extra-large input, .font-size-extra-large textarea, .font-size-extra-large button, .font-size-extra-large p { font-size: 1.35rem; }
 
 /* Layout Grid */
-.app-layout { display: flex; width: 100vw; height: 100vh; overflow: hidden; position: relative; }
+.app-layout { display: flex; width: 100vw; height: 100vh; overflow: hidden; position: relative; background: var(--bg-primary); color: var(--text-primary); }
 
 /* Sidebar */
 .sidebar {
@@ -962,14 +962,25 @@ body {
 
 /* Incognito Theme */
 .app-layout.incognito-theme {
-  --bg-primary: #020617; /* Very deep slate */
-  --bg-secondary: #0f172a;
-  --bg-sidebar: #020617;
-  --border-color: #1e293b;
+  --bg-primary: #0b0f19;
+  --bg-secondary: #111827;
+  --bg-sidebar: #0b0f19;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --border-color: #1f2937;
   --accent-color: #10b981;
   --accent-hover: #059669;
+  --user-bubble: #1f2937;
+  --ai-bubble: transparent;
+  --modal-bg: #111827;
+  --code-bg: #030712;
+  --inline-code-bg: #1f2937;
+  --header-bg: rgba(11, 15, 25, 0.85);
   --ai-avatar-bg: #10b981;
   --ai-avatar-color: #ffffff;
+  --surface-bg: rgba(255, 255, 255, 0.05);
+  --ambient-overlay: rgba(3, 7, 18, 0.4);
+  --ambient-header: rgba(11, 15, 25, 0.85);
 }
 .app-layout.incognito-theme .temporary-chat-toggle.active {
   background: rgba(16, 185, 129, 0.2) !important;
