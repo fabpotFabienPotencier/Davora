@@ -112,6 +112,8 @@ export default function Davora() {
   const [editCanvasText, setEditCanvasText] = useState("");
   const [artifactVersions, setArtifactVersions] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [isMetadataLoaded, setIsMetadataLoaded] = useState(false);
+  const [showPrivateOnboarding, setShowPrivateOnboarding] = useState(false);
   const [basicPrice, setBasicPrice] = useState("3");
   const [proPrice, setProPrice] = useState("7");
   const [premiumPrice, setPremiumPrice] = useState("15");
@@ -690,6 +692,7 @@ export default function Davora() {
               setActiveSessionId(dbSessions[0].id);
             }
           }
+          setIsMetadataLoaded(true);
 
           const projRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/projects', {
             headers: {
@@ -895,26 +898,33 @@ export default function Davora() {
   }, []);
 
   useEffect(() => {
-    syncMetadata({ prefs: JSON.stringify(prefs) });
     document.body.classList.remove('light-theme', 'amoled-theme');
     if (prefs.theme === 'light') {
       document.body.classList.add('light-theme');
     } else if (prefs.theme === 'amoled') {
       document.body.classList.add('amoled-theme');
     }
-  }, [prefs]);
+  }, [prefs.theme]);
 
   useEffect(() => {
+    if (!isMetadataLoaded) return;
+    syncMetadata({ prefs: JSON.stringify(prefs) });
+  }, [prefs, isMetadataLoaded]);
+
+  useEffect(() => {
+    if (!isMetadataLoaded) return;
     syncMetadata({ ratings: JSON.stringify(ratings) });
-  }, [ratings]);
+  }, [ratings, isMetadataLoaded]);
 
   useEffect(() => {
+    if (!isMetadataLoaded) return;
     syncMetadata({ pins: JSON.stringify(pinnedSessionIds) });
-  }, [pinnedSessionIds]);
+  }, [pinnedSessionIds, isMetadataLoaded]);
 
   useEffect(() => {
+    if (!isMetadataLoaded) return;
     syncMetadata({ canvas: JSON.stringify(canvasArtifacts) });
-  }, [canvasArtifacts]);
+  }, [canvasArtifacts, isMetadataLoaded]);
 
   const saveToCanvas = (content) => {
     const artifactId = Date.now().toString();
@@ -1929,7 +1939,17 @@ export default function Davora() {
             {messages.length === 0 ? (
               <button
                 className={`temporary-chat-toggle ${isTemporary ? 'active' : ''}`}
-                onClick={() => { setIsTemporary(!isTemporary); showNotification(isTemporary ? "Temporary Chat Disabled" : "Temporary Chat Enabled. History won't be saved."); }}
+                onClick={() => {
+                  const targetState = !isTemporary;
+                  setIsTemporary(targetState);
+                  showNotification(targetState ? "Temporary Chat Enabled. History won't be saved." : "Temporary Chat Disabled");
+                  if (targetState) {
+                    const seen = localStorage.getItem('davora_seen_private_onboarding');
+                    if (!seen) {
+                      setShowPrivateOnboarding(true);
+                    }
+                  }
+                }}
                 title="Temporary Chat (Incognito)"
               >
                 <Ghost size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
@@ -1982,25 +2002,63 @@ export default function Davora() {
         {/* Chat Box */}
         <main className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
           {messages.length === 0 && (
-            <div className="welcome-screen">
-              <div className="welcome-icon" style={{ marginBottom: '16px' }}>
-                {isTemporary ? <Ghost size={64} strokeWidth={1.5} color="#10b981" /> : (logoUrl ? <img src={logoUrl} alt="Davora" style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={64} strokeWidth={1.5} />)}
-              </div>
-              <h2 style={{ textAlign: 'center', transition: 'opacity 0.3s ease-in', marginBottom: isTemporary ? '12px' : '32px' }}>{isTemporary ? "Private Chat Mode" : greeting}</h2>
-              {isTemporary && (
-                <div style={{ color: '#10b981', textAlign: 'center', fontSize: '0.9rem', maxWidth: '600px', margin: '0 auto 24px', lineHeight: '1.5', opacity: 0.8 }}>
-                  <Shield size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '6px', marginBottom: '2px' }} />
-                  Private Chat Mode Enabled. This conversation will only be stored securely for 30 days and then permanently deleted. We do not use private chats for model training.
-                </div>
-              )}
-              {!isTemporary && (
-                <div className="suggestion-chips">
-                  {visibleSuggestions.map((s, idx) => (
-                    <button key={idx} className="suggestion-chip" onClick={() => triggerSend(s.text)}>
-                      {s.icon} {s.text}
+            <div className="welcome-screen" style={isTemporary ? { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', padding: '24px' } : {}}>
+              {isTemporary ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', maxWidth: '640px', width: '100%', margin: '0 auto', textAlign: 'center' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--text-primary)' }}>
+                    <Ghost size={28} />
+                  </div>
+                  <h1 style={{ fontSize: '2.2rem', fontWeight: '500', color: 'var(--text-primary)', letterSpacing: '-0.03em', margin: '8px 0 0' }}>Temporary Chat</h1>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', margin: '0 0 24px', opacity: 0.85 }}>
+                    This chat won't appear in history or be used to train our models. For safety purposes, we may keep a copy of this chat for up to 30 days.
+                  </p>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '360px', marginTop: '8px' }}>
+                    <button 
+                      onClick={() => triggerSend("Create an image")} 
+                      style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', cursor: 'pointer', transition: 'background 0.2s', textAlign: 'left' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                    >
+                      <Image size={18} style={{ color: '#3b82f6' }} />
+                      <span style={{ fontWeight: '500' }}>Create an image</span>
                     </button>
-                  ))}
+                    
+                    <button 
+                      onClick={() => triggerSend("Write or edit")} 
+                      style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', cursor: 'pointer', transition: 'background 0.2s', textAlign: 'left' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                    >
+                      <PenTool size={18} style={{ color: '#10b981' }} />
+                      <span style={{ fontWeight: '500' }}>Write or edit</span>
+                    </button>
+                    
+                    <button 
+                      onClick={() => triggerSend("Look something up")} 
+                      style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', cursor: 'pointer', transition: 'background 0.2s', textAlign: 'left' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                    >
+                      <Globe size={18} style={{ color: '#ec4899' }} />
+                      <span style={{ fontWeight: '500' }}>Look something up</span>
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  <div className="welcome-icon" style={{ marginBottom: '16px' }}>
+                    {logoUrl ? <img src={logoUrl} alt="Davora" style={{ width: 64, height: 64, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={64} strokeWidth={1.5} />}
+                  </div>
+                  <h2 style={{ textAlign: 'center', transition: 'opacity 0.3s ease-in', marginBottom: '32px' }}>{greeting}</h2>
+                  <div className="suggestion-chips">
+                    {visibleSuggestions.map((s, idx) => (
+                      <button key={idx} className="suggestion-chip" onClick={() => triggerSend(s.text)}>
+                        {s.icon} {s.text}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -3973,6 +4031,78 @@ export default function Davora() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showPrivateOnboarding && (
+        <div className="modal-overlay" style={{ backdropFilter: 'blur(12px)', backgroundColor: 'rgba(0, 0, 0, 0.75)', zIndex: 1100 }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px', width: '90%', padding: '32px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)', background: '#171717', display: 'flex', flexDirection: 'column', gap: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', flexDirection: 'column' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', marginBottom: '8px' }}>
+                <Ghost size={28} />
+              </div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#fff', textAlign: 'center', margin: 0 }}>Temporary Chat</h2>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                <div style={{ color: '#a3a3a3', marginTop: '3px' }}>
+                  <Clock size={20} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ color: '#f5f5f5', fontWeight: '600', fontSize: '0.95rem' }}>Not in history</span>
+                  <span style={{ color: '#a3a3a3', fontSize: '0.85rem', lineHeight: '1.4' }}>Temporary chats won't appear in your history. For safety purposes, we may keep a copy of your chat for up to 30 days.</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                <div style={{ color: '#a3a3a3', marginTop: '3px' }}>
+                  <BrainCircuit size={20} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ color: '#f5f5f5', fontWeight: '600', fontSize: '0.95rem' }}>No model training</span>
+                  <span style={{ color: '#a3a3a3', fontSize: '0.85rem', lineHeight: '1.4' }}>Temporary chats won't be used to improve our models.</span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                <div style={{ color: '#a3a3a3', marginTop: '3px' }}>
+                  <Database size={20} />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <span style={{ color: '#f5f5f5', fontWeight: '600', fontSize: '0.95rem' }}>Memory off</span>
+                  <span style={{ color: '#a3a3a3', fontSize: '0.85rem', lineHeight: '1.4' }}>While in a temporary chat, Davora won't use or update its memory. Custom instructions will still be followed if you have them enabled.</span>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => {
+                localStorage.setItem('davora_seen_private_onboarding', 'true');
+                setShowPrivateOnboarding(false);
+              }}
+              style={{
+                marginTop: '12px',
+                width: '100%',
+                padding: '12px',
+                borderRadius: '9999px',
+                background: '#ececec',
+                color: '#0f0f0f',
+                fontWeight: '600',
+                fontSize: '0.95rem',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                textAlign: 'center'
+              }}
+              onMouseEnter={(e) => e.target.style.background = '#ffffff'}
+              onMouseLeave={(e) => e.target.style.background = '#ececec'}
+            >
+              Continue
+            </button>
+            
           </div>
         </div>
       )}
