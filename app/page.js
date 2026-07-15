@@ -815,12 +815,13 @@ export default function Davora() {
 
   const syncMetadata = (updates) => {
     const token = (localStorage.getItem('davora_token') || '');
-    if (!token) return;
+    const hasAuthCookie = document.cookie.includes('davora_auth=1');
+    if (!token && !hasAuthCookie) return;
     fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/metadata', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Authorization': token ? `Bearer ${token}` : '',
         'ngrok-skip-browser-warning': 'true'
       },
       body: JSON.stringify(updates)
@@ -2761,7 +2762,7 @@ export default function Davora() {
                                     method: 'POST',
                                     headers: {
                                       'Content-Type': 'application/json',
-                                      'Authorization': 'Bearer ' + token
+                                      'Authorization': token ? 'Bearer ' + token : ''
                                     },
                                     body: JSON.stringify({
                                       filename: file.name,
