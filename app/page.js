@@ -2005,45 +2005,10 @@ export default function Davora() {
             <div className="welcome-screen" style={isTemporary ? { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', padding: '24px' } : {}}>
               {isTemporary ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', maxWidth: '640px', width: '100%', margin: '0 auto', textAlign: 'center' }}>
-                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--text-primary)' }}>
-                    <Ghost size={28} />
-                  </div>
                   <h1 style={{ fontSize: '2.2rem', fontWeight: '500', color: 'var(--text-primary)', letterSpacing: '-0.03em', margin: '8px 0 0' }}>Temporary Chat</h1>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', margin: '0 0 24px', opacity: 0.85 }}>
                     This chat won't appear in history or be used to train our models. For safety purposes, we may keep a copy of this chat for up to 30 days.
                   </p>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '360px', marginTop: '8px' }}>
-                    <button 
-                      onClick={() => triggerSend("Create an image")} 
-                      style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', cursor: 'pointer', transition: 'background 0.2s', textAlign: 'left' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
-                    >
-                      <Image size={18} style={{ color: '#3b82f6' }} />
-                      <span style={{ fontWeight: '500' }}>Create an image</span>
-                    </button>
-                    
-                    <button 
-                      onClick={() => triggerSend("Write or edit")} 
-                      style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', cursor: 'pointer', transition: 'background 0.2s', textAlign: 'left' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
-                    >
-                      <PenTool size={18} style={{ color: '#10b981' }} />
-                      <span style={{ fontWeight: '500' }}>Write or edit</span>
-                    </button>
-                    
-                    <button 
-                      onClick={() => triggerSend("Look something up")} 
-                      style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.9rem', cursor: 'pointer', transition: 'background 0.2s', textAlign: 'left' }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-secondary)'}
-                    >
-                      <Globe size={18} style={{ color: '#ec4899' }} />
-                      <span style={{ fontWeight: '500' }}>Look something up</span>
-                    </button>
-                  </div>
                 </div>
               ) : (
                 <>
@@ -2353,7 +2318,7 @@ export default function Davora() {
 
         {/* Input Area */}
         <div className={`input-wrapper mode-${inputMode} ${isTemporary ? 'mode-incognito' : ''}`}>
-          <form className="input-area" onSubmit={sendMessage} style={isTemporary ? { borderColor: 'rgba(16, 185, 129, 0.4)', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.05)' } : {}}>
+          <form className="input-area" onSubmit={sendMessage}>
 
             <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
               <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} className={`attach-btn ${showPlusMenu ? 'active' : ''}`} title="Options">
@@ -4040,9 +4005,6 @@ export default function Davora() {
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px', width: '90%', padding: '32px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)', background: '#171717', display: 'flex', flexDirection: 'column', gap: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', flexDirection: 'column' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', marginBottom: '8px' }}>
-                <Ghost size={28} />
-              </div>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#fff', textAlign: 'center', margin: 0 }}>Temporary Chat</h2>
             </div>
             

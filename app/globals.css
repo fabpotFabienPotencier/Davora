@@ -968,28 +968,28 @@ body {
   --text-primary: #f9fafb;
   --text-secondary: #9ca3af;
   --border-color: #1f2937;
-  --accent-color: #10b981;
-  --accent-hover: #059669;
+  --accent-color: #f9fafb;
+  --accent-hover: #e5e7eb;
   --user-bubble: #1f2937;
   --ai-bubble: transparent;
   --modal-bg: #111827;
   --code-bg: #030712;
   --inline-code-bg: #1f2937;
   --header-bg: rgba(11, 15, 25, 0.85);
-  --ai-avatar-bg: #10b981;
+  --ai-avatar-bg: #374151;
   --ai-avatar-color: #ffffff;
   --surface-bg: rgba(255, 255, 255, 0.05);
   --ambient-overlay: rgba(3, 7, 18, 0.4);
   --ambient-header: rgba(11, 15, 25, 0.85);
 }
 .app-layout.incognito-theme .temporary-chat-toggle.active {
-  background: rgba(16, 185, 129, 0.2) !important;
-  color: #10b981 !important;
-  border-color: rgba(16, 185, 129, 0.3) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f9fafb !important;
+  border-color: #1f2937 !important;
 }
 .app-layout.incognito-theme .chat-input-wrapper {
-  border-color: #10b981 !important;
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.1) !important;
+  border-color: #1f2937 !important;
+  box-shadow: none !important;
 }
 
 /* Active Chat Header Menu Dropdown */
