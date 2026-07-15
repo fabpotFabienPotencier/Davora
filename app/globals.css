@@ -7,6 +7,7 @@
   --text-secondary: #737373;
   --accent-color: #ffffff;
   --accent-hover: #cccccc;
+  --accent-text: #0a0a0a;
   --user-bubble: #171717;
   --ai-bubble: transparent;
   --border-color: #262626;
@@ -36,6 +37,7 @@ body.light-theme {
   --inline-code-bg: #e4e4e7;
   --accent-color: #000000;
   --accent-hover: #333333;
+  --accent-text: #ffffff;
   --header-bg: rgba(255, 255, 255, 0.85);
   --ai-avatar-bg: #000000;
   --ai-avatar-color: #ffffff;
@@ -58,6 +60,7 @@ body.amoled-theme {
   --inline-code-bg: #111111;
   --accent-color: #ffffff;
   --accent-hover: #dddddd;
+  --accent-text: #000000;
   --header-bg: rgba(0, 0, 0, 0.95);
   --ai-avatar-bg: #ffffff;
   --ai-avatar-color: #000000;
@@ -485,7 +488,8 @@ body {
   background: transparent;
   border: none;
   border-radius: 8px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  opacity: 0.65;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -495,10 +499,12 @@ body {
 .settings-nav-btn:hover {
   background: var(--bg-secondary);
   color: var(--text-primary);
+  opacity: 0.9;
 }
 .settings-nav-btn.active {
   background: var(--border-color);
   color: var(--text-primary);
+  opacity: 1;
 }
 .settings-body {
   flex: 1;
@@ -970,6 +976,7 @@ body {
   --border-color: #1f2937;
   --accent-color: #f9fafb;
   --accent-hover: #e5e7eb;
+  --accent-text: #111827;
   --user-bubble: #1f2937;
   --ai-bubble: transparent;
   --modal-bg: #111827;
@@ -1021,7 +1028,7 @@ body {
 .primary-action-btn {
   background: var(--accent-color);
   border: none;
-  color: #fff;
+  color: var(--accent-text);
   cursor: pointer;
   padding: 12px 24px;
   border-radius: 8px;

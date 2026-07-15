@@ -3862,10 +3862,52 @@ export default function Davora() {
                   <p>Generate a public link to share this conversation.</p>
                   <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                     {shareLink ? (
-                      <>
-                        <input type="text" readOnly value={shareLink} style={{ flex: 1, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                        <button className="primary-action-btn" onClick={() => { navigator.clipboard.writeText(shareLink); showNotification('Link copied!'); setActiveModal(null); setShareLink(''); }}>Copy</button>
-                      </>
+                      <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+                        <input 
+                          type="text" 
+                          readOnly 
+                          value={shareLink} 
+                          style={{ 
+                            width: '100%', 
+                            padding: '12px 48px 12px 12px', 
+                            background: 'var(--bg-primary)', 
+                            border: '1px solid var(--border-color)', 
+                            borderRadius: '8px', 
+                            color: 'var(--text-primary)',
+                            fontSize: '0.85rem',
+                            textOverflow: 'ellipsis',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap'
+                          }} 
+                        />
+                        <button 
+                          onClick={() => { 
+                            navigator.clipboard.writeText(shareLink); 
+                            showNotification('Link copied!'); 
+                            setActiveModal(null); 
+                            setShareLink(''); 
+                          }} 
+                          style={{ 
+                            position: 'absolute', 
+                            right: '4px', 
+                            background: 'transparent', 
+                            border: 'none', 
+                            cursor: 'pointer', 
+                            color: 'var(--text-secondary)', 
+                            padding: '8px', 
+                            borderRadius: '6px', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            transition: 'color 0.2s, background-color 0.2s'
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.backgroundColor = 'var(--surface-bg)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+                          title="Copy link"
+                        >
+                          <Copy size={18} />
+                        </button>
+                      </div>
                     ) : (
                       <button className="primary-action-btn" style={{ width: '100%', padding: '12px' }} onClick={async () => {
                         if (!activeSessionId) {
