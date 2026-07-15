@@ -1892,11 +1892,13 @@ export default function Davora() {
             </div>
             <div className="user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, overflow: 'hidden' }}>
               <span className="user-name" style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.85rem', width: '100%', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{userEmail.split('@')[0] || "User"}</span>
-              <span className="user-plan" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>Free</span>
+              <span className="user-plan" style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{subscriptionPlan.replace("Davora ", "")}</span>
             </div>
-            <div className="upgrade-pill" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: '500' }}>
-              Upgrade
-            </div>
+            {(!subscriptionPlan || subscriptionPlan.includes("Free")) && (
+              <div className="upgrade-pill" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: '500' }}>
+                Upgrade
+              </div>
+            )}
           </button>
         </div>
       </aside>
@@ -1920,18 +1922,39 @@ export default function Davora() {
                 <PanelLeft size={20} />
               </button>
             )}
-            <div className="model-selector-wrapper" onClick={() => setShowModelPicker(!showModelPicker)}>
-              <div className="model-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <h1 style={{ fontSize: '1.1rem', fontWeight: '600' }}>{selectedModel}</h1>
-                <ChevronDown size={14} className="text-secondary opacity-70" />
-              </div>
-
-              {showModelPicker && (
-                <div className="model-dropdown">
-                  <div className="model-option" onClick={(e) => { e.stopPropagation(); setSelectedModel("Davora 3.2 Pro"); setShowModelPicker(false); showNotification("Using Davora 3.2 Pro (llama3.2 1B)"); }}>
-                    <Sparkles size={16} className="text-purple-500" />
-                    <div className="model-opt-text"><strong>Davora 3.2 Pro</strong><br /><span>Default model — fast & capable</span></div>
+            <div className="subscription-indicator-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {(!subscriptionPlan || subscriptionPlan.includes("Free")) ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--surface-bg)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '500' }}>
+                    <Shield size={14} />
+                    <span>Free Plan</span>
                   </div>
+                  <button 
+                    onClick={() => setActiveModal("upgrade")}
+                    style={{ 
+                      background: 'var(--accent-color)', 
+                      color: 'var(--accent-text)', 
+                      border: 'none', 
+                      padding: '6px 14px', 
+                      borderRadius: '20px', 
+                      fontSize: '0.8rem', 
+                      fontWeight: '600', 
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = 0.9}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = 1}
+                  >
+                    Upgrade
+                  </button>
+                </>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(99, 102, 241, 0.15)', color: '#6366f1', padding: '6px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600' }}>
+                  <ShieldCheck size={14} />
+                  <span>{subscriptionPlan}</span>
                 </div>
               )}
             </div>
