@@ -19,42 +19,6 @@ export function middleware(request) {
   // Extract the bare domain (e.g. "davora.xyz") for building redirect URLs
   const baseDomain = hostname.replace(/^(www\.|chat\.|login\.|signup\.)/, '');
 
-  // Intercept authentication query parameters (passed from login subdomain to set cookies immediately)
-  const tokenParam = url.searchParams.get('token');
-  if (tokenParam && hostname.startsWith('chat.')) {
-    url.searchParams.delete('token');
-    const emailParam = url.searchParams.get('email');
-    if (emailParam) {
-      url.searchParams.delete('email');
-    }
-    const response = NextResponse.redirect(url);
-    response.cookies.set('davora_auth', '1', {
-      domain: `.${baseDomain}`,
-      path: '/',
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7
-    });
-    response.cookies.set('davora_token', tokenParam, {
-      domain: `.${baseDomain}`,
-      path: '/',
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7
-    });
-    if (emailParam) {
-      response.cookies.set('davora_email', decodeURIComponent(emailParam), {
-        domain: `.${baseDomain}`,
-        path: '/',
-        secure: true,
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7
-      });
-    }
-    return response;
-  }
-
   // Always allow legal pages, shared chats, and API routes on any subdomain
   if (
     url.pathname.startsWith('/terms') ||
