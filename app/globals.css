@@ -140,7 +140,7 @@ body {
 .hover-white:hover { color: var(--text-primary); }
 
 .sidebar-history {
-  flex: 1; overflow-y: auto; padding: 0 12px; display: flex; flex-direction: column; gap: 2px; margin-top: 8px;
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 12px; display: flex; flex-direction: column; gap: 2px; margin-top: 8px;
 }
 .sidebar-history::-webkit-scrollbar { width: 4px; }
 .sidebar-history::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
@@ -323,7 +323,7 @@ body {
 .icon-action-btn:hover:not(:disabled) { background: var(--bg-secondary); color: var(--text-primary); }
 
 /* Chat Area */
-.chat-box { flex: 1; overflow-y: auto; padding: 24px 15% 24px; display: flex; flex-direction: column; gap: 32px; scroll-behavior: smooth; position: relative; height: 100%; overscroll-behavior-y: contain; }
+.chat-box { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 24px 15% 24px; display: flex; flex-direction: column; gap: 32px; scroll-behavior: smooth; position: relative; height: 100%; overscroll-behavior-y: contain; }
 .chat-box::-webkit-scrollbar { width: 6px; }
 .chat-box::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
 
@@ -741,7 +741,7 @@ body {
 .canvas-panel.closed { transform: translateX(100%); }
 .canvas-header { padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
 .canvas-title { font-weight: 600; display: flex; align-items: center; gap: 8px; color: var(--text-primary); }
-.canvas-body { flex: 1; padding: 24px; overflow-y: auto; }
+.canvas-body { flex: 1; padding: 24px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .canvas-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; color: var(--text-secondary); opacity: 0.7; }
 .canvas-empty-state h3 { color: var(--text-primary); margin-bottom: 8px; font-size: 1.1rem; }
 .canvas-empty-state p { font-size: 0.9rem; max-width: 250px; }
@@ -890,15 +890,12 @@ body {
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .message-toolbar {
-    opacity: 0 !important;
-    pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    transform: translateY(5px);
-  }
-  .message-row.long-pressed .message-toolbar {
     opacity: 1 !important;
-    pointer-events: auto;
-    transform: translateY(0);
+    pointer-events: auto !important;
+    transform: none !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 2px !important;
   }
   .chat-box { padding: 16px; }
   .input-wrapper { padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)) 16px; }
@@ -909,7 +906,7 @@ body {
   .main-content.sidebar-open { width: 100vw; margin-left: 0; }
   .scroll-bottom-btn { right: 24px; }
   .settings-modal-content { flex-direction: column; height: 100vh; max-height: 100vh; border-radius: 0; margin-top: 0; border: none; }
-  .settings-sidebar { width: 100%; border-right: none; height: 100%; overflow-y: auto; background: var(--bg-primary); }
+  .settings-sidebar { width: 100%; border-right: none; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg-primary); }
   .settings-nav { flex-direction: column; overflow-x: hidden; padding: 16px; gap: 8px; }
   .settings-nav-btn { justify-content: flex-start; padding: 16px; background: var(--bg-secondary); border-radius: 12px; font-size: 1rem; font-weight: 500; position: relative; }
   .settings-nav-btn::after { content: "›"; position: absolute; right: 16px; font-size: 1.5rem; color: var(--text-secondary); opacity: 0.5; top: 50%; transform: translateY(-50%); }
@@ -945,7 +942,7 @@ body {
   .mobile-view-menu .settings-body { display: none !important; }
   .mobile-view-pane .settings-sidebar { display: none !important; }
   .mobile-view-pane .settings-body { display: flex !important; height: 100%; }
-  .settings-body { overflow-y: auto; padding-bottom: 40px; }
+  .settings-body { overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
 
   /* Modal responsive constraints */
   .modal-content {

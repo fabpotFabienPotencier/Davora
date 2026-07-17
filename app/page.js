@@ -55,6 +55,7 @@ export default function Davora() {
   const [longPressMessageId, setLongPressMessageId] = useState(null);
   const touchTimerRef = useRef(null);
   const touchStartRef = useRef({ x: 0, y: 0 });
+  const sidebarTouchStartRef = useRef({ x: 0, y: 0 });
   const [pinnedSessionIds, setPinnedSessionIds] = useState([]);
 
   // Voice, Edit, TTS, and Rating states
@@ -558,7 +559,7 @@ export default function Davora() {
         config.credentials = 'include';
 
         // Strip stale user tokens on production web to force fallback to the secure HTTPOnly cookie
-        const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+        const isMobile = window.Capacitor || window.location.hostname === 'localhost' || (typeof navigator !== 'undefined' && /Mobi|Android|iPhone/i.test(navigator.userAgent));
         if (!isMobile && config.headers) {
           let authVal = '';
           if (typeof config.headers.get === 'function') {
@@ -595,7 +596,7 @@ export default function Davora() {
           document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;";
           setToast("Session expired. Please log in again.");
           setTimeout(() => {
-            const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+            const isMobile = window.Capacitor || window.location.hostname === 'localhost' || (typeof navigator !== 'undefined' && /Mobi|Android|iPhone/i.test(navigator.userAgent));
             if (isMobile) {
               router.push('/login');
             } else {
@@ -623,7 +624,7 @@ export default function Davora() {
   useEffect(() => {
     const cachedLogo = localStorage.getItem('davora_logo_url');
     if (cachedLogo) setLogoUrl(cachedLogo);
-    const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+    const isMobile = window.Capacitor || window.location.hostname === 'localhost' || (typeof navigator !== 'undefined' && /Mobi|Android|iPhone/i.test(navigator.userAgent));
     const emailCookie = document.cookie.split('; ').find(c => c.startsWith('davora_email='));
     let email = emailCookie ? decodeURIComponent(emailCookie.split('=')[1]) : null;
     if (!email && isMobile) {
@@ -735,7 +736,7 @@ export default function Davora() {
         }
       } catch (err) {
         console.error("Failed to fetch from DB", err);
-        const isMobile = window.Capacitor || window.location.hostname === 'localhost';
+        const isMobile = window.Capacitor || window.location.hostname === 'localhost' || (typeof navigator !== 'undefined' && /Mobi|Android|iPhone/i.test(navigator.userAgent));
         if (isMobile && !localStorage.getItem('davora_token')) {
           router.push('/login');
         }
@@ -751,7 +752,8 @@ export default function Davora() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = true;
+        const isMobile = (typeof window !== "undefined" && (window.Capacitor || (typeof navigator !== "undefined" && /Mobi|Android|iPhone/i.test(navigator.userAgent))));
+        recognitionRef.current.continuous = !isMobile;
         recognitionRef.current.interimResults = true;
         recognitionRef.current.onresult = (event) => {
           let transcript = "";
@@ -760,7 +762,10 @@ export default function Davora() {
           }
           setInput(transcript);
         };
-        recognitionRef.current.onerror = () => setIsListening(false);
+        recognitionRef.current.onerror = (event) => {
+          console.error("Speech recognition error:", event.error);
+          setIsListening(false);
+        };
         recognitionRef.current.onend = () => setIsListening(false);
       }
     }
@@ -1596,7 +1601,7 @@ export default function Davora() {
     }
   };
 
-  const toggleVoice = () => {
+  const toggleVoice = async () => {
     if (!recognitionRef.current) {
       showNotification("Voice input not supported in this browser.");
       return;
@@ -1611,20 +1616,20 @@ export default function Davora() {
     } else {
       setInput("");
       try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
         recognitionRef.current.start();
         setIsListening(true);
       } catch (err) {
         console.error(err);
-        if (err.name === 'InvalidStateError') {
-          setIsListening(true);
-        } else {
-          showNotification("Failed to start voice input. Please try again.");
-        }
+        showNotification("Microphone permission is required for voice input.");
+        setIsListening(false);
       }
     }
   };
 
-  const toggleTextToSpeech = (text, id) => {
+  const toggleTextToSpeech = async (text, id) => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
@@ -1636,22 +1641,33 @@ export default function Davora() {
       setSpeakingId(null);
     } else {
       setSpeakingId(id);
-      const token = localStorage.getItem('davora_token') || '';
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(text)}&token=${encodeURIComponent(token)}&voice=${encodeURIComponent(prefs.voiceProfile || 'Alloy')}&ngrok-skip-browser-warning=true`;
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audio.onended = () => {
-        setSpeakingId(null);
-      };
-      audio.onerror = () => {
-        setSpeakingId(null);
-      };
-      audio.play().catch(err => {
-        if (err.name !== 'AbortError') {
-          console.warn("Audio playback failed:", err);
+      try {
+        const token = localStorage.getItem('davora_token') || '';
+        const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(text)}&token=${encodeURIComponent(token)}&voice=${encodeURIComponent(prefs.voiceProfile || 'Alloy')}&ngrok-skip-browser-warning=true`;
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error("Failed to fetch audio stream");
         }
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        
+        const audio = new Audio(blobUrl);
+        audioRef.current = audio;
+        audio.onended = () => {
+          setSpeakingId(null);
+          URL.revokeObjectURL(blobUrl);
+        };
+        audio.onerror = () => {
+          setSpeakingId(null);
+          URL.revokeObjectURL(blobUrl);
+        };
+        await audio.play();
+      } catch (err) {
+        console.warn("Audio playback failed:", err);
+        showNotification("Failed to play audio read aloud.");
         setSpeakingId(null);
-      });
+      }
     }
   };
 
@@ -1764,7 +1780,20 @@ export default function Davora() {
       </div>
 
       {/* Sidebar for Chat History */}
-      <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+      <aside 
+        className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}
+        onTouchStart={(e) => {
+          sidebarTouchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }}
+        onTouchMove={(e) => {
+          if (!sidebarTouchStartRef.current) return;
+          const currentX = e.touches[0].clientX;
+          const diffX = sidebarTouchStartRef.current.x - currentX;
+          if (diffX > 40) {
+            setSidebarOpen(false);
+          }
+        }}
+      >
         <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="flex items-center" style={{ color: 'var(--text-primary)', display: 'flex', gap: '8px' }}>
             {logoUrl ? <img src={logoUrl} alt="Davora Logo" style={{ width: 22, height: 22, objectFit: 'contain', borderRadius: '50%' }} /> : <Bot size={22} />}
@@ -1908,6 +1937,17 @@ export default function Davora() {
         <div
           className="sidebar-overlay"
           onClick={() => setSidebarOpen(false)}
+          onTouchStart={(e) => {
+            sidebarTouchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          }}
+          onTouchMove={(e) => {
+            if (!sidebarTouchStartRef.current) return;
+            const currentX = e.touches[0].clientX;
+            const diffX = sidebarTouchStartRef.current.x - currentX;
+            if (diffX > 40) {
+              setSidebarOpen(false);
+            }
+          }}
         />
       )}
 
@@ -1924,33 +1964,27 @@ export default function Davora() {
             )}
             <div className="subscription-indicator-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {(!subscriptionPlan || subscriptionPlan.includes("Free")) ? (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--surface-bg)', color: 'var(--text-secondary)', padding: '6px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '500' }}>
-                    <Shield size={14} />
-                    <span>Free Plan</span>
-                  </div>
-                  <button 
-                    onClick={() => setActiveModal("upgrade")}
-                    style={{ 
-                      background: 'var(--accent-color)', 
-                      color: 'var(--accent-text)', 
-                      border: 'none', 
-                      padding: '6px 14px', 
-                      borderRadius: '20px', 
-                      fontSize: '0.8rem', 
-                      fontWeight: '600', 
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      transition: 'opacity 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.opacity = 0.9}
-                    onMouseLeave={(e) => e.currentTarget.style.opacity = 1}
-                  >
-                    Upgrade
-                  </button>
-                </>
+                <button 
+                  onClick={() => setActiveModal("upgrade")}
+                  style={{ 
+                    background: 'var(--accent-color)', 
+                    color: 'var(--accent-text)', 
+                    border: 'none', 
+                    padding: '6px 14px', 
+                    borderRadius: '20px', 
+                    fontSize: '0.8rem', 
+                    fontWeight: '600', 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'opacity 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = 0.9}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = 1}
+                >
+                  Upgrade
+                </button>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(99, 102, 241, 0.15)', color: '#6366f1', padding: '6px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600' }}>
                   <ShieldCheck size={14} />
@@ -2243,7 +2277,7 @@ export default function Davora() {
                   </div>
                 )}
 
-                {!isTyping && (
+                {!(msg.role === 'assistant' && index === messages.length - 1 && isTyping) && (
                   <div
                     className={`message-toolbar ${msg.role === 'user' ? 'toolbar-user' : 'toolbar-ai'}`}
                     onClick={(e) => e.stopPropagation()}
@@ -2418,7 +2452,7 @@ export default function Davora() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={
-                    isTemporary ? "Message Davora (Incognito)..." :
+                    isTemporary ? "Message Davora..." :
                       inputMode === 'deep' ? "Message Davora (Deep Think)..." :
                         inputMode === 'deep-search' ? "Message Davora (Deep Web Search)..." :
                           inputMode === 'research' ? "Message Davora (Web Search)..." :

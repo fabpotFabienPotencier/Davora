@@ -152,7 +152,7 @@ export default function Login() {
         router.push('/');
       } else {
         const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-        window.location.href = `${window.location.protocol}//chat.${baseDomain}`;
+        window.location.href = `${window.location.protocol}//chat.${baseDomain}?token=${data.access_token}&email=${encodeURIComponent(email)}`;
       }
     } catch (err) {
       setError(err.message);
