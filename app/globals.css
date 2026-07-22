@@ -21,6 +21,7 @@
   --ambient-overlay: rgba(0, 0, 0, 0.4);
   --ambient-header: rgba(0, 0, 0, 0.8);
   --sidebar-width: 260px;
+  --user-avatar-bg: #f87171;
 }
 
 body.light-theme {
@@ -403,7 +404,7 @@ body {
 .syntax-highlighter { margin: 0 !important; padding: 16px !important; border-radius: 0 0 8px 8px !important; background: transparent !important; }
 
 /* Input Area & 2026 Modes */
-.input-wrapper { padding: 16px 15%; background: linear-gradient(to top, var(--bg-primary) 80%, transparent); position: relative; z-index: 15; }
+.input-wrapper { padding: 16px 15% calc(16px + env(safe-area-inset-bottom, 0px)) 15%; background: linear-gradient(to top, var(--bg-primary) 80%, transparent); position: relative; z-index: 15; }
 
 /* Input Mode Selector */
 .input-mode-selector { display: flex; gap: 8px; margin-bottom: 12px; justify-content: center; }

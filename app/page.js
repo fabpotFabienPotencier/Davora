@@ -1640,29 +1640,46 @@ export default function Davora() {
     if (speakingId === id) {
       setSpeakingId(null);
     } else {
+      if (!('speechSynthesis' in window)) {
+        showNotification("Text-to-speech is not supported in this browser.");
+        return;
+      }
       setSpeakingId(id);
       try {
-        const token = localStorage.getItem('davora_token') || '';
-        const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(text)}&token=${encodeURIComponent(token)}&voice=${encodeURIComponent(prefs.voiceProfile || 'Alloy')}&ngrok-skip-browser-warning=true`;
+        const synth = window.speechSynthesis;
+        const msg = new SpeechSynthesisUtterance(text);
         
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error("Failed to fetch audio stream");
+        const voices = synth.getVoices();
+        let selectedVoice = null;
+        
+        selectedVoice = voices.find(v => v.name === 'Google UK English Female' || v.name === 'Google US English');
+        
+        if (!selectedVoice) {
+          selectedVoice = voices.find(v => v.name.includes('Zira') || v.name.includes('David') || v.name.includes('Jenny'));
         }
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
         
-        const audio = new Audio(blobUrl);
-        audioRef.current = audio;
-        audio.onended = () => {
+        if (!selectedVoice) {
+          selectedVoice = voices.find(v => v.name.includes('Natural') || v.name.includes('Premium'));
+        }
+        
+        if (!selectedVoice) {
+          selectedVoice = voices.find(v => v.lang && v.lang.startsWith('en'));
+        }
+        
+        if (selectedVoice) {
+          msg.voice = selectedVoice;
+        }
+        
+        msg.rate = 1.0;
+        msg.pitch = 1.0;
+        
+        msg.onend = () => setSpeakingId(null);
+        msg.onerror = () => {
+          showNotification("Failed to play audio read aloud.");
           setSpeakingId(null);
-          URL.revokeObjectURL(blobUrl);
         };
-        audio.onerror = () => {
-          setSpeakingId(null);
-          URL.revokeObjectURL(blobUrl);
-        };
-        await audio.play();
+        
+        synth.speak(msg);
       } catch (err) {
         console.warn("Audio playback failed:", err);
         showNotification("Failed to play audio read aloud.");
@@ -1721,7 +1738,7 @@ export default function Davora() {
   };
 
   const mockAttach = () => {
-    showNotification("Attachments coming in next model update.");
+    showNotification("Attachments will be available soon.");
   };
 
   const clearAllChats = () => {
@@ -1888,7 +1905,7 @@ export default function Davora() {
           {showProfileMenu && (
             <div className="profile-popover">
               <div className="popover-header">
-                <div className="user-avatar-small" style={{ background: '#f87171' }}>
+                <div className="user-avatar-small" style={{ background: 'var(--user-avatar-bg, #f87171)' }}>
                   {prefs.profilePictureUrl ? (
                     <img src={prefs.profilePictureUrl} alt="User Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
@@ -1912,7 +1929,7 @@ export default function Davora() {
             </div>
           )}
           <button onClick={() => setShowProfileMenu(!showProfileMenu)} className="user-profile-btn" style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '12px', gap: '12px', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '8px' }}>
-            <div className="user-avatar-small" style={{ width: '32px', height: '32px', background: '#f87171', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '600' }}>
+            <div className="user-avatar-small" style={{ width: '32px', height: '32px', background: 'var(--user-avatar-bg, #f87171)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: '600' }}>
               {prefs.profilePictureUrl ? (
                 <img src={prefs.profilePictureUrl} alt="User Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
@@ -2503,7 +2520,7 @@ export default function Davora() {
               )}
             </div>
           </form>
-          <p className="footer-text">Davora 3.2 can make mistakes. Consider verifying important information.</p>
+          <p className="footer-text">Davora can make mistakes. Consider verifying important information.</p>
         </div>
       </div>
 
@@ -2542,10 +2559,10 @@ export default function Davora() {
                 <button className={`settings-nav-btn ${settingsTab === 'General' ? 'active' : ''}`} onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }}><Settings size={18} /> General</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Notifications' ? 'active' : ''}`} onClick={() => { setSettingsTab('Notifications'); setMobileSettingsView('pane'); }}><Bell size={18} /> Notifications</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Personalization' ? 'active' : ''}`} onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Fingerprint size={18} /> Personalization</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Apps' ? 'active' : ''}`} onClick={() => { setSettingsTab('Apps'); setMobileSettingsView('pane'); }}><Grid size={18} /> Apps</button>
+
                 <button className={`settings-nav-btn ${settingsTab === 'Voice' ? 'active' : ''}`} onClick={() => { setSettingsTab('Voice'); setMobileSettingsView('pane'); }}><Mic size={18} /> Voice</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Billing' ? 'active' : ''}`} onClick={() => { setSettingsTab('Billing'); setMobileSettingsView('pane'); }}><CreditCard size={18} /> Billing</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Data controls' ? 'active' : ''}`} onClick={() => { setSettingsTab('Data controls'); setMobileSettingsView('pane'); }}><Database size={18} /> Data controls</button>
+
                 <button className={`settings-nav-btn ${settingsTab === 'Storage' ? 'active' : ''}`} onClick={() => { setSettingsTab('Storage'); setMobileSettingsView('pane'); }}><HardDrive size={18} /> Storage</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Safety' ? 'active' : ''}`} onClick={() => { setSettingsTab('Safety'); setMobileSettingsView('pane'); }}><Shield size={18} /> Safety</button>
                 <button className={`settings-nav-btn ${settingsTab === 'Security' ? 'active' : ''}`} onClick={() => { setSettingsTab('Security'); setMobileSettingsView('pane'); }}><Settings size={18} /> Security and login</button>
@@ -2773,7 +2790,7 @@ export default function Davora() {
                       <label>Profile Picture</label>
                       <p>Upload a custom profile picture to personalize your account.</p>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px' }}>
-                        <div className="user-avatar-small" style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f87171', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.2rem', fontWeight: '600', border: '1px solid var(--border-color)' }}>
+                        <div className="user-avatar-small" style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--user-avatar-bg, #f87171)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '1.2rem', fontWeight: '600', border: '1px solid var(--border-color)' }}>
                           {prefs.profilePictureUrl ? (
                             <img src={prefs.profilePictureUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           ) : (
@@ -2930,17 +2947,10 @@ export default function Davora() {
                 <div className="settings-pane">
                   <div className="settings-row">
                     <div className="settings-info">
-                      <label>Export data</label>
-                      <p>Request an export of your data.</p>
-                    </div>
-                    <button className="outline-btn" style={{ opacity: 0.5, cursor: 'not-allowed' }} disabled>Export</button>
-                  </div>
-                  <div className="settings-row border-top">
-                    <div className="settings-info">
                       <label>Delete account</label>
                       <p>Permanently delete your account and data.</p>
                     </div>
-                    <button className="danger-btn" onClick={() => showNotification("Please contact support to delete your account.")}>Delete</button>
+                    <button className="danger-btn" onClick={() => setSettingsTab('Account')}>Go to Account</button>
                   </div>
                 </div>
               )}
@@ -3004,18 +3014,7 @@ export default function Davora() {
               {settingsTab === 'Apps' && (
                 <div className="settings-pane">
                   <div className="settings-row">
-                    <div className="settings-info">
-                      <label>Google Drive</label>
-                      <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Import and export documents directly. <span style={{ color: '#f59e0b', fontSize: '0.75rem', background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Coming soon</span></p>
-                    </div>
-                    <button className="outline-btn" style={{ opacity: 0.5, cursor: 'not-allowed' }} disabled>Connect</button>
-                  </div>
-                  <div className="settings-row border-top">
-                    <div className="settings-info">
-                      <label>GitHub</label>
-                      <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>Access repositories for code generation. <span style={{ color: '#f59e0b', fontSize: '0.75rem', background: 'rgba(245,158,11,0.1)', padding: '2px 8px', borderRadius: '12px' }}>Coming soon</span></p>
-                    </div>
-                    <button className="outline-btn" style={{ opacity: 0.5, cursor: 'not-allowed' }} disabled>Connect</button>
+                    <p style={{ color: 'var(--text-secondary)' }}>No apps connected.</p>
                   </div>
                 </div>
               )}
