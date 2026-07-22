@@ -1640,46 +1640,29 @@ export default function Davora() {
     if (speakingId === id) {
       setSpeakingId(null);
     } else {
-      if (!('speechSynthesis' in window)) {
-        showNotification("Text-to-speech is not supported in this browser.");
-        return;
-      }
       setSpeakingId(id);
       try {
-        const synth = window.speechSynthesis;
-        const msg = new SpeechSynthesisUtterance(text);
+        const token = localStorage.getItem('davora_token') || '';
+        const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(text)}&token=${encodeURIComponent(token)}&voice=${encodeURIComponent(prefs.voiceProfile || 'Alloy')}&ngrok-skip-browser-warning=true`;
         
-        const voices = synth.getVoices();
-        let selectedVoice = null;
-        
-        selectedVoice = voices.find(v => v.name === 'Google UK English Female' || v.name === 'Google US English');
-        
-        if (!selectedVoice) {
-          selectedVoice = voices.find(v => v.name.includes('Zira') || v.name.includes('David') || v.name.includes('Jenny'));
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error("Failed to fetch audio stream");
         }
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
         
-        if (!selectedVoice) {
-          selectedVoice = voices.find(v => v.name.includes('Natural') || v.name.includes('Premium'));
-        }
-        
-        if (!selectedVoice) {
-          selectedVoice = voices.find(v => v.lang && v.lang.startsWith('en'));
-        }
-        
-        if (selectedVoice) {
-          msg.voice = selectedVoice;
-        }
-        
-        msg.rate = 1.0;
-        msg.pitch = 1.0;
-        
-        msg.onend = () => setSpeakingId(null);
-        msg.onerror = () => {
-          showNotification("Failed to play audio read aloud.");
+        const audio = new Audio(blobUrl);
+        audioRef.current = audio;
+        audio.onended = () => {
           setSpeakingId(null);
+          URL.revokeObjectURL(blobUrl);
         };
-        
-        synth.speak(msg);
+        audio.onerror = () => {
+          setSpeakingId(null);
+          URL.revokeObjectURL(blobUrl);
+        };
+        await audio.play();
       } catch (err) {
         console.warn("Audio playback failed:", err);
         showNotification("Failed to play audio read aloud.");
