@@ -631,13 +631,15 @@ export default function Davora() {
       const urlParams = new URLSearchParams(window.location.search);
       const urlToken = urlParams.get('token');
       const urlEmail = urlParams.get('email');
+      const expiresDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
+      const domainStr = window.location.hostname.includes('davora.xyz') ? 'domain=.davora.xyz;' : '';
+
       if (urlToken) {
         localStorage.setItem('davora_token', urlToken);
-        const domainStr = window.location.hostname.includes('davora.xyz') ? 'domain=.davora.xyz;' : '';
-        document.cookie = `davora_auth=1; path=/; ${domainStr} max-age=604800; SameSite=Lax`;
+        document.cookie = `davora_auth=1; path=/; ${domainStr} expires=${expiresDate}; max-age=31536000; SameSite=Lax`;
         if (urlEmail) {
           localStorage.setItem('davora_email', urlEmail);
-          document.cookie = `davora_email=${encodeURIComponent(urlEmail)}; path=/; ${domainStr} max-age=604800; SameSite=Lax`;
+          document.cookie = `davora_email=${encodeURIComponent(urlEmail)}; path=/; ${domainStr} expires=${expiresDate}; max-age=31536000; SameSite=Lax`;
         }
         const cleanUrl = window.location.pathname + window.location.hash;
         window.history.replaceState({}, document.title, cleanUrl);
@@ -664,10 +666,11 @@ export default function Davora() {
       return;
     }
 
-    // Ensure davora_auth cookie is synced if we have a valid token
+    // Ensure davora_auth cookie is synced for 1 year if we have a valid token
     if (token && !hasAuthCookie) {
+      const expiresDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
       const domainStr = window.location.hostname.includes('davora.xyz') ? 'domain=.davora.xyz;' : '';
-      document.cookie = `davora_auth=1; path=/; ${domainStr} max-age=604800; SameSite=Lax`;
+      document.cookie = `davora_auth=1; path=/; ${domainStr} expires=${expiresDate}; max-age=31536000; SameSite=Lax`;
     }
 
     setUserEmail(cleanEmail);

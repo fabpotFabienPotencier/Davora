@@ -70,8 +70,9 @@ export function middleware(request) {
 
   // ── chat.davora.xyz ──
   if (hostname.startsWith('chat.')) {
-    // Not authenticated? Bounce to login
-    if (!isAuth) {
+    const hasTokenParam = url.searchParams.has('token');
+    // Not authenticated? Bounce to login unless token param is present
+    if (!isAuth && !hasTokenParam) {
       return NextResponse.redirect(new URL(`https://login.${baseDomain}`));
     }
     return NextResponse.next();
