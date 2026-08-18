@@ -1714,14 +1714,14 @@ export default function Davora() {
       try {
         const token = localStorage.getItem('davora_token') || '';
         const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(text)}&token=${encodeURIComponent(token)}&voice=${encodeURIComponent(prefs.voiceProfile || 'Alloy')}&ngrok-skip-browser-warning=true`;
-        
+
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error("Failed to fetch audio stream");
         }
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
-        
+
         const audio = new Audio(blobUrl);
         audioRef.current = audio;
         audio.onended = () => {
@@ -1850,7 +1850,7 @@ export default function Davora() {
       </div>
 
       {/* Sidebar for Chat History */}
-      <aside 
+      <aside
         className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}
         onTouchStart={(e) => {
           sidebarTouchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -2034,16 +2034,16 @@ export default function Davora() {
             )}
             <div className="subscription-indicator-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {(!subscriptionPlan || subscriptionPlan.includes("Free")) ? (
-                <button 
+                <button
                   onClick={() => setActiveModal("upgrade")}
-                  style={{ 
-                    background: 'var(--accent-color)', 
-                    color: 'var(--accent-text)', 
-                    border: 'none', 
-                    padding: '6px 14px', 
-                    borderRadius: '20px', 
-                    fontSize: '0.8rem', 
-                    fontWeight: '600', 
+                  style={{
+                    background: 'var(--accent-color)',
+                    color: 'var(--accent-text)',
+                    border: 'none',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '0.8rem',
+                    fontWeight: '600',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -2091,7 +2091,7 @@ export default function Davora() {
                   <Share size={16} />
                   <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>Share</span>
                 </button>
-                
+
                 <div className="active-chat-menu-wrapper" style={{ position: 'relative' }}>
                   <button
                     className="icon-action-btn"
@@ -2101,7 +2101,7 @@ export default function Davora() {
                   >
                     <MoreHorizontal size={18} />
                   </button>
-                  
+
                   {showActiveChatMenu && (
                     <div className="active-chat-dropdown" style={{ position: 'absolute', right: 0, top: '100%', marginTop: '6px', background: 'var(--bg-sidebar)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '4px', width: '160px', display: 'flex', flexDirection: 'column', gap: '2px', zIndex: 100, boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
                       <button
@@ -2525,7 +2525,7 @@ export default function Davora() {
                       inputMode === 'deep' ? "Message Davora (Deep Think)..." :
                         inputMode === 'deep-search' ? "Message Davora (Deep Web Search)..." :
                           inputMode === 'research' ? "Message Davora (Web Search)..." :
-                            "Message Davora..."
+                            "Ask anything"
                   }
                   disabled={isTyping}
                   className="auto-resize-textarea"
@@ -2850,16 +2850,16 @@ export default function Davora() {
                           )}
                         </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          <button 
-                            className="primary-action-btn" 
+                          <button
+                            className="primary-action-btn"
                             style={{ padding: '8px 16px', fontSize: '0.85rem' }}
                             onClick={() => document.getElementById('profile-pic-file-input').click()}
                           >
                             Upload Photo
                           </button>
                           {prefs.profilePictureUrl && (
-                            <button 
-                              className="settings-nav-btn" 
+                            <button
+                              className="settings-nav-btn"
                               style={{ padding: '8px 16px', fontSize: '0.85rem', color: '#ef4444' }}
                               onClick={() => {
                                 setPrefs(prev => ({ ...prev, profilePictureUrl: "" }));
@@ -2868,20 +2868,20 @@ export default function Davora() {
                               Remove
                             </button>
                           )}
-                          <input 
-                            id="profile-pic-file-input" 
-                            type="file" 
-                            accept="image/*" 
+                          <input
+                            id="profile-pic-file-input"
+                            type="file"
+                            accept="image/*"
                             style={{ display: 'none' }}
                             onChange={async (e) => {
                               const file = e.target.files?.[0];
                               if (!file) return;
-                              
+
                               const reader = new FileReader();
                               reader.onload = async (event) => {
                                 const base64 = event.target.result;
                                 setPrefs(prev => ({ ...prev, profilePictureUrl: base64 }));
-                                
+
                                 try {
                                   const token = localStorage.getItem('davora_token') || '';
                                   const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/images/presigned-url', {
@@ -3972,41 +3972,41 @@ export default function Davora() {
                   <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                     {shareLink ? (
                       <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
-                        <input 
-                          type="text" 
-                          readOnly 
-                          value={shareLink} 
-                          style={{ 
-                            width: '100%', 
-                            padding: '12px 48px 12px 12px', 
-                            background: 'var(--bg-primary)', 
-                            border: '1px solid var(--border-color)', 
-                            borderRadius: '8px', 
+                        <input
+                          type="text"
+                          readOnly
+                          value={shareLink}
+                          style={{
+                            width: '100%',
+                            padding: '12px 48px 12px 12px',
+                            background: 'var(--bg-primary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
                             color: 'var(--text-primary)',
                             fontSize: '0.85rem',
                             textOverflow: 'ellipsis',
                             overflow: 'hidden',
                             whiteSpace: 'nowrap'
-                          }} 
+                          }}
                         />
-                        <button 
-                          onClick={() => { 
-                            navigator.clipboard.writeText(shareLink); 
-                            showNotification('Link copied!'); 
-                            setActiveModal(null); 
-                            setShareLink(''); 
-                          }} 
-                          style={{ 
-                            position: 'absolute', 
-                            right: '4px', 
-                            background: 'transparent', 
-                            border: 'none', 
-                            cursor: 'pointer', 
-                            color: 'var(--text-secondary)', 
-                            padding: '8px', 
-                            borderRadius: '6px', 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(shareLink);
+                            showNotification('Link copied!');
+                            setActiveModal(null);
+                            setShareLink('');
+                          }}
+                          style={{
+                            position: 'absolute',
+                            right: '4px',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: 'var(--text-secondary)',
+                            padding: '8px',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'center',
                             transition: 'color 0.2s, background-color 0.2s'
                           }}
@@ -4154,11 +4154,11 @@ export default function Davora() {
       {showPrivateOnboarding && (
         <div className="modal-overlay" style={{ backdropFilter: 'blur(12px)', backgroundColor: 'rgba(0, 0, 0, 0.75)', zIndex: 1100 }}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px', width: '90%', padding: '32px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)', background: '#171717', display: 'flex', flexDirection: 'column', gap: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
-            
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center', flexDirection: 'column' }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#fff', textAlign: 'center', margin: 0 }}>Temporary Chat</h2>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                 <div style={{ color: '#a3a3a3', marginTop: '3px' }}>
@@ -4191,7 +4191,7 @@ export default function Davora() {
               </div>
             </div>
 
-            <button 
+            <button
               onClick={() => {
                 localStorage.setItem('davora_seen_private_onboarding', 'true');
                 setShowPrivateOnboarding(false);
@@ -4215,7 +4215,7 @@ export default function Davora() {
             >
               Continue
             </button>
-            
+
           </div>
         </div>
       )}
