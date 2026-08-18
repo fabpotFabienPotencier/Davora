@@ -1688,9 +1688,12 @@ export default function Davora() {
       try {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           try {
-            await navigator.mediaDevices.getUserMedia({ audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // Crucial: Stop the tracks immediately so the microphone isn't locked!
+            // SpeechRecognition needs exclusive access to the microphone on mobile WebViews.
+            stream.getTracks().forEach(track => track.stop());
           } catch (micErr) {
-            console.warn("getUserMedia failed (often expected in WebViews without explicit plugins). Trying speech recognition anyway...", micErr);
+            console.warn("getUserMedia failed, trying speech recognition anyway...", micErr);
           }
         }
         recognitionRef.current.start();
