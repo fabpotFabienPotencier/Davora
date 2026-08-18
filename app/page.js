@@ -795,6 +795,48 @@ export default function Davora() {
     }
   }, []);
 
+  // Swipe-from-edge gesture to open/close sidebar (like ChatGPT, WhatsApp, etc.)
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isSwiping = false;
+
+    const handleTouchStart = (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      isSwiping = false;
+    };
+
+    const handleTouchMove = (e) => {
+      if (isSwiping) return;
+      const touchX = e.touches[0].clientX;
+      const touchY = e.touches[0].clientY;
+      const diffX = touchX - touchStartX;
+      const diffY = Math.abs(touchY - touchStartY);
+
+      // Ignore vertical scrolls — only trigger on clearly horizontal swipes
+      if (diffY > Math.abs(diffX)) return;
+
+      // Swipe RIGHT from left edge (within 30px) → open sidebar
+      if (touchStartX < 30 && diffX > 50) {
+        isSwiping = true;
+        setSidebarOpen(true);
+      }
+      // Swipe LEFT anywhere → close sidebar (only when it's open)
+      if (diffX < -60 && sidebarOpen) {
+        isSwiping = true;
+        setSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [sidebarOpen]);
+
   // 2026 Dynamic Thinking States
   useEffect(() => {
     if (!isTyping) {
@@ -2024,7 +2066,6 @@ export default function Davora() {
                 onClick={() => {
                   const targetState = !isTemporary;
                   setIsTemporary(targetState);
-                  showNotification(targetState ? "Temporary Chat Enabled. History won't be saved." : "Temporary Chat Disabled");
                   if (targetState) {
                     const seen = localStorage.getItem('davora_seen_private_onboarding');
                     if (!seen) {
