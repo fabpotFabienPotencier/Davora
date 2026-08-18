@@ -71,8 +71,11 @@ export function middleware(request) {
   // ── chat.davora.xyz ──
   if (hostname.startsWith('chat.')) {
     const hasTokenParam = url.searchParams.has('token');
-    // Not authenticated? Bounce to login unless token param is present
-    if (!isAuth && !hasTokenParam) {
+    // Detect Capacitor mobile app via User-Agent (WebView indicators)
+    const ua = request.headers.get('user-agent') || '';
+    const isCapacitorApp = /wv\)|Capacitor|DavoraApp/i.test(ua);
+    // Not authenticated? Bounce to login unless token param is present or it's the mobile app
+    if (!isAuth && !hasTokenParam && !isCapacitorApp) {
       return NextResponse.redirect(new URL(`https://login.${baseDomain}`));
     }
     return NextResponse.next();

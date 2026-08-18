@@ -559,8 +559,10 @@ export default function Davora() {
         config.credentials = 'include';
 
         // Strip stale user tokens on production web to force fallback to the secure HTTPOnly cookie
+        // But keep the token if localStorage has a valid one (mobile app / token-based auth)
         const isMobile = window.Capacitor || window.location.hostname === 'localhost' || (typeof navigator !== 'undefined' && /Mobi|Android|iPhone/i.test(navigator.userAgent));
-        if (!isMobile && config.headers) {
+        const hasStoredToken = localStorage.getItem('davora_token');
+        if (!isMobile && !hasStoredToken && config.headers) {
           let authVal = '';
           if (typeof config.headers.get === 'function') {
             authVal = config.headers.get('Authorization') || config.headers.get('authorization') || '';
