@@ -1687,13 +1687,17 @@ export default function Davora() {
       setInput("");
       try {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-          await navigator.mediaDevices.getUserMedia({ audio: true });
+          try {
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+          } catch (micErr) {
+            console.warn("getUserMedia failed (often expected in WebViews without explicit plugins). Trying speech recognition anyway...", micErr);
+          }
         }
         recognitionRef.current.start();
         setIsListening(true);
       } catch (err) {
-        console.error(err);
-        showNotification("Microphone permission is required for voice input.");
+        console.error("Speech recognition start error:", err);
+        showNotification("Microphone permission is required or not supported in this environment.");
         setIsListening(false);
       }
     }
