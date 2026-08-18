@@ -2521,7 +2521,7 @@ export default function Davora() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={
-                    isTemporary ? "Message Davora..." :
+                    isTemporary ? "Temporary Chat..." :
                       inputMode === 'deep' ? "Message Davora (Deep Think)..." :
                         inputMode === 'deep-search' ? "Message Davora (Deep Web Search)..." :
                           inputMode === 'research' ? "Message Davora (Web Search)..." :
