@@ -625,32 +625,51 @@ export default function Davora() {
     const cachedLogo = localStorage.getItem('davora_logo_url');
     if (cachedLogo) setLogoUrl(cachedLogo);
     const isMobile = window.Capacitor || window.location.hostname === 'localhost' || (typeof navigator !== 'undefined' && /Mobi|Android|iPhone/i.test(navigator.userAgent));
+
+    // Process URL query parameters if arriving from login redirect
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('token');
+      const urlEmail = urlParams.get('email');
+      if (urlToken) {
+        localStorage.setItem('davora_token', urlToken);
+        const domainStr = window.location.hostname.includes('davora.xyz') ? 'domain=.davora.xyz;' : '';
+        document.cookie = `davora_auth=1; path=/; ${domainStr} max-age=604800; SameSite=Lax`;
+        if (urlEmail) {
+          localStorage.setItem('davora_email', urlEmail);
+          document.cookie = `davora_email=${encodeURIComponent(urlEmail)}; path=/; ${domainStr} max-age=604800; SameSite=Lax`;
+        }
+        const cleanUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
+
+    let token = localStorage.getItem('davora_token') || '';
     const emailCookie = document.cookie.split('; ').find(c => c.startsWith('davora_email='));
     let email = emailCookie ? decodeURIComponent(emailCookie.split('=')[1]) : null;
-    if (!email && isMobile) {
+    if (!email) {
       email = localStorage.getItem('davora_email');
     }
     const cleanEmail = email ? email.replace(/^"+|"+$/g, '') : "User";
 
-    if (!isMobile) {
-      localStorage.removeItem('davora_token'); // Clear stale localStorage token on production web
-    }
-    const token = isMobile ? (localStorage.getItem('davora_token') || '') : '';
-
-    // Fallback client-side auth check (middleware handles this server-side,
-    // but this catches mid-session cookie expiry)
-    if (isMobile) {
-      if (!localStorage.getItem('davora_token')) {
+    // Client-side authentication check
+    const hasAuthCookie = document.cookie.includes('davora_auth=1');
+    if (!token && !hasAuthCookie) {
+      if (isMobile) {
         router.push('/login');
-        return;
-      }
-    } else {
-      if (!document.cookie.includes('davora_auth=1')) {
+      } else {
         const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
         window.location.href = `${window.location.protocol}//login.${baseDomain}`;
-        return;
       }
+      return;
     }
+
+    // Ensure davora_auth cookie is synced if we have a valid token
+    if (token && !hasAuthCookie) {
+      const domainStr = window.location.hostname.includes('davora.xyz') ? 'domain=.davora.xyz;' : '';
+      document.cookie = `davora_auth=1; path=/; ${domainStr} max-age=604800; SameSite=Lax`;
+    }
+
     setUserEmail(cleanEmail);
 
     const fetchSessions = async () => {
