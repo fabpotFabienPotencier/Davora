@@ -815,25 +815,29 @@ export default function Davora() {
       const diffY = Math.abs(touchY - touchStartY);
 
       // Ignore vertical scrolls — only trigger on clearly horizontal swipes
-      if (diffY > Math.abs(diffX)) return;
+      if (diffY > Math.abs(diffX) * 0.7) return;
 
-      // Swipe RIGHT from left edge (within 30px) → open sidebar
-      if (touchStartX < 30 && diffX > 50) {
+      // Swipe RIGHT from left edge zone → open sidebar
+      // Edge zone = 40% of screen width or 160px, whichever is smaller
+      const edgeZone = Math.min(window.innerWidth * 0.4, 160);
+      if (!sidebarOpen && touchStartX < edgeZone && diffX > 30) {
         isSwiping = true;
         setSidebarOpen(true);
+        if (navigator.vibrate) navigator.vibrate(10);
       }
       // Swipe LEFT anywhere → close sidebar (only when it's open)
-      if (diffX < -60 && sidebarOpen) {
+      if (sidebarOpen && diffX < -40) {
         isSwiping = true;
         setSidebarOpen(false);
+        if (navigator.vibrate) navigator.vibrate(10);
       }
     };
 
-    document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchstart', handleTouchStart, { passive: true, capture: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true, capture: true });
     return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      document.removeEventListener('touchmove', handleTouchMove, { capture: true });
     };
   }, [sidebarOpen]);
 
