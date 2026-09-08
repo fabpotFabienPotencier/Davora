@@ -145,6 +145,7 @@ export default function Davora() {
   const messagesEndRef = useRef(null);
   const chatBoxRef = useRef(null);
   const ws = useRef(null);
+  const streamWatchdogRef = useRef(null);
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
@@ -1056,12 +1057,36 @@ export default function Davora() {
     setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
   };
 
+  const resetStreamWatchdog = () => {
+    if (streamWatchdogRef.current) clearTimeout(streamWatchdogRef.current);
+    streamWatchdogRef.current = setTimeout(() => {
+      console.warn("Stream watchdog: No chunks received for 45s, resetting streaming state.");
+      setIsTyping(false);
+      setSessions(prev => prev.map(session => {
+        if (session.id === activeSessionIdRef.current) {
+          return { ...session, messages: session.messages.map(m => ({ ...m, isStreaming: false })) };
+        }
+        return session;
+      }));
+      showNotification("Response took too long or connection dropped. Please retry.");
+    }, 45000);
+  };
+
+  const clearStreamWatchdog = () => {
+    if (streamWatchdogRef.current) {
+      clearTimeout(streamWatchdogRef.current);
+      streamWatchdogRef.current = null;
+    }
+  };
+
   const connectWebSocket = () => {
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://api.davora.xyz/ws/chat";
     ws.current = new WebSocket(wsUrl);
     ws.current.onmessage = (event) => {
       const data = event.data;
+      resetStreamWatchdog();
       if (data.includes("quota_error")) {
+        clearStreamWatchdog();
         try {
           const quotaData = JSON.parse(data);
           if (quotaData.quota_error) {
@@ -1080,6 +1105,7 @@ export default function Davora() {
         } catch (e) { }
       }
       if (data === "[DONE]") {
+        clearStreamWatchdog();
         setIsTyping(false);
         setTimeout(() => inputRef.current?.focus(), 100);
         // Auto-read aloud if enabled
@@ -1131,7 +1157,19 @@ export default function Davora() {
         return { ...session, messages: newMessages };
       }));
     };
+    ws.current.onerror = (err) => {
+      console.warn("WebSocket error encountered:", err);
+      clearStreamWatchdog();
+      setIsTyping(false);
+      setSessions(prev => prev.map(session => {
+        if (session.id === activeSessionIdRef.current) {
+          return { ...session, messages: session.messages.map(m => ({ ...m, isStreaming: false })) };
+        }
+        return session;
+      }));
+    };
     ws.current.onclose = () => {
+      clearStreamWatchdog();
       setIsTyping(false); // CRITICAL: Reset typing state so the chat can be saved to the database!
       setSessions(prev => prev.map(session => {
         if (session.id === activeSessionIdRef.current) {
@@ -1145,6 +1183,7 @@ export default function Davora() {
   useEffect(() => {
     connectWebSocket();
     return () => {
+      clearStreamWatchdog();
       if (ws.current) ws.current.close();
       if (synthRef.current) synthRef.current.cancel();
       if (audioRef.current) {
@@ -1702,6 +1741,7 @@ export default function Davora() {
     setIsTyping(true);
     setEditingId(null);
     setIsListening(false);
+    resetStreamWatchdog();
 
     if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
       connectWebSocket();
@@ -1713,6 +1753,7 @@ export default function Davora() {
           clearInterval(checkAndSend);
         } else if (attempts > 50) {
           clearInterval(checkAndSend);
+          clearStreamWatchdog();
           showNotification("Connection timeout. Please try sending again.");
           setIsTyping(false);
         }
@@ -1741,6 +1782,7 @@ export default function Davora() {
     }));
 
     setIsTyping(true);
+    resetStreamWatchdog();
     if (synthRef.current) synthRef.current.cancel();
     if (audioRef.current) {
       audioRef.current.pause();
@@ -1766,12 +1808,25 @@ export default function Davora() {
       aboutYou: prefs.aboutYou,
       referenceMemories: prefs.referenceMemories,
       referenceHistory: prefs.referenceHistory,
-      strictMarkdown: prefs.strictMarkdown
+      strictMarkdown: prefs.strictMarkdown,
+      token: (localStorage.getItem('davora_token') || '')
     });
 
-    if (ws.current.readyState !== WebSocket.OPEN) {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
       connectWebSocket();
-      setTimeout(() => ws.current.send(jsonPayload), 500);
+      let attempts = 0;
+      const checkAndSend = setInterval(() => {
+        attempts++;
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+          ws.current.send(jsonPayload);
+          clearInterval(checkAndSend);
+        } else if (attempts > 50) {
+          clearInterval(checkAndSend);
+          clearStreamWatchdog();
+          showNotification("Connection timeout. Please try sending again.");
+          setIsTyping(false);
+        }
+      }, 100);
     } else {
       ws.current.send(jsonPayload);
     }
