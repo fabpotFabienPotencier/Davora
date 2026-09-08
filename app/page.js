@@ -1278,7 +1278,7 @@ export default function Davora() {
   }, [messages, isTyping, showScrollButton, activeSessionId]);
 
   const createNewSession = (initialMsg) => {
-    const title = initialMsg.length > 25 ? initialMsg.substring(0, 25) + "..." : initialMsg;
+    const title = initialMsg.length > 35 ? initialMsg.substring(0, 35) : initialMsg;
     const newId = Date.now().toString();
     const newSession = { id: newId, title, messages: [], isTemporary };
 
@@ -1551,7 +1551,7 @@ export default function Davora() {
           },
           body: JSON.stringify({
             id: targetSessionId,
-            title: currentSession ? currentSession.title : (textToSend.length > 25 ? textToSend.substring(0, 25) + "..." : (textToSend || "Image Upload")),
+            title: currentSession ? currentSession.title : (textToSend.length > 35 ? textToSend.substring(0, 35) : (textToSend || "Image Upload")),
             isTemporary: false,
             messages: activeMessages
           })
