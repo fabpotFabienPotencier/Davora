@@ -1291,6 +1291,39 @@ export default function Davora() {
     return newId;
   };
 
+  const generateSmartTitle = async (sessionId, userPrompt) => {
+    if (!userPrompt || isTemporary) return;
+    const token = localStorage.getItem('davora_token') || '';
+    if (!token) return;
+
+    try {
+      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions/generate-title', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message: userPrompt
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.title && data.title.trim()) {
+          const smartTitle = data.title.trim();
+          setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title: smartTitle } : s));
+          if (sessionsRef.current) {
+            sessionsRef.current = sessionsRef.current.map(s => s.id === sessionId ? { ...s, title: smartTitle } : s);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Auto title generation error:", err);
+    }
+  };
+
   const handleFileSelect = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -1487,6 +1520,7 @@ export default function Davora() {
     // Fix: activeMessages needs to include the message we just added
     // because `setSessions` is async and hasn't updated the state yet
     const currentSession = sessions.find(s => s.id === targetSessionId) || (sessionsRef.current || []).find(s => s.id === targetSessionId);
+    const isFirstMessage = !currentSession || !currentSession.messages || currentSession.messages.length === 0;
     let activeMessages = currentSession ? [...currentSession.messages, newMessage] : [newMessage];
 
     // Synchronously update sessionsRef for beforeunload
@@ -1495,6 +1529,11 @@ export default function Davora() {
       if (sIdx !== -1) {
         sessionsRef.current[sIdx] = { ...sessionsRef.current[sIdx], messages: activeMessages };
       }
+    }
+
+    // Auto-generate ChatGPT-style smart topic title for the conversation
+    if (isFirstMessage && !isTemporary) {
+      generateSmartTitle(targetSessionId, textToSend || "Image Upload");
     }
 
     // IMMEDIATE SAVE: Securely save the user's message to the cloud instantly
