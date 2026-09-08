@@ -2666,21 +2666,17 @@ export default function Davora() {
 
               {showPlusMenu && (
                 <div className="plus-menu-dropdown">
-                  <button type="button" className="plus-menu-item" onClick={() => docInputRef.current?.click()}>
-                    <FileText size={18} className="text-blue-400" /> Upload document
+                  <button type="button" className="plus-menu-item" onClick={() => fileInputRef.current?.click()}>
+                    <Paperclip size={18} /> Add photos & files
                   </button>
                   <input
                     type="file"
-                    accept=".pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
+                    accept="image/*,.pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
                     multiple
-                    ref={docInputRef}
+                    ref={fileInputRef}
                     style={{ display: 'none' }}
                     onChange={handleFileSelect}
                   />
-                  <button type="button" className="plus-menu-item" onClick={() => fileInputRef.current?.click()}>
-                    <Image size={18} className="text-pink-400" /> Add photo
-                  </button>
-                  <input type="file" accept="image/*" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} />
                   <div className="plus-menu-divider"></div>
                   <button type="button" className={`plus-menu-item ${inputMode === 'instant' ? 'active' : ''}`} onClick={() => { setInputMode("instant"); setShowPlusMenu(false); }}>
                     <Zap size={18} className="text-yellow-500" /> Instant
