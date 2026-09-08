@@ -1271,10 +1271,20 @@ export default function Davora() {
     }
   }, [artifactVersions]);
 
-  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (behavior = "smooth") => {
+    const scrollMode = typeof behavior === "string" ? behavior : "smooth";
+    if (chatBoxRef.current) {
+      chatBoxRef.current.scrollTo({
+        top: chatBoxRef.current.scrollHeight,
+        behavior: scrollMode
+      });
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: scrollMode });
+    }
+  };
 
   useEffect(() => {
-    if (!showScrollButton) scrollToBottom();
+    if (!showScrollButton) scrollToBottom("auto");
   }, [messages, isTyping, showScrollButton, activeSessionId]);
 
   const createNewSession = (initialMsg) => {
@@ -2478,19 +2488,21 @@ export default function Davora() {
           <div ref={messagesEndRef} />
         </main>
 
-        {/* 2026 Scroll to bottom badge */}
-        {showScrollButton && (
-          <button
-            className={`scroll-bottom-btn ${isTyping ? 'has-unread' : ''}`}
-            onClick={scrollToBottom}
-          >
-            <ArrowDown size={20} />
-            {isTyping && <div className="unread-dot"></div>}
-          </button>
-        )}
-
         {/* Input Area */}
         <div className={`input-wrapper mode-${inputMode} ${isTemporary ? 'mode-incognito' : ''}`}>
+          {/* ChatGPT-Style Centered Scroll to Bottom Down Arrow */}
+          {showScrollButton && (
+            <button
+              type="button"
+              className="scroll-bottom-btn"
+              onClick={() => scrollToBottom("smooth")}
+              title="Scroll to bottom"
+              aria-label="Scroll to bottom"
+            >
+              <ArrowDown size={16} strokeWidth={2.2} />
+            </button>
+          )}
+
           <form className="input-area" onSubmit={sendMessage}>
 
             <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
