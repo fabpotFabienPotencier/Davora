@@ -12,7 +12,8 @@ import {
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight, ShieldCheck,
   VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert, Ghost,
   Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint,
-  Bell, Grid, CreditCard, HardDrive, Users, UserPlus, Key, FolderPlus, Link2, Link2Off, Type, LogOut
+  Bell, Grid, CreditCard, HardDrive, Users, UserPlus, Key, FolderPlus, Link2, Link2Off, Type, LogOut,
+  FileText, FileCode, FileSpreadsheet
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -150,6 +151,26 @@ export default function Davora() {
   const audioRef = useRef(null);
   const plusMenuRef = useRef(null);
   const fileInputRef = useRef(null);
+  const docInputRef = useRef(null);
+
+  const formatFileSize = (bytes) => {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const getDocIcon = (ext, size = 18) => {
+    const e = (ext || '').toLowerCase();
+    if (e === 'pdf') return <FileText size={size} style={{ color: '#ef4444' }} />;
+    if (['docx', 'doc'].includes(e)) return <FileText size={size} style={{ color: '#3b82f6' }} />;
+    if (['csv', 'tsv', 'xlsx', 'xls'].includes(e)) return <FileSpreadsheet size={size} style={{ color: '#10b981' }} />;
+    if (['py', 'js', 'ts', 'jsx', 'tsx', 'html', 'css', 'scss', 'sql', 'json', 'sh', 'rs', 'go', 'java', 'cpp', 'c', 'h'].includes(e)) {
+      return <FileCode size={size} style={{ color: '#8b5cf6' }} />;
+    }
+    return <FileText size={size} style={{ color: '#9ca3af' }} />;
+  };
 
   // Derived messages for the active session
   const activeSession = sessions.find(s => s.id === activeSessionId);
@@ -1338,103 +1359,199 @@ export default function Davora() {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
-    if (attachments.length + files.length > 3) {
-      showNotification("You can only upload up to 3 images at once.");
+    if (attachments.length + files.length > 5) {
+      showNotification("You can upload up to 5 files at once.");
       return;
     }
 
-    const newAttachments = [];
-    const filesToUpload = [];
+    const ALLOWED_DOC_EXTS = [
+      'pdf', 'docx', 'doc', 'txt', 'csv', 'tsv', 'json', 'md', 'markdown',
+      'py', 'js', 'ts', 'jsx', 'tsx', 'html', 'htm', 'css', 'scss',
+      'sql', 'xml', 'yaml', 'yml', 'log', 'sh', 'env', 'c', 'cpp', 'h',
+      'java', 'rs', 'go'
+    ];
 
-    files.forEach(file => {
-      if (!file.type.startsWith('image/')) {
-        showNotification("Only images are supported right now");
-        return;
+    const BLOCKED_EXTS = [
+      'exe', 'bat', 'cmd', 'com', 'msi', 'bin', 'dll', 'so', 'vbs', 'vbe',
+      'scr', 'pif', 'wsf', 'jar', 'apk', 'dmg', 'iso', 'img', 'app', 'sys'
+    ];
+
+    const MAX_SIZE = 15 * 1024 * 1024; // 15MB
+
+    const newAttachments = [];
+    const itemsToUpload = [];
+
+    for (const file of files) {
+      if (file.size > MAX_SIZE) {
+        showNotification(`"${file.name}" exceeds the 15MB limit.`);
+        continue;
       }
 
-      // Create a temporary local URL for immediate rendering
-      const localUrl = URL.createObjectURL(file);
-      const attItem = {
-        file,
-        url: localUrl,
-        base64: null,
-        uploading: true,
-        error: null,
-        publicUrl: null
-      };
-      newAttachments.push(attItem);
-      filesToUpload.push(attItem);
-    });
+      const ext = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
 
-    if (newAttachments.length === 0) return;
+      if (BLOCKED_EXTS.includes(ext)) {
+        showNotification(`Executable files (.${ext}) are strictly prohibited for security.`);
+        continue;
+      }
+
+      const isImage = file.type.startsWith('image/');
+      const isDoc = ALLOWED_DOC_EXTS.includes(ext);
+
+      if (!isImage && !isDoc) {
+        showNotification(`File format (.${ext}) is not supported. Supported: PDF, Word, Text, CSV, JSON, Code.`);
+        continue;
+      }
+
+      const tempId = 'att_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+      const attItem = {
+        id: tempId,
+        file,
+        name: file.name,
+        size: file.size,
+        ext: ext,
+        type: isDoc ? 'document' : 'image',
+        url: isImage ? URL.createObjectURL(file) : null,
+        base64: null,
+        fileKey: null,
+        publicUrl: null,
+        textContent: null,
+        uploading: true,
+        error: null
+      };
+
+      newAttachments.push(attItem);
+      itemsToUpload.push(attItem);
+    }
+
+    if (newAttachments.length === 0) {
+      if (e.target) e.target.value = '';
+      return;
+    }
 
     setAttachments(prev => [...prev, ...newAttachments]);
     setShowPlusMenu(false);
+    if (e.target) e.target.value = '';
     inputRef.current?.focus();
 
-    // Trigger upload in background for each new image
-    filesToUpload.forEach(async (att) => {
-      let base64Data = null;
-      try {
-        // Read file as base64 first for legacy/fallback support
-        base64Data = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (event) => resolve(event.target.result.split(',')[1]);
-          reader.readAsDataURL(att.file);
-        });
+    // Trigger upload in background for each new item
+    itemsToUpload.forEach(async (att) => {
+      const token = localStorage.getItem('davora_token') || '';
 
-        // Update local state with base64 for fallback
-        setAttachments(prev => prev.map(item => item.url === att.url ? { ...item, base64: base64Data } : item));
+      if (att.type === 'image') {
+        let base64Data = null;
+        try {
+          base64Data = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (event) => resolve(event.target.result.split(',')[1]);
+            reader.readAsDataURL(att.file);
+          });
 
-        const token = localStorage.getItem('davora_token') || '';
-        const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/images/presigned-url', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify({
-            filename: att.file.name,
-            content_type: att.file.type
-          })
-        });
+          setAttachments(prev => prev.map(item => item.id === att.id ? { ...item, base64: base64Data } : item));
 
-        if (!res.ok) {
-          throw new Error("Presigned URL generation failed");
+          const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/images/presigned-url', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+              filename: att.file.name,
+              content_type: att.file.type || 'image/jpeg'
+            })
+          });
+
+          if (!res.ok) throw new Error("Presigned URL generation failed");
+          const data = await res.json();
+          const { upload_url, public_url } = data;
+
+          const uploadRes = await fetch(upload_url, {
+            method: 'PUT',
+            headers: { 'Content-Type': att.file.type || 'image/jpeg' },
+            body: att.file
+          });
+
+          if (!uploadRes.ok) throw new Error("R2 upload failed");
+
+          setAttachments(prev => prev.map(item => item.id === att.id ? {
+            ...item,
+            url: public_url,
+            publicUrl: public_url,
+            uploading: false
+          } : item));
+        } catch (err) {
+          console.error("Image upload error, fallback to legacy base64:", err);
+          setAttachments(prev => prev.map(item => item.id === att.id ? {
+            ...item,
+            url: `data:${att.file.type || 'image/jpeg'};base64,${base64Data}`,
+            uploading: false,
+            error: "R2 upload failed, using legacy mode"
+          } : item));
         }
+      } else {
+        // Document upload
+        let textFallback = null;
+        try {
+          // Read text files locally for fallback
+          if (['txt', 'csv', 'tsv', 'json', 'md', 'markdown', 'py', 'js', 'ts', 'jsx', 'tsx', 'html', 'htm', 'css', 'scss', 'sql', 'xml', 'yaml', 'yml', 'log', 'sh', 'env', 'c', 'cpp', 'h', 'java', 'rs', 'go'].includes(att.ext)) {
+            textFallback = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = (event) => resolve(event.target.result);
+              reader.readAsText(att.file);
+            });
+          }
 
-        const data = await res.json();
-        const { upload_url, public_url } = data;
+          const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/documents/presigned-url', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+              filename: att.file.name,
+              content_type: att.file.type || 'application/octet-stream',
+              file_size: att.file.size
+            })
+          });
 
-        // Perform PUT request to Cloudflare R2
-        const uploadRes = await fetch(upload_url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': att.file.type
-          },
-          body: att.file
-        });
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || "Document upload authorization failed");
+          }
 
-        if (!uploadRes.ok) {
-          throw new Error("R2 upload request failed");
+          const data = await res.json();
+          const { upload_url, public_url, file_key } = data;
+
+          const uploadRes = await fetch(upload_url, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': att.file.type || 'application/octet-stream'
+            },
+            body: att.file
+          });
+
+          if (!uploadRes.ok) throw new Error("Document upload to Cloudflare storage failed");
+
+          setAttachments(prev => prev.map(item => item.id === att.id ? {
+            ...item,
+            publicUrl: public_url,
+            fileKey: file_key,
+            textContent: textFallback,
+            uploading: false
+          } : item));
+        } catch (err) {
+          console.error("Document upload error:", err);
+          if (textFallback) {
+            setAttachments(prev => prev.map(item => item.id === att.id ? {
+              ...item,
+              textContent: textFallback,
+              uploading: false,
+              error: "Direct text extraction mode"
+            } : item));
+          } else {
+            showNotification(err.message || "Failed to upload document");
+            setAttachments(prev => prev.filter(item => item.id !== att.id));
+          }
         }
-
-        // Update state with the public R2 URL
-        setAttachments(prev => prev.map(item => item.url === att.url ? {
-          ...item,
-          url: public_url,
-          publicUrl: public_url,
-          uploading: false
-        } : item));
-
-      } catch (err) {
-        console.error("R2 upload error, falling back to legacy base64 mode:", err);
-        setAttachments(prev => prev.map(item => item.url === att.url ? {
-          ...item,
-          url: `data:${att.file.type};base64,${base64Data}`,
-          uploading: false,
-          error: "R2 upload failed, using legacy mode"
-        } : item));
       }
     });
   };
@@ -1446,7 +1563,7 @@ export default function Davora() {
 
     const isUploading = attachments.some(a => a.uploading);
     if (isUploading) {
-      showNotification("Please wait for images to finish uploading.");
+      showNotification("Please wait for files to finish uploading.");
       return;
     }
 
@@ -1457,83 +1574,41 @@ export default function Davora() {
     }
     setSpeakingId(null);
 
+    const imageAttachments = attachments.filter(a => a.type === 'image' || (!a.type && a.url && !a.ext));
+    const docAttachments = attachments.filter(a => a.type === 'document' || a.fileKey || a.textContent);
+
     let targetSessionId = activeSessionId;
     if (!targetSessionId) {
-      targetSessionId = createNewSession(textToSend || "Image Upload");
+      const fallbackTitle = docAttachments.length > 0 ? docAttachments[0].name : (imageAttachments.length > 0 ? "Image Upload" : "New Chat");
+      targetSessionId = createNewSession(textToSend || fallbackTitle);
     }
 
-    // Convert attachments array into a single JSON string if there are any
-    const imageUrls = attachments.length > 0 ? JSON.stringify(attachments.map(a => a.url)) : null;
-
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      const newMessage = {
-        id: Date.now(), role: "user", content: textToSend, image_url: imageUrls,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        isPending: true
-      };
-      setSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newMessage] } : s));
-
-      const currentSession = sessions.find(s => s.id === targetSessionId) || (sessionsRef.current || []).find(s => s.id === targetSessionId);
-      const activeMessages = currentSession ? [...currentSession.messages, newMessage] : [newMessage];
-
-      const payloadObj = {
-        message: textToSend,
-        history: activeMessages,
-        mode: inputMode,
-        model: selectedModel,
-        isTemporary: isTemporary,
-        customInstructions: prefs.customInstructions,
-        baseStyle: prefs.baseStyle,
-        characteristicsWarm: prefs.characteristicsWarm,
-        characteristicsEnthusiastic: prefs.characteristicsEnthusiastic,
-        characteristicsHeaders: prefs.characteristicsHeaders,
-        characteristicsEmoji: prefs.characteristicsEmoji,
-        fastAnswers: prefs.fastAnswers,
-        nickname: prefs.nickname,
-        occupation: prefs.occupation,
-        aboutYou: prefs.aboutYou,
-        referenceMemories: prefs.referenceMemories,
-        referenceHistory: prefs.referenceHistory,
-        strictMarkdown: prefs.strictMarkdown,
-        token: (localStorage.getItem('davora_token') || '')
-      };
-
-      if (attachments.length > 0) {
-        payloadObj.image_urls = attachments.map(a => a.publicUrl).filter(Boolean);
-        payloadObj.image_data_array = attachments.map(a => a.base64).filter(Boolean);
-      }
-
-      const queueItem = {
-        sessionId: targetSessionId,
-        messageId: newMessage.id,
-        payload: payloadObj
-      };
-
-      const currentQueue = JSON.parse(localStorage.getItem('davora_offline_queue') || '[]');
-      currentQueue.push(queueItem);
-      localStorage.setItem('davora_offline_queue', JSON.stringify(currentQueue));
-      offlineQueueRef.current = currentQueue;
-
-      setInput("");
-      setAttachments([]);
-      showNotification("You are offline. Message queued for automatic sync.");
-      return;
-    }
+    const imageUrls = imageAttachments.length > 0 ? JSON.stringify(imageAttachments.map(a => a.publicUrl || a.url).filter(Boolean)) : null;
+    const docsData = docAttachments.length > 0 ? JSON.stringify(docAttachments.map(d => ({
+      name: d.name,
+      size: d.size,
+      ext: d.ext,
+      file_key: d.fileKey,
+      url: d.publicUrl,
+      content: d.textContent
+    }))) : null;
 
     const newMessage = {
-      id: Date.now(), role: "user", content: textToSend, image_url: imageUrls,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      id: Date.now(),
+      role: "user",
+      content: textToSend,
+      image_url: imageUrls,
+      documents: docsData,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      ...(typeof navigator !== 'undefined' && !navigator.onLine ? { isPending: true } : {})
     };
 
     setSessions(prev => prev.map(s => s.id === targetSessionId ? { ...s, messages: [...s.messages, newMessage] } : s));
 
-    // Fix: activeMessages needs to include the message we just added
-    // because `setSessions` is async and hasn't updated the state yet
     const currentSession = sessions.find(s => s.id === targetSessionId) || (sessionsRef.current || []).find(s => s.id === targetSessionId);
     const isFirstMessage = !currentSession || !currentSession.messages || currentSession.messages.length === 0;
     let activeMessages = currentSession ? [...currentSession.messages, newMessage] : [newMessage];
 
-    // Synchronously update sessionsRef for beforeunload
     if (sessionsRef.current) {
       const sIdx = sessionsRef.current.findIndex(s => s.id === targetSessionId);
       if (sIdx !== -1) {
@@ -1541,18 +1616,16 @@ export default function Davora() {
       }
     }
 
-    // Auto-generate ChatGPT-style smart topic title for the conversation
     if (isFirstMessage && !isTemporary) {
-      generateSmartTitle(targetSessionId, textToSend || "Image Upload");
+      const titlePrompt = textToSend || (docAttachments.length > 0 ? `Analyze ${docAttachments[0].name}` : "Image Upload");
+      generateSmartTitle(targetSessionId, titlePrompt);
     }
 
-    // IMMEDIATE SAVE: Securely save the user's message to the cloud instantly
-    // This ensures that even if they refresh the page before the AI starts typing, 
-    // the chat session is safely preserved in the database.
     if (!isTemporary) {
       const isAuthenticated = document.cookie.includes('davora_auth=1');
       if (isAuthenticated) {
         const token = localStorage.getItem('davora_token') || '';
+        const fallbackTitle = docAttachments.length > 0 ? docAttachments[0].name : (imageAttachments.length > 0 ? "Image Upload" : "New Chat");
         fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
           method: 'POST',
           headers: {
@@ -1561,7 +1634,7 @@ export default function Davora() {
           },
           body: JSON.stringify({
             id: targetSessionId,
-            title: currentSession ? currentSession.title : (textToSend.length > 35 ? textToSend.substring(0, 35) : (textToSend || "Image Upload")),
+            title: currentSession ? currentSession.title : (textToSend.length > 35 ? textToSend.substring(0, 35) : (textToSend || fallbackTitle)),
             isTemporary: false,
             messages: activeMessages
           })
@@ -1590,9 +1663,38 @@ export default function Davora() {
       strictMarkdown: prefs.strictMarkdown,
       token: (localStorage.getItem('davora_token') || '')
     };
-    if (attachments.length > 0) {
-      payloadObj.image_urls = attachments.map(a => a.publicUrl).filter(Boolean);
-      payloadObj.image_data_array = attachments.map(a => a.base64).filter(Boolean);
+
+    if (imageAttachments.length > 0) {
+      payloadObj.image_urls = imageAttachments.map(a => a.publicUrl).filter(Boolean);
+      payloadObj.image_data_array = imageAttachments.map(a => a.base64).filter(Boolean);
+    }
+
+    if (docAttachments.length > 0) {
+      payloadObj.documents = docAttachments.map(d => ({
+        name: d.name,
+        file_key: d.fileKey,
+        url: d.publicUrl,
+        size: d.size,
+        ext: d.ext,
+        content: d.textContent
+      }));
+    }
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      const queueItem = {
+        sessionId: targetSessionId,
+        messageId: newMessage.id,
+        payload: payloadObj
+      };
+      const currentQueue = JSON.parse(localStorage.getItem('davora_offline_queue') || '[]');
+      currentQueue.push(queueItem);
+      localStorage.setItem('davora_offline_queue', JSON.stringify(currentQueue));
+      offlineQueueRef.current = currentQueue;
+
+      setInput("");
+      setAttachments([]);
+      showNotification("You are offline. Message queued for automatic sync.");
+      return;
     }
 
     setInput("");
@@ -1609,7 +1711,7 @@ export default function Davora() {
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
           ws.current.send(JSON.stringify(payloadObj));
           clearInterval(checkAndSend);
-        } else if (attempts > 50) { // Timeout after 5 seconds
+        } else if (attempts > 50) {
           clearInterval(checkAndSend);
           showNotification("Connection timeout. Please try sending again.");
           setIsTyping(false);
@@ -2222,6 +2324,58 @@ export default function Davora() {
 
 
               <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
+                {msg.role === 'user' && msg.documents && (
+                  <div className="user-doc-attachments" style={{ marginBottom: (msg.content || msg.image_url) ? '8px' : '0', display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', maxWidth: '350px' }}>
+                    {(() => {
+                      try {
+                        const parsedDocs = typeof msg.documents === 'string' ? JSON.parse(msg.documents) : msg.documents;
+                        if (Array.isArray(parsedDocs)) {
+                          return parsedDocs.map((doc, dIdx) => (
+                            <div key={dIdx} className="message-doc-chip" style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '10px',
+                              padding: '8px 12px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '10px',
+                              width: '100%'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, overflow: 'hidden' }}>
+                                <div style={{ padding: '6px', borderRadius: '6px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  {getDocIcon(doc.ext, 18)}
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                                  <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {doc.name}
+                                  </span>
+                                  {doc.size && (
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                                      {formatFileSize(doc.size)}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              {doc.url && (
+                                <a
+                                  href={doc.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{ color: 'var(--text-secondary)', padding: '4px', display: 'flex', alignItems: 'center', borderRadius: '4px', flexShrink: 0 }}
+                                  title="Download / View document"
+                                >
+                                  <Download size={14} />
+                                </a>
+                              )}
+                            </div>
+                          ));
+                        }
+                      } catch (e) { }
+                      return null;
+                    })()}
+                  </div>
+                )}
                 {msg.role === 'user' && msg.image_url && (
                   <div className="user-image-attachments" style={{ marginBottom: msg.content ? '8px' : '0', display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '350px' }}>
                     {(() => {
@@ -2512,8 +2666,19 @@ export default function Davora() {
 
               {showPlusMenu && (
                 <div className="plus-menu-dropdown">
+                  <button type="button" className="plus-menu-item" onClick={() => docInputRef.current?.click()}>
+                    <FileText size={18} className="text-blue-400" /> Upload document
+                  </button>
+                  <input
+                    type="file"
+                    accept=".pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
+                    multiple
+                    ref={docInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleFileSelect}
+                  />
                   <button type="button" className="plus-menu-item" onClick={() => fileInputRef.current?.click()}>
-                    <Image size={18} /> Add photo
+                    <Image size={18} className="text-pink-400" /> Add photo
                   </button>
                   <input type="file" accept="image/*" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} />
                   <div className="plus-menu-divider"></div>
@@ -2535,37 +2700,91 @@ export default function Davora() {
 
             <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
               {attachments.length > 0 && (
-                <div className="attachment-preview" style={{ padding: '8px 16px', display: 'flex', gap: '8px', overflowX: 'auto' }}>
+                <div className="attachment-preview" style={{ padding: '8px 16px', display: 'flex', gap: '8px', overflowX: 'auto', alignItems: 'center' }}>
                   {attachments.map((att, idx) => (
-                    <div key={idx} style={{ position: 'relative', display: 'inline-block', flexShrink: 0 }}>
-                      <img
-                        src={att.url}
-                        alt="Attachment"
-                        style={{
-                          height: '60px',
-                          borderRadius: '8px',
-                          objectFit: 'cover',
-                          opacity: att.uploading ? 0.5 : 1,
-                          transition: 'opacity 0.2s'
-                        }}
-                      />
-                      {att.uploading && (
-                        <div style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
+                    <div key={att.id || idx} style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+                      {att.type === 'document' ? (
+                        <div className="doc-preview-chip" style={{
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          background: 'rgba(0,0,0,0.3)',
-                          borderRadius: '8px'
+                          gap: '10px',
+                          padding: '8px 12px',
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '10px',
+                          maxWidth: '240px',
+                          opacity: att.uploading ? 0.6 : 1,
+                          position: 'relative'
                         }}>
-                          <Loader2 size={16} className="animate-spin" style={{ color: '#ffffff' }} />
+                          <div style={{ padding: '6px', borderRadius: '6px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            {getDocIcon(att.ext, 20)}
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', textAlign: 'left', minWidth: 0 }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {att.name}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                              {formatFileSize(att.size)}
+                            </span>
+                          </div>
+                          {att.uploading && (
+                            <div style={{ marginLeft: '4px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                              <Loader2 size={14} className="animate-spin" style={{ color: 'var(--text-secondary)' }} />
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ position: 'relative' }}>
+                          <img
+                            src={att.url}
+                            alt="Attachment"
+                            style={{
+                              height: '60px',
+                              borderRadius: '8px',
+                              objectFit: 'cover',
+                              opacity: att.uploading ? 0.5 : 1,
+                              transition: 'opacity 0.2s'
+                            }}
+                          />
+                          {att.uploading && (
+                            <div style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: 'rgba(0,0,0,0.3)',
+                              borderRadius: '8px'
+                            }}>
+                              <Loader2 size={16} className="animate-spin" style={{ color: '#ffffff' }} />
+                            </div>
+                          )}
                         </div>
                       )}
-                      <button type="button" onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))} style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--bg-secondary)', borderRadius: '50%', padding: '2px', cursor: 'pointer', border: '1px solid var(--border-color)' }}><X size={14} style={{ color: 'var(--text-primary)' }} /></button>
+                      <button
+                        type="button"
+                        onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
+                        style={{
+                          position: 'absolute',
+                          top: '-6px',
+                          right: '-6px',
+                          background: 'var(--bg-secondary)',
+                          borderRadius: '50%',
+                          padding: '2px',
+                          cursor: 'pointer',
+                          border: '1px solid var(--border-color)',
+                          zIndex: 3,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        title="Remove attachment"
+                      >
+                        <X size={12} style={{ color: 'var(--text-primary)' }} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -2624,7 +2843,7 @@ export default function Davora() {
                   <Square size={16} fill="currentColor" />
                 </button>
               ) : (
-                <button type="submit" disabled={!input.trim()} className="send-btn" title="Send message">
+                <button type="submit" disabled={!input.trim() && attachments.length === 0} className="send-btn" title="Send message">
                   <Send size={18} />
                 </button>
               )}
