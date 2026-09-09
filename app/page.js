@@ -2726,11 +2726,13 @@ export default function Davora() {
                     type="button"
                     className="plus-menu-item"
                     onClick={() => {
-                      if (cameraInputRef.current) {
-                        cameraInputRef.current.value = "";
-                        cameraInputRef.current.click();
-                      }
                       setShowPlusMenu(false);
+                      setTimeout(() => {
+                        if (cameraInputRef.current) {
+                          cameraInputRef.current.value = "";
+                          cameraInputRef.current.click();
+                        }
+                      }, 50);
                     }}
                   >
                     <Camera size={18} /> Camera
@@ -2739,31 +2741,17 @@ export default function Davora() {
                     type="button"
                     className="plus-menu-item"
                     onClick={() => {
-                      if (fileInputRef.current) {
-                        fileInputRef.current.value = "";
-                        fileInputRef.current.click();
-                      }
                       setShowPlusMenu(false);
+                      setTimeout(() => {
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = "";
+                          fileInputRef.current.click();
+                        }
+                      }, 50);
                     }}
                   >
                     <Paperclip size={18} /> Add photos & files
                   </button>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    ref={cameraInputRef}
-                    style={{ display: 'none' }}
-                    onChange={handleFileSelect}
-                  />
-                  <input
-                    type="file"
-                    accept="image/*,.pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
-                    multiple
-                    ref={fileInputRef}
-                    style={{ display: 'none' }}
-                    onChange={handleFileSelect}
-                  />
                   <div className="plus-menu-divider"></div>
                   <button type="button" className={`plus-menu-item ${inputMode === 'instant' ? 'active' : ''}`} onClick={() => { setInputMode("instant"); setShowPlusMenu(false); }}>
                     <Zap size={18} className="text-yellow-500" /> Instant
@@ -2779,6 +2767,23 @@ export default function Davora() {
                   </button>
                 </div>
               )}
+              {/* Hidden file inputs OUTSIDE dropdown so they survive unmount */}
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                ref={cameraInputRef}
+                style={{ display: 'none' }}
+                onChange={handleFileSelect}
+              />
+              <input
+                type="file"
+                accept="image/*,.pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
+                multiple
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleFileSelect}
+              />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
