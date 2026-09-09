@@ -13,7 +13,7 @@ import {
   VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert, Ghost,
   Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint,
   Bell, Grid, CreditCard, HardDrive, Users, UserPlus, Key, FolderPlus, Link2, Link2Off, Type, LogOut,
-  FileText, FileCode, FileSpreadsheet
+  FileText, FileCode, FileSpreadsheet, Camera
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -151,6 +151,7 @@ export default function Davora() {
   const synthRef = useRef(null);
   const audioRef = useRef(null);
   const plusMenuRef = useRef(null);
+  const cameraInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const docInputRef = useRef(null);
 
@@ -2721,9 +2722,40 @@ export default function Davora() {
 
               {showPlusMenu && (
                 <div className="plus-menu-dropdown">
-                  <button type="button" className="plus-menu-item" onClick={() => fileInputRef.current?.click()}>
+                  <button
+                    type="button"
+                    className="plus-menu-item"
+                    onClick={() => {
+                      if (cameraInputRef.current) {
+                        cameraInputRef.current.value = "";
+                        cameraInputRef.current.click();
+                      }
+                      setShowPlusMenu(false);
+                    }}
+                  >
+                    <Camera size={18} /> Camera
+                  </button>
+                  <button
+                    type="button"
+                    className="plus-menu-item"
+                    onClick={() => {
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                        fileInputRef.current.click();
+                      }
+                      setShowPlusMenu(false);
+                    }}
+                  >
                     <Paperclip size={18} /> Add photos & files
                   </button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    ref={cameraInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleFileSelect}
+                  />
                   <input
                     type="file"
                     accept="image/*,.pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
