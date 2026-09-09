@@ -21,8 +21,65 @@ export default function Login() {
   const [hasBiometrics, setHasBiometrics] = useState(false);
   const [googleClientId, setGoogleClientId] = useState('');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [githubClientId, setGithubClientId] = useState('');
+  const [isGitHubLoading, setIsGitHubLoading] = useState(false);
   const googleBtnRef = useRef(null);
   const router = useRouter();
+
+  const handleGitHubLogin = () => {
+    if (!githubClientId) {
+      setError('GitHub sign-in is not configured yet on the server.');
+      return;
+    }
+    setIsGitHubLoading(true);
+    const redirectUri = window.location.origin + window.location.pathname;
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&scope=user:email&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    window.location.href = githubAuthUrl;
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      setIsGitHubLoading(true);
+      setError('');
+      const redirectUri = window.location.origin + window.location.pathname;
+
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/github', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ code, redirect_uri: redirectUri })
+      })
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || 'GitHub sign-in failed');
+
+          localStorage.setItem('davora_token', data.access_token);
+          localStorage.setItem('davora_email', data.email || '');
+
+          if (window.Capacitor || window.location.hostname === 'localhost') {
+            router.push('/');
+          } else {
+            const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+            window.location.href = `${window.location.protocol}//chat.${baseDomain}?token=${data.access_token}&email=${encodeURIComponent(data.email || '')}`;
+          }
+        })
+        .catch((err) => {
+          console.error("GitHub sign-in error:", err);
+          setError(err.message || 'GitHub sign-in failed');
+        })
+        .finally(() => {
+          setIsGitHubLoading(false);
+        });
+    }
+  }, [router]);
 
   const handleGoogleCredentialResponse = async (response) => {
     if (!response || !response.credential) return;
@@ -137,6 +194,7 @@ export default function Login() {
         if (cfg.terms_url && cfg.terms_url !== '#') setTermsUrl(cfg.terms_url);
         if (cfg.privacy_url && cfg.privacy_url !== '#') setPrivacyUrl(cfg.privacy_url);
         if (cfg.google_client_id) setGoogleClientId(cfg.google_client_id);
+        if (cfg.github_client_id) setGithubClientId(cfg.github_client_id);
       })
       .catch(() => { });
   }, []);
@@ -420,6 +478,36 @@ export default function Login() {
                       {isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google'}
                     </button>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={handleGitHubLogin}
+                    disabled={isGitHubLoading}
+                    style={{
+                      width: '100%',
+                      background: '#161b22',
+                      color: '#ffffff',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      padding: '12px 16px',
+                      borderRadius: '9999px',
+                      fontWeight: '600',
+                      fontSize: '0.95rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '12px',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#1f242c'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#161b22'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                    </svg>
+                    {isGitHubLoading ? 'Connecting to GitHub...' : 'Continue with GitHub'}
+                  </button>
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                     <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
