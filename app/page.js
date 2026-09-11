@@ -2531,6 +2531,7 @@ export default function Davora() {
                                 <button
                                   type="button"
                                   className="user-expand-toggle-btn"
+                                  style={{ background: 'transparent', border: 'none', outline: 'none', padding: '4px 2px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
                                   title={isExpanded ? "Collapse" : "Expand"}
                                   onClick={(e) => {
                                     e.stopPropagation();

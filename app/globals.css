@@ -977,32 +977,30 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 8px;
-  padding: 4px 14px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  margin-top: 6px;
+  padding: 4px 2px;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, opacity 0.2s ease;
   align-self: flex-start;
+  border-radius: 0;
+  opacity: 0.8;
 }
 
 .user-expand-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: transparent !important;
   color: var(--text-primary);
-  border-color: rgba(255, 255, 255, 0.35);
-  transform: translateY(-1px);
-}
-
-body.light-theme .user-expand-toggle-btn {
-  background: rgba(0, 0, 0, 0.05);
-  border-color: rgba(0, 0, 0, 0.15);
+  opacity: 1;
 }
 
 body.light-theme .user-expand-toggle-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
+  background: transparent !important;
   color: var(--text-primary);
+  opacity: 1;
 }
 
 .bubble-ai {
