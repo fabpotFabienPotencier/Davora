@@ -2531,6 +2531,7 @@ export default function Davora() {
                                 <button
                                   type="button"
                                   className="user-expand-toggle-btn"
+                                  title={isExpanded ? "Collapse" : "Expand"}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setExpandedUserMsgIds(prev =>
@@ -2538,11 +2539,7 @@ export default function Davora() {
                                     );
                                   }}
                                 >
-                                  {isExpanded ? (
-                                    <>Show less <ChevronDown size={14} style={{ transform: 'rotate(180deg)' }} /></>
-                                  ) : (
-                                    <>Show more <ChevronDown size={14} /></>
-                                  )}
+                                  <ChevronDown size={14} style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
                                 </button>
                               )}
                             </div>
