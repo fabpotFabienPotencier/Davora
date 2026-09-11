@@ -48,6 +48,7 @@ export default function Davora() {
   const [copiedId, setCopiedId] = useState(null);
   const [attachments, setAttachments] = useState([]);
   const [activeLightboxImg, setActiveLightboxImg] = useState(null);
+  const [expandedUserMsgIds, setExpandedUserMsgIds] = useState([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
@@ -2509,14 +2510,44 @@ export default function Davora() {
                           </div>
                         </div>
                       ) : (
-                        <p className="user-text" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {msg.content}
-                          {msg.isPending && (
-                            <span title="Pending connection sync" style={{ opacity: 0.5, display: 'inline-flex', alignItems: 'center' }}>
-                              <Clock size={14} style={{ animation: 'spin 2s linear infinite' }} />
-                            </span>
-                          )}
-                        </p>
+                        (() => {
+                          const isLong = (msg.content || '').length > 350 || (msg.content || '').split('\n').length > 7;
+                          const isExpanded = expandedUserMsgIds.includes(msg.id);
+
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                              <div className={`user-text-container ${isLong && !isExpanded ? 'collapsed' : ''}`}>
+                                <p className="user-text" style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0 }}>
+                                  {msg.content}
+                                  {msg.isPending && (
+                                    <span title="Pending connection sync" style={{ opacity: 0.5, display: 'inline-flex', alignItems: 'center' }}>
+                                      <Clock size={14} style={{ animation: 'spin 2s linear infinite' }} />
+                                    </span>
+                                  )}
+                                </p>
+                                {isLong && !isExpanded && <div className="user-text-fade-overlay" />}
+                              </div>
+                              {isLong && (
+                                <button
+                                  type="button"
+                                  className="user-expand-toggle-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedUserMsgIds(prev =>
+                                      prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
+                                    );
+                                  }}
+                                >
+                                  {isExpanded ? (
+                                    <>Show less <ChevronDown size={14} style={{ transform: 'rotate(180deg)' }} /></>
+                                  ) : (
+                                    <>Show more <ChevronDown size={14} /></>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()
                       )
                     ) : (
                       <div className="markdown-body">
