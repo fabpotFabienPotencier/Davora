@@ -29,8 +29,7 @@ export default function Signup() {
       return;
     }
     setIsGitHubLoading(true);
-    const redirectUri = window.location.origin + window.location.pathname;
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&scope=user:email&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&scope=user:email`;
     window.location.href = githubAuthUrl;
   };
 
@@ -52,7 +51,7 @@ export default function Signup() {
           'ngrok-skip-browser-warning': 'true'
         },
         credentials: 'include',
-        body: JSON.stringify({ code, redirect_uri: redirectUri })
+        body: JSON.stringify({ code })
       })
         .then(async (res) => {
           const data = await res.json();
