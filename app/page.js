@@ -245,12 +245,27 @@ export default function Davora() {
       setLongPressMessageId(null);
     };
     window.addEventListener('click', handleDismissLongPress);
-    window.addEventListener('touchstart', handleDismissLongPress);
+    window.addEventListener('touchstart', handleDismissLongPress, { passive: true });
     return () => {
       window.removeEventListener('click', handleDismissLongPress);
       window.removeEventListener('touchstart', handleDismissLongPress);
     };
   }, []);
+
+  // Lock body scroll when settings or modals are open to prevent gesture lag
+  useEffect(() => {
+    if (showSettings || activeModal) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.overscrollBehavior = 'none';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.overscrollBehavior = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.overscrollBehavior = '';
+    };
+  }, [showSettings, activeModal]);
 
   useEffect(() => {
     if (settingsTab === 'Tasks') {
@@ -826,13 +841,14 @@ export default function Davora() {
     let isSwiping = false;
 
     const handleTouchStart = (e) => {
+      if (showSettings || activeModal || !e.touches || e.touches.length === 0) return;
       touchStartX = e.touches[0].clientX;
       touchStartY = e.touches[0].clientY;
       isSwiping = false;
     };
 
     const handleTouchMove = (e) => {
-      if (isSwiping) return;
+      if (showSettings || activeModal || isSwiping || !e.touches || e.touches.length === 0) return;
       const touchX = e.touches[0].clientX;
       const touchY = e.touches[0].clientY;
       const diffX = touchX - touchStartX;
@@ -863,7 +879,7 @@ export default function Davora() {
       document.removeEventListener('touchstart', handleTouchStart, { capture: true });
       document.removeEventListener('touchmove', handleTouchMove, { capture: true });
     };
-  }, [sidebarOpen]);
+  }, [sidebarOpen, showSettings, activeModal]);
 
   // 2026 Dynamic Thinking States
   useEffect(() => {
