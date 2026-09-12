@@ -248,17 +248,13 @@ body {
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  transform: translate3d(0, 0, 0);
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 20;
 }
 
 .sidebar.closed {
-  transform: translate3d(-100%, 0, 0);
+  transform: translateX(-100%);
   position: absolute;
 }
 
@@ -591,7 +587,7 @@ body {
   display: flex;
   flex-direction: column;
   position: relative;
-  transition: margin-left 0.22s cubic-bezier(0.16, 1, 0.3, 1), width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
 }
 
@@ -872,13 +868,10 @@ body {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.5);
     z-index: 50;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    transition: opacity 0.2s ease;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: pan-y;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
   }
 }
 
@@ -2739,25 +2732,18 @@ body.light-theme .user-expand-toggle-btn:hover {
   }
 
   .sidebar {
-    width: 82%;
+    width: 80%;
     max-width: 320px;
     position: fixed;
     left: 0;
     top: 0;
     z-index: 100;
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
-    height: 100%;
-    height: 100dvh;
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    transform: translate3d(0, 0, 0);
-    will-change: transform;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
+    height: 100vh;
   }
 
   .sidebar.closed {
-    transform: translate3d(-100%, 0, 0);
-    pointer-events: none;
+    transform: translateX(-100%);
   }
 
   .main-content.sidebar-open {
