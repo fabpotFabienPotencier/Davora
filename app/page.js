@@ -854,22 +854,21 @@ export default function Davora() {
       const diffX = touchX - touchStartX;
       const diffY = Math.abs(touchY - touchStartY);
 
-      // Ignore vertical scrolls — only trigger on clearly horizontal swipes
-      if (diffY > Math.abs(diffX) * 0.7) return;
+      // Only ignore if motion is overwhelmingly vertical (scrolling chat)
+      if (diffY > Math.abs(diffX) * 1.5 && Math.abs(diffX) < 15) return;
 
-      // Swipe RIGHT from left edge zone → open sidebar
-      // Edge zone = 40% of screen width or 160px, whichever is smaller
-      const edgeZone = Math.min(window.innerWidth * 0.4, 160);
-      if (!sidebarOpen && touchStartX < edgeZone && diffX > 30) {
+      // Swipe RIGHT from left edge zone → open sidebar instantly
+      const edgeZone = Math.min(window.innerWidth * 0.45, 180);
+      if (!sidebarOpen && touchStartX < edgeZone && diffX > 16) {
         isSwiping = true;
         setSidebarOpen(true);
-        if (navigator.vibrate) navigator.vibrate(10);
+        if (navigator.vibrate) navigator.vibrate(8);
       }
-      // Swipe LEFT anywhere → close sidebar (only when it's open)
-      if (sidebarOpen && diffX < -40) {
+      // Swipe LEFT anywhere when open → close sidebar instantly
+      if (sidebarOpen && diffX < -16) {
         isSwiping = true;
         setSidebarOpen(false);
-        if (navigator.vibrate) navigator.vibrate(10);
+        if (navigator.vibrate) navigator.vibrate(8);
       }
     };
 
@@ -2084,14 +2083,19 @@ export default function Davora() {
       <aside
         className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}
         onTouchStart={(e) => {
+          if (!e.touches || e.touches.length === 0) return;
           sidebarTouchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         }}
         onTouchMove={(e) => {
-          if (!sidebarTouchStartRef.current) return;
+          if (!sidebarTouchStartRef.current || !e.touches || e.touches.length === 0) return;
           const currentX = e.touches[0].clientX;
+          const currentY = e.touches[0].clientY;
           const diffX = sidebarTouchStartRef.current.x - currentX;
-          if (diffX > 40) {
+          const diffY = Math.abs(sidebarTouchStartRef.current.y - currentY);
+          if (diffX > 16 && diffX > diffY) {
             setSidebarOpen(false);
+            sidebarTouchStartRef.current = null;
+            if (navigator.vibrate) navigator.vibrate(8);
           }
         }}
       >
@@ -2239,14 +2243,19 @@ export default function Davora() {
           className="sidebar-overlay"
           onClick={() => setSidebarOpen(false)}
           onTouchStart={(e) => {
+            if (!e.touches || e.touches.length === 0) return;
             sidebarTouchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
           }}
           onTouchMove={(e) => {
-            if (!sidebarTouchStartRef.current) return;
+            if (!sidebarTouchStartRef.current || !e.touches || e.touches.length === 0) return;
             const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
             const diffX = sidebarTouchStartRef.current.x - currentX;
-            if (diffX > 40) {
+            const diffY = Math.abs(sidebarTouchStartRef.current.y - currentY);
+            if (diffX > 16 && diffX > diffY) {
               setSidebarOpen(false);
+              sidebarTouchStartRef.current = null;
+              if (navigator.vibrate) navigator.vibrate(8);
             }
           }}
         />
