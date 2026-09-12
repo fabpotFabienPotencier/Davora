@@ -609,7 +609,7 @@ body {
   background: var(--header-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: none;
   z-index: 50;
   position: sticky;
   top: 0;
