@@ -2798,16 +2798,13 @@ export default function Davora() {
                     <Paperclip size={18} /> Add photos & files
                   </button>
                   <div className="plus-menu-divider"></div>
-                  <button type="button" className={`plus-menu-item ${inputMode === 'instant' ? 'active' : ''}`} onClick={() => { setInputMode("instant"); setShowPlusMenu(false); }}>
-                    <Zap size={18} className="text-yellow-500" /> Instant
-                  </button>
-                  <button type="button" className={`plus-menu-item ${inputMode === 'deep' ? 'active' : ''}`} onClick={() => { setInputMode("deep"); setShowPlusMenu(false); }}>
+                  <button type="button" className={`plus-menu-item ${inputMode === 'deep' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep' ? 'instant' : 'deep'); setShowPlusMenu(false); }}>
                     <Lightbulb size={18} className="text-purple-500" /> Thinking
                   </button>
-                  <button type="button" className={`plus-menu-item ${inputMode === 'deep-search' ? 'active' : ''}`} onClick={() => { setInputMode("deep-search"); setShowPlusMenu(false); }}>
+                  <button type="button" className={`plus-menu-item ${inputMode === 'deep-search' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep-search' ? 'instant' : 'deep-search'); setShowPlusMenu(false); }}>
                     <Telescope size={18} className="text-blue-500" /> Deep search
                   </button>
-                  <button type="button" className={`plus-menu-item ${inputMode === 'research' ? 'active' : ''}`} onClick={() => { setInputMode("research"); setShowPlusMenu(false); }}>
+                  <button type="button" className={`plus-menu-item ${inputMode === 'research' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'research' ? 'instant' : 'research'); setShowPlusMenu(false); }}>
                     <Globe size={18} className="text-green-500" /> Web search
                   </button>
                 </div>
