@@ -2929,9 +2929,9 @@ export default function Davora() {
                   onKeyDown={handleKeyDown}
                   placeholder={
                     isTemporary ? "Temporary Chat..." :
-                      inputMode === 'deep' ? "Message Davora (Deep Think)..." :
-                        inputMode === 'deep-search' ? "Message Davora (Deep Web Search)..." :
-                          inputMode === 'research' ? "Message Davora (Web Search)..." :
+                      inputMode === 'deep' ? "(Deep Think)..." :
+                        inputMode === 'deep-search' ? "(Deep Web Search)..." :
+                          inputMode === 'research' ? "(Web Search)..." :
                             "Ask anything"
                   }
                   disabled={isTyping}
