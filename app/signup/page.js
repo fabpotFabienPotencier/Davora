@@ -156,7 +156,7 @@ export default function Signup() {
         if (!existingScript) {
           const script = document.createElement('script');
           script.id = 'google-gsi-script';
-          script.src = 'https://accounts.google.com/gsi/client';
+          script.src = 'https://accounts.google.com/gsi/client?hl=en';
           script.async = true;
           script.defer = true;
           script.onload = initializeGsi;
@@ -479,9 +479,6 @@ export default function Signup() {
 
                 <button type="submit" disabled={isLoading} className="auth-btn">
                   {isLoading ? 'Creating account...' : 'Next'}
-                </button>
-                <button type="button" onClick={() => { const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="auth-btn-secondary">
-                  Go back
                 </button>
               </form>
 

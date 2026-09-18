@@ -159,7 +159,7 @@ export default function Login() {
         if (!existingScript) {
           const script = document.createElement('script');
           script.id = 'google-gsi-script';
-          script.src = 'https://accounts.google.com/gsi/client';
+          script.src = 'https://accounts.google.com/gsi/client?hl=en';
           script.async = true;
           script.defer = true;
           script.onload = initializeGsi;
@@ -553,9 +553,6 @@ export default function Login() {
                   </div>
                   <button type="submit" disabled={isLoading} className="auth-btn">
                     {isLoading ? 'Authenticating...' : 'Next'}
-                  </button>
-                  <button type="button" onClick={() => router.push('/signup')} className="auth-btn-secondary">
-                    Go back
                   </button>
                 </form>
               ) : (
