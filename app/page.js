@@ -8,7 +8,7 @@ import {
   Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
-  Search, Pencil, Share, Bookmark, Compass, Folder, Activity, Database, Globe,
+  Search, Pencil, Share, Forward, Bookmark, Compass, Folder, Activity, Database, Globe,
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight, ShieldCheck,
   VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert, Ghost,
   Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint,
@@ -2703,7 +2703,7 @@ export default function Davora() {
                           )}
                         </button>
                         <button onClick={() => setActiveModal('share')} className="toolbar-btn" title="Share message">
-                          <Share size={18} />
+                          <Forward size={18} />
                         </button>
                         {index === messages.length - 1 && (
                           <button onClick={regenerateResponse} className="toolbar-btn toolbar-btn-right" title="Regenerate Response">
