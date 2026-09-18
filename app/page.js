@@ -2817,7 +2817,7 @@ export default function Davora() {
 
             <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
               {attachments.length > 0 && (
-                <div className="attachment-preview" style={{ padding: '8px 16px', display: 'flex', gap: '8px', overflowX: 'auto', alignItems: 'center' }}>
+                <div className="attachment-preview" style={{ padding: '10px 16px 4px 16px', display: 'flex', gap: '12px', overflowX: 'auto', alignItems: 'center' }}>
                   {attachments.map((att, idx) => (
                     <div key={att.id || idx} style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
                       {att.type === 'document' ? (
@@ -2828,13 +2828,14 @@ export default function Davora() {
                           padding: '8px 12px',
                           background: 'var(--bg-secondary)',
                           border: '1px solid var(--border-color)',
-                          borderRadius: '10px',
-                          maxWidth: '240px',
+                          borderRadius: '14px',
+                          maxWidth: '250px',
+                          height: '68px',
                           opacity: att.uploading ? 0.6 : 1,
                           position: 'relative'
                         }}>
-                          <div style={{ padding: '6px', borderRadius: '6px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            {getDocIcon(att.ext, 20)}
+                          <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            {getDocIcon(att.ext, 22)}
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', textAlign: 'left', minWidth: 0 }}>
                             <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -2851,13 +2852,22 @@ export default function Davora() {
                           )}
                         </div>
                       ) : (
-                        <div style={{ position: 'relative' }}>
+                        <div style={{
+                          width: '68px',
+                          height: '68px',
+                          borderRadius: '14px',
+                          overflow: 'hidden',
+                          border: '1.5px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                          position: 'relative',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
+                        }}>
                           <img
                             src={att.url}
                             alt="Attachment"
                             style={{
-                              height: '60px',
-                              borderRadius: '8px',
+                              width: '100%',
+                              height: '100%',
                               objectFit: 'cover',
                               opacity: att.uploading ? 0.5 : 1,
                               transition: 'opacity 0.2s'
@@ -2873,10 +2883,9 @@ export default function Davora() {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              background: 'rgba(0,0,0,0.3)',
-                              borderRadius: '8px'
+                              background: 'rgba(0,0,0,0.4)'
                             }}>
-                              <Loader2 size={16} className="animate-spin" style={{ color: '#ffffff' }} />
+                              <Loader2 size={18} className="animate-spin" style={{ color: '#ffffff' }} />
                             </div>
                           )}
                         </div>
@@ -2888,19 +2897,25 @@ export default function Davora() {
                           position: 'absolute',
                           top: '-6px',
                           right: '-6px',
-                          background: 'var(--bg-secondary)',
+                          background: 'rgba(25, 25, 25, 0.9)',
+                          backdropFilter: 'blur(8px)',
                           borderRadius: '50%',
-                          padding: '2px',
+                          width: '22px',
+                          height: '22px',
+                          padding: 0,
                           cursor: 'pointer',
-                          border: '1px solid var(--border-color)',
+                          border: '1.5px solid rgba(255, 255, 255, 0.25)',
                           zIndex: 3,
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center'
+                          justifyContent: 'center',
+                          color: '#ffffff',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
                         }}
                         title="Remove attachment"
+                        aria-label="Remove attachment"
                       >
-                        <X size={12} style={{ color: 'var(--text-primary)' }} />
+                        <X size={12} strokeWidth={2.5} />
                       </button>
                     </div>
                   ))}
