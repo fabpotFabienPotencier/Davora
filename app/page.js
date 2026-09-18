@@ -2312,15 +2312,6 @@ export default function Davora() {
               </button>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <button
-                  className="icon-action-btn"
-                  onClick={() => setActiveModal('share')}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', color: 'var(--text-primary)' }}
-                >
-                  <Share size={16} />
-                  <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>Share</span>
-                </button>
-
                 <div className="active-chat-menu-wrapper" style={{ position: 'relative' }}>
                   <button
                     className="icon-action-btn"
