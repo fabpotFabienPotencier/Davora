@@ -1014,17 +1014,25 @@ body.light-theme .user-expand-toggle-btn:hover {
   align-items: center;
   width: 100%;
   gap: 8px;
-  margin-top: 10px;
-  opacity: 0;
-  transition: opacity 0.2s;
+  margin-top: 8px;
+  transition: opacity 0.2s ease;
 }
 
-.message-row:hover .message-toolbar {
+.toolbar-ai {
   opacity: 1;
 }
 
 .toolbar-user {
   justify-content: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.message-row:hover .toolbar-user,
+.toolbar-user.mobile-visible {
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 .toolbar-btn {

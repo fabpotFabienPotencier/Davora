@@ -49,6 +49,7 @@ export default function Davora() {
   const [attachments, setAttachments] = useState([]);
   const [activeLightboxImg, setActiveLightboxImg] = useState(null);
   const [expandedUserMsgIds, setExpandedUserMsgIds] = useState([]);
+  const [activeUserToolbarId, setActiveUserToolbarId] = useState(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimeoutRef = useRef(null);
@@ -2508,7 +2509,14 @@ export default function Davora() {
                 )}
 
                 {(msg.role !== 'user' || msg.content || editingId === msg.id) && (
-                  <div className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}>
+                  <div
+                    className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}
+                    onClick={() => {
+                      if (msg.role === 'user' && !editingId) {
+                        setActiveUserToolbarId(prev => prev === msg.id ? null : msg.id);
+                      }
+                    }}
+                  >
                     {msg.role === 'user' ? (
                       editingId === msg.id ? (
                         <div className="edit-mode-box">
@@ -2656,7 +2664,7 @@ export default function Davora() {
 
                 {!(msg.role === 'assistant' && index === messages.length - 1 && isTyping) && (
                   <div
-                    className={`message-toolbar ${msg.role === 'user' ? 'toolbar-user' : 'toolbar-ai'}`}
+                    className={`message-toolbar ${msg.role === 'user' ? 'toolbar-user' : 'toolbar-ai'} ${activeUserToolbarId === msg.id ? 'mobile-visible' : ''}`}
                     onClick={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
                   >
