@@ -2678,6 +2678,32 @@ body.light-theme .user-expand-toggle-btn:hover {
   font-weight: 600;
 }
 
+/* Plus/Attachment Button */
+.attach-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.attach-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+.attach-btn.active {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
 /* Plus Menu Dropdown */
 .plus-menu-dropdown {
   position: absolute;

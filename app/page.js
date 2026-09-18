@@ -2742,8 +2742,14 @@ export default function Davora() {
           <form className="input-area" onSubmit={sendMessage}>
 
             <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
-              <button type="button" onClick={() => setShowPlusMenu(!showPlusMenu)} className={`attach-btn ${showPlusMenu ? 'active' : ''}`} title="Options">
-                <Plus size={24} />
+              <button 
+                type="button" 
+                onClick={() => setShowPlusMenu(!showPlusMenu)} 
+                className={`attach-btn ${showPlusMenu ? 'active' : ''}`} 
+                title={showPlusMenu ? "Close" : "Options"}
+                aria-label={showPlusMenu ? "Close" : "Options"}
+              >
+                {showPlusMenu ? <X size={22} strokeWidth={2.2} /> : <Plus size={24} />}
               </button>
 
               {showPlusMenu && (
