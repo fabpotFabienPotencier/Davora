@@ -1947,22 +1947,14 @@ export default function Davora() {
         const token = localStorage.getItem('davora_token') || '';
         const url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/tts?text=${encodeURIComponent(text)}&token=${encodeURIComponent(token)}&voice=${encodeURIComponent(prefs.voiceProfile || 'Alloy')}&ngrok-skip-browser-warning=true`;
 
-        const response = await fetch(url);
-        if (!response.ok) {
-          throw new Error("Failed to fetch audio stream");
-        }
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-
-        const audio = new Audio(blobUrl);
+        const audio = new Audio(url);
         audioRef.current = audio;
         audio.onended = () => {
           setSpeakingId(null);
-          URL.revokeObjectURL(blobUrl);
         };
-        audio.onerror = () => {
+        audio.onerror = (e) => {
+          console.warn("Audio playback error:", e);
           setSpeakingId(null);
-          URL.revokeObjectURL(blobUrl);
         };
         await audio.play();
       } catch (err) {
