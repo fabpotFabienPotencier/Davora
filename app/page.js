@@ -2664,51 +2664,44 @@ export default function Davora() {
                       !editingId && (
                         <>
                           <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
-                            {copiedId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                            {copiedId === msg.id ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
                           </button>
                           <button onClick={() => { setEditingId(msg.id); setEditInput(msg.content); }} className="toolbar-btn" title="Edit Prompt">
-                            <Edit2 size={14} />
+                            <Edit2 size={18} />
                           </button>
                         </>
                       )
                     ) : (
                       <>
-                        <button onClick={() => toggleTextToSpeech(msg.content, msg.id)} className={`toolbar-btn ${speakingId === msg.id ? 'active-tts' : ''}`} title="Read Aloud">
-                          {speakingId === msg.id ? <VolumeX size={14} /> : <Volume2 size={14} />}
-                        </button>
                         <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
-                          {copiedId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                          {copiedId === msg.id ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
                         </button>
-                        <div className="toolbar-divider"></div>
                         <button onClick={() => handleRate(msg.id, 'up')} className={`toolbar-btn ${ratings[msg.id] === 'up' ? 'text-green-500' : ''}`} title="Good response">
-                          <ThumbsUp size={14} />
+                          <ThumbsUp size={18} />
                         </button>
                         <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${ratings[msg.id] === 'down' ? 'text-red-500' : ''}`} title="Bad response">
-                          <ThumbsDown size={14} />
+                          <ThumbsDown size={18} />
                         </button>
-                        <button onClick={() => saveToCanvas(msg.content)} className="toolbar-btn" title="Save to Canvas">
-                          <Bookmark size={14} />
+                        <button onClick={() => toggleTextToSpeech(msg.content, msg.id)} className={`toolbar-btn ${speakingId === msg.id ? 'active-tts' : ''}`} title={speakingId === msg.id ? "Stop Read Aloud" : "Read Aloud"}>
+                          {speakingId === msg.id ? (
+                            <div className="tts-equalizer-icon">
+                              <span className="tts-eq-bar bar-1"></span>
+                              <span className="tts-eq-bar bar-2"></span>
+                              <span className="tts-eq-bar bar-3"></span>
+                              <span className="tts-eq-bar bar-4"></span>
+                            </div>
+                          ) : (
+                            <Volume2 size={18} />
+                          )}
                         </button>
                         <button onClick={() => setActiveModal('share')} className="toolbar-btn" title="Share message">
-                          <Share size={14} />
+                          <Share size={18} />
                         </button>
-                        <div className="toolbar-divider"></div>
                         {index === messages.length - 1 && (
-                          <button onClick={regenerateResponse} className="toolbar-btn" title="Regenerate Response">
-                            <RefreshCw size={12} />
+                          <button onClick={regenerateResponse} className="toolbar-btn toolbar-btn-right" title="Regenerate Response">
+                            <RefreshCw size={18} />
                           </button>
                         )}
-                        <div className="more-menu-wrapper">
-                          <button onClick={() => setOpenMoreMenuId(openMoreMenuId === msg.id ? null : msg.id)} className="toolbar-btn" title="More Actions">
-                            <MoreHorizontal size={14} />
-                          </button>
-                          {openMoreMenuId === msg.id && (
-                            <div className="more-menu-dropdown">
-                              <button onClick={() => { setActiveModal('schedule'); setOpenMoreMenuId(null); }} className="more-menu-item"><CalendarClock size={14} /> Schedule Task</button>
-                              <button onClick={() => { setActiveModal('report'); setOpenMoreMenuId(null); }} className="more-menu-item"><TriangleAlert size={14} className="text-red-500" /> Report Issue</button>
-                            </div>
-                          )}
-                        </div>
                       </>
                     )}
                   </div>
