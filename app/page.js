@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Send, User, Bot, Loader2, Copy, Check,
   PlusCircle, Download, Square, ArrowDown,
-  Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, Clock,
+  Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, ChevronUp, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
   Search, Pencil, Share, Forward, Bookmark, Compass, Folder, Activity, Database, Globe,
@@ -39,6 +39,12 @@ export default function Davora() {
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [selectedModel, setSelectedModel] = useState("Davora 3.2 Pro");
   const [showPlusMenu, setShowPlusMenu] = useState(false);
+
+  // Find in Chat states
+  const [showFindInChat, setShowFindInChat] = useState(false);
+  const [findQuery, setFindQuery] = useState("");
+  const [currentFindIndex, setCurrentFindIndex] = useState(0);
+  const findInputRef = useRef(null);
 
   // Input & UI States
   const [input, setInput] = useState("");
@@ -1969,6 +1975,64 @@ export default function Davora() {
     setRatings(prev => ({ ...prev, [id]: prev[id] === rating ? null : rating }));
   };
 
+  const matchingMessageIndices = findQuery.trim()
+    ? messages.reduce((acc, m, idx) => {
+        if (m.content && m.content.toLowerCase().includes(findQuery.toLowerCase().trim())) {
+          acc.push(idx);
+        }
+        return acc;
+      }, [])
+    : [];
+
+  useEffect(() => {
+    if (showFindInChat) {
+      setTimeout(() => {
+        findInputRef.current?.focus();
+      }, 100);
+    } else {
+      setFindQuery("");
+      setCurrentFindIndex(0);
+    }
+  }, [showFindInChat]);
+
+  useEffect(() => {
+    if (matchingMessageIndices.length > 0) {
+      const clampedIndex = Math.min(currentFindIndex, matchingMessageIndices.length - 1);
+      const msgIndex = matchingMessageIndices[clampedIndex];
+      const targetMsg = messages[msgIndex];
+      if (targetMsg) {
+        const targetId = targetMsg.id || msgIndex;
+        const el = document.getElementById(`msg-node-${targetId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
+  }, [currentFindIndex, findQuery]);
+
+  const handleNextFind = () => {
+    if (matchingMessageIndices.length === 0) return;
+    setCurrentFindIndex(prev => (prev + 1) % matchingMessageIndices.length);
+  };
+
+  const handlePrevFind = () => {
+    if (matchingMessageIndices.length === 0) return;
+    setCurrentFindIndex(prev => (prev - 1 + matchingMessageIndices.length) % matchingMessageIndices.length);
+  };
+
+  const handleFindKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (e.shiftKey) {
+        handlePrevFind();
+      } else {
+        handleNextFind();
+      }
+    } else if (e.key === 'Escape') {
+      setShowFindInChat(false);
+    }
+  };
+
   const startNewChat = () => {
     if (isTyping) return;
     setActiveSessionId(null);
@@ -2318,6 +2382,16 @@ export default function Davora() {
                     <div className="active-chat-dropdown" style={{ position: 'absolute', right: 0, top: '100%', marginTop: '6px', background: 'var(--bg-sidebar)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '4px', width: '160px', display: 'flex', flexDirection: 'column', gap: '2px', zIndex: 100, boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
                       <button
                         className="active-chat-dropdown-item"
+                        onClick={() => {
+                          setShowFindInChat(true);
+                          setShowActiveChatMenu(false);
+                        }}
+                      >
+                        <Search size={14} />
+                        <span>Find in chat</span>
+                      </button>
+                      <button
+                        className="active-chat-dropdown-item"
                         onClick={(e) => { togglePin(e, activeSessionId); setShowActiveChatMenu(false); }}
                       >
                         <Pin size={14} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
@@ -2337,6 +2411,63 @@ export default function Davora() {
             )}
           </div>
         </header>
+
+        {/* Find In Chat Floating Toolbar */}
+        {showFindInChat && (
+          <div className="find-in-chat-bar">
+            <div className="find-in-chat-input-wrap">
+              <Search size={15} className="find-icon" />
+              <input
+                ref={findInputRef}
+                type="text"
+                placeholder="Find in chat..."
+                value={findQuery}
+                onChange={(e) => {
+                  setFindQuery(e.target.value);
+                  setCurrentFindIndex(0);
+                }}
+                onKeyDown={handleFindKeyDown}
+                className="find-in-chat-input"
+              />
+              {findQuery && (
+                <span className="find-count">
+                  {matchingMessageIndices.length > 0 ? `${currentFindIndex + 1} of ${matchingMessageIndices.length}` : '0 of 0'}
+                </span>
+              )}
+            </div>
+            <div className="find-actions">
+              <button
+                type="button"
+                onClick={handlePrevFind}
+                disabled={matchingMessageIndices.length <= 1}
+                className="find-nav-btn"
+                title="Previous match (Shift+Enter)"
+                aria-label="Previous match"
+              >
+                <ChevronUp size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={handleNextFind}
+                disabled={matchingMessageIndices.length <= 1}
+                className="find-nav-btn"
+                title="Next match (Enter)"
+                aria-label="Next match"
+              >
+                <ChevronDown size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowFindInChat(false)}
+                className="find-close-btn"
+                title="Close (Esc)"
+                aria-label="Close search"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Chat Box */}
         <main className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
@@ -2367,10 +2498,15 @@ export default function Davora() {
             </div>
           )}
 
-          {messages.map((msg, index) => (
+          {messages.map((msg, index) => {
+            const isMatch = showFindInChat && findQuery.trim() && msg.content && msg.content.toLowerCase().includes(findQuery.toLowerCase().trim());
+            const isActiveMatch = isMatch && matchingMessageIndices[currentFindIndex] === index;
+
+            return (
             <div
               key={msg.id || index}
-              className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'} ${longPressMessageId === msg.id ? 'long-pressed' : ''}`}
+              id={`msg-node-${msg.id || index}`}
+              className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'} ${longPressMessageId === msg.id ? 'long-pressed' : ''} ${isMatch ? (isActiveMatch ? 'find-active-match' : 'find-match') : ''}`}
               onTouchStart={(e) => handleTouchStart(msg.id, e)}
               onTouchEnd={handleTouchEnd}
               onTouchMove={handleTouchMove}

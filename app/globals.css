@@ -3362,3 +3362,116 @@ body.light-theme .pricing-card-clean:hover {
   margin-top: 6px;
   flex-wrap: wrap;
 }
+
+/* =========================================================
+   Find In Chat Floating Toolbar & Highlights
+   ========================================================= */
+.find-in-chat-bar {
+  position: absolute;
+  top: 56px;
+  right: 16px;
+  background: var(--modal-bg);
+  border: 1px solid var(--dropdown-border);
+  border-radius: 14px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px);
+  z-index: 1000;
+  animation: findSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: calc(100vw - 32px);
+}
+
+@keyframes findSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.find-in-chat-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 5px 10px;
+}
+
+.find-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.find-in-chat-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  width: 140px;
+}
+
+.find-in-chat-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.find-count {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-weight: 600;
+  padding-left: 2px;
+}
+
+.find-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.find-nav-btn,
+.find-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.find-nav-btn:hover:not(:disabled),
+.find-close-btn:hover {
+  background: var(--dropdown-hover-bg);
+  color: var(--text-primary);
+}
+
+.find-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Match Highlights in Chat */
+.message-row.find-match .message-bubble-wrapper {
+  outline: 1.5px dashed rgba(168, 85, 247, 0.45);
+  border-radius: 12px;
+}
+
+.message-row.find-active-match .message-bubble-wrapper {
+  outline: 2px solid #a855f7;
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.4);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
