@@ -2837,7 +2837,8 @@ export default function Davora() {
 
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {isTyping && (
             <div className="message-row row-ai">
