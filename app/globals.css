@@ -1014,8 +1014,13 @@ body.light-theme .user-expand-toggle-btn:hover {
   align-items: center;
   width: 100%;
   gap: 8px;
-  margin-top: 8px;
-  transition: opacity 0.2s ease;
+  margin-top: 10px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message-row:hover .message-toolbar {
+  opacity: 1;
 }
 
 .toolbar-ai {
@@ -1025,14 +1030,34 @@ body.light-theme .user-expand-toggle-btn:hover {
 .toolbar-user {
   justify-content: flex-end;
   opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  margin-top: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, max-height 0.2s ease, margin-top 0.2s ease;
 }
 
-.message-row:hover .toolbar-user,
-.toolbar-user.mobile-visible {
+@media (hover: hover) and (pointer: fine) {
+  .message-row.row-user:hover .toolbar-user {
+    opacity: 1;
+    max-height: 48px;
+    overflow: visible;
+    margin-top: 8px;
+    pointer-events: auto;
+  }
+}
+
+.toolbar-user.active-toolbar {
   opacity: 1 !important;
+  max-height: 48px !important;
+  overflow: visible !important;
+  margin-top: 8px !important;
   pointer-events: auto !important;
+}
+
+.bubble-user {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .toolbar-btn {

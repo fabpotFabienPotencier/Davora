@@ -2664,7 +2664,7 @@ export default function Davora() {
 
                 {!(msg.role === 'assistant' && index === messages.length - 1 && isTyping) && (
                   <div
-                    className={`message-toolbar ${msg.role === 'user' ? 'toolbar-user' : 'toolbar-ai'} ${activeUserToolbarId === msg.id ? 'mobile-visible' : ''}`}
+                    className={`message-toolbar ${msg.role === 'user' ? `toolbar-user ${activeUserToolbarId === msg.id ? 'active-toolbar' : ''}` : 'toolbar-ai'}`}
                     onClick={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
                   >
