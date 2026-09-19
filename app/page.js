@@ -2434,40 +2434,36 @@ export default function Davora() {
           </div>
         </header>
 
-        {/* Find In Chat Floating Toolbar */}
+        {/* Find In Chat Toolbar - ChatGPT-style full-width bar */}
         {showFindInChat && (
           <div className="find-in-chat-bar">
-            <div className="find-in-chat-input-wrap">
-              <Search size={15} className="find-icon" />
-              <input
-                ref={findInputRef}
-                type="text"
-                placeholder="Find in chat..."
-                value={findQuery}
-                onChange={(e) => {
-                  setFindQuery(e.target.value);
-                  setCurrentFindIndex(0);
-                }}
-                onKeyDown={handleFindKeyDown}
-                className="find-in-chat-input"
-              />
+            <button
+              type="button"
+              onClick={() => setShowFindInChat(false)}
+              className="find-back-btn"
+              title="Close (Esc)"
+              aria-label="Close search"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <input
+              ref={findInputRef}
+              type="text"
+              placeholder="Search in chat"
+              value={findQuery}
+              onChange={(e) => {
+                setFindQuery(e.target.value);
+                setCurrentFindIndex(0);
+              }}
+              onKeyDown={handleFindKeyDown}
+              className="find-in-chat-input"
+            />
+            <div className="find-actions">
               {findQuery && (
                 <span className="find-count">
                   {matchingMessageIndices.length > 0 ? `${currentFindIndex + 1} of ${matchingMessageIndices.length}` : '0 of 0'}
                 </span>
               )}
-            </div>
-            <div className="find-actions">
-              <button
-                type="button"
-                onClick={handlePrevFind}
-                disabled={matchingMessageIndices.length <= 1}
-                className="find-nav-btn"
-                title="Previous match (Shift+Enter)"
-                aria-label="Previous match"
-              >
-                <ChevronUp size={16} />
-              </button>
               <button
                 type="button"
                 onClick={handleNextFind}
@@ -2476,16 +2472,17 @@ export default function Davora() {
                 title="Next match (Enter)"
                 aria-label="Next match"
               >
-                <ChevronDown size={16} />
+                <ChevronDown size={18} />
               </button>
               <button
                 type="button"
-                onClick={() => setShowFindInChat(false)}
-                className="find-close-btn"
-                title="Close (Esc)"
-                aria-label="Close search"
+                onClick={handlePrevFind}
+                disabled={matchingMessageIndices.length <= 1}
+                className="find-nav-btn"
+                title="Previous match (Shift+Enter)"
+                aria-label="Previous match"
               >
-                <X size={16} />
+                <ChevronUp size={18} />
               </button>
             </div>
           </div>
