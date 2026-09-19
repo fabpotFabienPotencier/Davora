@@ -42,13 +42,14 @@ jobs:
 
     - name: Update Android App Version
       run: |
-        sed -i 's/versionCode 1/versionCode 6/g' android/app/build.gradle
-        sed -i 's/versionName "1.0"/versionName "1.0.2"/g' android/app/build.gradle
+        sed -i 's/versionCode 1/versionCode 7/g' android/app/build.gradle
+        sed -i 's/versionName "1.0"/versionName "1.0.3"/g' android/app/build.gradle
 
-    - name: Update Android SDK Configuration
+    - name: Update Android SDK & Play Billing Library Configuration
       run: |
         sed -i 's/compileSdkVersion = [0-9]*/compileSdkVersion = 36/g' android/variables.gradle
         sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 36/g' android/variables.gradle
+        echo "allprojects { configurations.all { resolutionStrategy { force 'com.android.billingclient:billing:8.0.0', 'com.android.billingclient:billing-ktx:8.0.0' } } }" >> android/build.gradle
         echo "subprojects { configurations.all { exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'; exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7' } }" >> android/build.gradle
 
     - name: Add Microphone Permission to AndroidManifest
