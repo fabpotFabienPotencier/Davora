@@ -3373,7 +3373,7 @@ body.light-theme .pricing-card-clean:hover {
    ========================================================= */
 .find-in-chat-bar {
   position: absolute;
-  top: 8px;
+  top: calc(8px + env(safe-area-inset-top, 0px));
   left: 12px;
   right: 12px;
   background: var(--bg-secondary);
