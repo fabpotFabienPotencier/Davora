@@ -3372,27 +3372,22 @@ body.light-theme .pricing-card-clean:hover {
    Find In Chat Floating Toolbar & Highlights
    ========================================================= */
 .find-in-chat-bar {
-  position: absolute;
-  top: 56px;
-  right: 16px;
-  background: var(--modal-bg);
-  border: 1px solid var(--dropdown-border);
-  border-radius: 14px;
-  padding: 6px 10px;
+  position: relative;
+  width: 100%;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 10px 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(16px);
-  z-index: 1000;
-  animation: findSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  max-width: calc(100vw - 32px);
+  gap: 10px;
+  z-index: 50;
+  animation: findSlideDown 0.15s ease-out;
 }
 
 @keyframes findSlideDown {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
@@ -3400,28 +3395,34 @@ body.light-theme .pricing-card-clean:hover {
   }
 }
 
-.find-in-chat-input-wrap {
+.find-back-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 5px 10px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
 }
 
-.find-icon {
-  color: var(--text-secondary);
-  flex-shrink: 0;
+.find-back-btn:hover {
+  background: var(--dropdown-hover-bg);
+  color: var(--text-primary);
 }
 
 .find-in-chat-input {
+  flex: 1;
+  min-width: 0;
   background: transparent;
   border: none;
   outline: none;
   color: var(--text-primary);
-  font-size: 0.85rem;
-  width: 140px;
+  font-size: 0.95rem;
 }
 
 .find-in-chat-input::placeholder {
@@ -3429,21 +3430,20 @@ body.light-theme .pricing-card-clean:hover {
 }
 
 .find-count {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   white-space: nowrap;
-  font-weight: 600;
-  padding-left: 2px;
+  padding: 0 4px;
 }
 
 .find-actions {
   display: flex;
   align-items: center;
   gap: 2px;
+  flex-shrink: 0;
 }
 
-.find-nav-btn,
-.find-close-btn {
+.find-nav-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3457,8 +3457,7 @@ body.light-theme .pricing-card-clean:hover {
   transition: all 0.15s ease;
 }
 
-.find-nav-btn:hover:not(:disabled),
-.find-close-btn:hover {
+.find-nav-btn:hover:not(:disabled) {
   background: var(--dropdown-hover-bg);
   color: var(--text-primary);
 }
