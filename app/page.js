@@ -29,6 +29,7 @@ export default function Davora() {
   const [activeSessionId, setActiveSessionId] = useState(null);
   const activeSessionIdRef = useRef(null);
   const sessionsRef = useRef([]);
+  const scrollTimeoutRef = useRef(null); // debounce for ChatGPT-style scroll arrow
   const [sidebarOpen, setSidebarOpen] = useState(false); // Start closed on mobile to prevent blocking
   const [searchQuery, setSearchQuery] = useState("");
   const [renamingId, setRenamingId] = useState(null);
@@ -1078,8 +1079,17 @@ export default function Davora() {
 
   const handleScroll = () => {
     if (!chatBoxRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = chatBoxRef.current;
-    setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
+
+    // Hide immediately while actively scrolling (ChatGPT-style)
+    setShowScrollButton(false);
+
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (!chatBoxRef.current) return;
+      const { scrollTop, scrollHeight, clientHeight } = chatBoxRef.current;
+      setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
+    }, 150);
   };
 
   const resetStreamWatchdog = () => {
