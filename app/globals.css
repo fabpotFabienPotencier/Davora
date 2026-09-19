@@ -3471,15 +3471,4 @@ body.light-theme .pricing-card-clean:hover {
   cursor: not-allowed;
 }
 
-/* Match Highlights in Chat */
-.message-row.find-match .message-bubble-wrapper {
-  outline: 1.5px dashed rgba(168, 85, 247, 0.45);
-  border-radius: 12px;
-}
 
-.message-row.find-active-match .message-bubble-wrapper {
-  outline: 2px solid #a855f7;
-  box-shadow: 0 0 18px rgba(168, 85, 247, 0.4);
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
