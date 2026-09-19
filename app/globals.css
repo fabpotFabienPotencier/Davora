@@ -1951,6 +1951,11 @@ body.light-theme .user-expand-toggle-btn:hover {
   transform: translateX(-50%) translateY(0);
 }
 
+.scroll-bottom-btn.scroll-btn-hiding {
+  opacity: 0;
+  pointer-events: none;
+}
+
 @keyframes scrollBtnFadeIn {
   from {
     opacity: 0;

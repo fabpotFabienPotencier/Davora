@@ -1078,6 +1078,7 @@ export default function Davora() {
   };
 
   const scrollRAFRef = useRef(null);
+  const scrollBtnRef = useRef(null);
 
   const handleScroll = () => {
     if (!chatBoxRef.current) return;
@@ -1087,14 +1088,17 @@ export default function Davora() {
       scrollRAFRef.current = null;
       if (!chatBoxRef.current) return;
 
-      // Hide immediately while actively scrolling (ChatGPT-style)
-      setShowScrollButton(false);
+      // Hide immediately while actively scrolling — visual only, does NOT touch
+      // showScrollButton state (that state also drives auto-scroll-to-bottom
+      // elsewhere, so flipping it mid-scroll was fighting the user's scroll-up)
+      if (scrollBtnRef.current) scrollBtnRef.current.classList.add('scroll-btn-hiding');
 
       if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
 
       scrollTimeoutRef.current = setTimeout(() => {
         if (!chatBoxRef.current) return;
         const { scrollTop, scrollHeight, clientHeight } = chatBoxRef.current;
+        if (scrollBtnRef.current) scrollBtnRef.current.classList.remove('scroll-btn-hiding');
         setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
       }, 150);
     });
@@ -2885,6 +2889,7 @@ export default function Davora() {
           {showScrollButton && (
             <button
               type="button"
+              ref={scrollBtnRef}
               className="scroll-bottom-btn"
               onClick={() => scrollToBottom("smooth")}
               title="Scroll to bottom"
