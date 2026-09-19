@@ -3471,4 +3471,14 @@ body.light-theme .pricing-card-clean:hover {
   cursor: not-allowed;
 }
 
+/* Keep the last messages reachable above the keyboard while Find is open (iOS keeps
+   the layout viewport full-height and overlays the keyboard; --find-kb-inset is set in JS) */
+.chat-box.find-open {
+  padding-bottom: calc(24px + var(--find-kb-inset, 0px));
+}
 
+@media (max-width: 768px) {
+  .chat-box.find-open {
+    padding-bottom: calc(12px + var(--find-kb-inset, 0px));
+  }
+}
