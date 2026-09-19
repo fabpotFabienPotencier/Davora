@@ -1077,19 +1077,27 @@ export default function Davora() {
     setPinnedSessionIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
   };
 
+  const scrollRAFRef = useRef(null);
+
   const handleScroll = () => {
     if (!chatBoxRef.current) return;
+    if (scrollRAFRef.current) return; // already scheduled for this frame, skip extra work
 
-    // Hide immediately while actively scrolling (ChatGPT-style)
-    setShowScrollButton(false);
-
-    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
-
-    scrollTimeoutRef.current = setTimeout(() => {
+    scrollRAFRef.current = requestAnimationFrame(() => {
+      scrollRAFRef.current = null;
       if (!chatBoxRef.current) return;
-      const { scrollTop, scrollHeight, clientHeight } = chatBoxRef.current;
-      setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
-    }, 150);
+
+      // Hide immediately while actively scrolling (ChatGPT-style)
+      setShowScrollButton(false);
+
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+
+      scrollTimeoutRef.current = setTimeout(() => {
+        if (!chatBoxRef.current) return;
+        const { scrollTop, scrollHeight, clientHeight } = chatBoxRef.current;
+        setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
+      }, 150);
+    });
   };
 
   const resetStreamWatchdog = () => {
