@@ -2407,6 +2407,7 @@ export default function Davora() {
                         onClick={() => {
                           setShowFindInChat(true);
                           setShowActiveChatMenu(false);
+                          if (inputRef.current) inputRef.current.blur();
                         }}
                       >
                         <Search size={14} />
@@ -2880,7 +2881,8 @@ export default function Davora() {
           <div ref={messagesEndRef} />
         </main>
 
-        {/* Input Area */}
+        {/* Input Area - hidden while Find in chat is open */}
+        {!showFindInChat && (
         <div className={`input-wrapper mode-${inputMode} ${isTemporary ? 'mode-incognito' : ''}`}>
           {/* ChatGPT-Style Centered Scroll to Bottom Down Arrow */}
           {showScrollButton && (
@@ -3140,6 +3142,7 @@ export default function Davora() {
           </form>
           <p className="footer-text">Davora can make mistakes. Consider verifying important information.</p>
         </div>
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}
