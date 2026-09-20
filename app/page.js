@@ -74,6 +74,8 @@ export default function Davora() {
   const [editInput, setEditInput] = useState("");
   const [speakingId, setSpeakingId] = useState(null);
   const [ratings, setRatings] = useState({});
+  const [feedbackToastId, setFeedbackToastId] = useState(null);
+  const feedbackToastTimeoutRef = useRef(null);
 
   // Settings & Preferences
   const [showSettings, setShowSettings] = useState(false);
@@ -1993,9 +1995,49 @@ export default function Davora() {
     }
   };
 
-  const handleRate = (id, rating) => {
-    setRatings(prev => ({ ...prev, [id]: prev[id] === rating ? null : rating }));
+  const dismissFeedbackToast = () => {
+    if (feedbackToastTimeoutRef.current) clearTimeout(feedbackToastTimeoutRef.current);
+    setFeedbackToastId(null);
   };
+
+  const handleRate = (id, rating) => {
+    const isRemoving = ratings[id] === rating;
+    setRatings(prev => ({ ...prev, [id]: prev[id] === rating ? null : rating }));
+    if (isRemoving) {
+      // Taking the rating back: no "thank you" card
+      dismissFeedbackToast();
+      return;
+    }
+    setFeedbackToastId(id);
+    if (feedbackToastTimeoutRef.current) clearTimeout(feedbackToastTimeoutRef.current);
+    feedbackToastTimeoutRef.current = setTimeout(() => setFeedbackToastId(null), 4000);
+  };
+
+  // Clear the feedback card timer when leaving the page
+  useEffect(() => {
+    return () => {
+      if (feedbackToastTimeoutRef.current) clearTimeout(feedbackToastTimeoutRef.current);
+    };
+  }, []);
+
+  // When the card appears under the last message it can land below the visible chat area,
+  // so nudge ONLY the chat box down just enough to reveal it.
+  useEffect(() => {
+    if (feedbackToastId === null || feedbackToastId === undefined) return;
+    const frame = requestAnimationFrame(() => {
+      const box = chatBoxRef.current;
+      const card = document.getElementById(`feedback-toast-${feedbackToastId}`);
+      if (!box || !card) return;
+      const vv = window.visualViewport;
+      const visibleBottom = Math.min(
+        box.getBoundingClientRect().bottom,
+        vv ? vv.offsetTop + vv.height : window.innerHeight
+      );
+      const overflow = card.getBoundingClientRect().bottom - visibleBottom + 12;
+      if (overflow > 0) box.scrollBy({ top: overflow, behavior: 'smooth' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [feedbackToastId]);
 
   const matchingMessageIndices = findQuery.trim()
     ? messages.reduce((acc, m, idx) => {
@@ -2896,11 +2938,11 @@ export default function Davora() {
                         <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
                           {copiedId === msg.id ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
                         </button>
-                        <button onClick={() => handleRate(msg.id, 'up')} className={`toolbar-btn ${ratings[msg.id] === 'up' ? 'text-green-500' : ''}`} title="Good response">
-                          <ThumbsUp size={18} />
+                        <button onClick={() => handleRate(msg.id, 'up')} className={`toolbar-btn ${ratings[msg.id] === 'up' ? 'rated' : ''}`} title="Good response" aria-pressed={ratings[msg.id] === 'up'}>
+                          <ThumbsUp size={18} fill={ratings[msg.id] === 'up' ? 'currentColor' : 'none'} />
                         </button>
-                        <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${ratings[msg.id] === 'down' ? 'text-red-500' : ''}`} title="Bad response">
-                          <ThumbsDown size={18} />
+                        <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${ratings[msg.id] === 'down' ? 'rated' : ''}`} title="Bad response" aria-pressed={ratings[msg.id] === 'down'}>
+                          <ThumbsDown size={18} fill={ratings[msg.id] === 'down' ? 'currentColor' : 'none'} />
                         </button>
                         <button onClick={() => toggleTextToSpeech(msg.content, msg.id)} className={`toolbar-btn ${speakingId === msg.id ? 'active-tts' : ''}`} title={speakingId === msg.id ? "Stop Read Aloud" : "Read Aloud"}>
                           {speakingId === msg.id ? (
@@ -2927,6 +2969,14 @@ export default function Davora() {
                   </div>
                 )}
 
+                {msg.role !== 'user' && feedbackToastId === msg.id && (
+                  <div className="feedback-toast" id={`feedback-toast-${msg.id}`} role="status">
+                    <span>Thank you for your feedback!</span>
+                    <button type="button" className="feedback-toast-close" onClick={dismissFeedbackToast} aria-label="Dismiss">
+                      <X size={20} />
+                    </button>
+                  </div>
+                )}
 
               </div>
             </div>
