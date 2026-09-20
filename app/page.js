@@ -8,7 +8,7 @@ import {
   Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, ChevronUp, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
-  Search, Pencil, Share, Forward, Bookmark, Compass, Folder, Activity, Database, Globe,
+  Search, Pencil, Share, Forward, Bookmark, Compass, Folder, Archive, Activity, Database, Globe,
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight, ShieldCheck,
   VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert, Ghost,
   Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint,
@@ -62,6 +62,8 @@ export default function Davora() {
   const toastTimeoutRef = useRef(null);
   const [openMoreMenuId, setOpenMoreMenuId] = useState(null);
   const [showActiveChatMenu, setShowActiveChatMenu] = useState(false);
+  const [chatMenuView, setChatMenuView] = useState('main'); // 'main' | 'projects'
+  const [archivedSessionIds, setArchivedSessionIds] = useState([]);
   const [longPressMessageId, setLongPressMessageId] = useState(null);
   const touchTimerRef = useRef(null);
   const touchStartRef = useRef({ x: 0, y: 0 });
@@ -190,7 +192,8 @@ export default function Davora() {
   // Derived messages for the active session
   const activeSession = sessions.find(s => s.id === activeSessionId);
   const messages = activeSession ? activeSession.messages : [];
-  const filteredSessions = sessions.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredSessions = sessions.filter(s => !archivedSessionIds.includes(s.id) && s.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const archivedSessions = sessions.filter(s => archivedSessionIds.includes(s.id));
 
   // Rotating suggestion pool — shows 2 random chips at a time
   const allSuggestions = [
@@ -758,6 +761,7 @@ export default function Davora() {
             try { setCanvasArtifacts(JSON.parse(meta.canvas)); } catch (e) { }
             try { setPinnedSessionIds(JSON.parse(meta.pins)); } catch (e) { }
             try { setRatings(JSON.parse(meta.ratings)); } catch (e) { }
+            try { const a = JSON.parse(meta.archived); if (Array.isArray(a)) setArchivedSessionIds(a); } catch (e) { }
 
             const savedActive = meta.active_session_id;
             if (savedActive === "new") {
@@ -1049,6 +1053,20 @@ export default function Davora() {
     syncMetadata({ pins: JSON.stringify(pinnedSessionIds) });
   }, [pinnedSessionIds, isMetadataLoaded]);
 
+  // Archived chats: restore from this device first (the server value, if any, replaces it on load)
+  useEffect(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('davora_archived') || '[]');
+      if (Array.isArray(local)) setArchivedSessionIds(local);
+    } catch (e) { }
+  }, []);
+
+  useEffect(() => {
+    if (!isMetadataLoaded) return;
+    try { localStorage.setItem('davora_archived', JSON.stringify(archivedSessionIds)); } catch (e) { }
+    syncMetadata({ archived: JSON.stringify(archivedSessionIds) });
+  }, [archivedSessionIds, isMetadataLoaded]);
+
   useEffect(() => {
     if (!isMetadataLoaded) return;
     syncMetadata({ canvas: JSON.stringify(canvasArtifacts) });
@@ -1079,6 +1097,60 @@ export default function Davora() {
   const togglePin = (e, id) => {
     e.stopPropagation();
     setPinnedSessionIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
+  };
+
+  const closeChatMenu = () => {
+    setShowActiveChatMenu(false);
+    setChatMenuView('main');
+  };
+
+  // Close the chat menu on a tap/click anywhere outside it, or on Escape
+  useEffect(() => {
+    if (!showActiveChatMenu) return;
+    const onPointerDown = (e) => {
+      if (e.target && e.target.closest && e.target.closest('.active-chat-menu-wrapper')) return;
+      closeChatMenu();
+    };
+    const onKeyDown = (e) => { if (e.key === 'Escape') closeChatMenu(); };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showActiveChatMenu]);
+
+  const archiveSession = (id) => {
+    if (!id) return;
+    setArchivedSessionIds(prev => prev.includes(id) ? prev : [...prev, id]);
+    if (activeSessionIdRef.current === id) activeSessionIdRef.current = null;
+    if (activeSessionId === id) setActiveSessionId(null);
+    showNotification('Chat archived');
+  };
+
+  const unarchiveSession = (id) => {
+    setArchivedSessionIds(prev => prev.filter(x => x !== id));
+    showNotification('Chat unarchived');
+  };
+
+  // Add the open chat to a project, or remove it if it's already in that project
+  const toggleSessionProject = async (sessionId, projId) => {
+    if (!sessionId) return;
+    const session = sessions.find(s => s.id === sessionId);
+    const isLinked = !!session && session.project_id === projId;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${sessionId}/project`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
+        body: JSON.stringify({ project_id: isLinked ? null : projId })
+      });
+      if (!res.ok) throw new Error('Project update failed');
+      setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, project_id: isLinked ? null : projId } : s));
+      showNotification(isLinked ? 'Removed from project.' : 'Added to project!');
+      closeChatMenu();
+    } catch (e) {
+      showNotification('Failed to update project.');
+    }
   };
 
   const scrollRAFRef = useRef(null);
@@ -2257,6 +2329,7 @@ export default function Davora() {
       }
 
       setSessions(prev => prev.filter(s => s.id !== id));
+      setArchivedSessionIds(prev => prev.filter(x => x !== id));
       if (activeSessionId === id) setActiveSessionId(null);
       showNotification("Chat deleted");
       const token = (localStorage.getItem('davora_token') || '');
@@ -2271,6 +2344,7 @@ export default function Davora() {
       sessionsRef.current = [];
 
       setSessions([]);
+      setArchivedSessionIds([]);
       setActiveSessionId(null);
       showNotification("All chats cleared");
       setShowSettings(false);
@@ -2394,6 +2468,11 @@ export default function Davora() {
               )}
             </div>
           ))}
+          {archivedSessions.length > 0 && (
+            <button className="sidebar-nav-btn" style={{ marginTop: '12px' }} onClick={() => setActiveModal('archived')}>
+              <Archive size={16} /> Archived chats ({archivedSessions.length})
+            </button>
+          )}
         </div>
 
         <div className="sidebar-footer" style={{ position: 'relative' }}>
@@ -2528,7 +2607,7 @@ export default function Davora() {
                 <div className="active-chat-menu-wrapper" style={{ position: 'relative' }}>
                   <button
                     className="icon-action-btn"
-                    onClick={() => setShowActiveChatMenu(!showActiveChatMenu)}
+                    onClick={() => { setChatMenuView('main'); setShowActiveChatMenu(!showActiveChatMenu); }}
                     title="More actions"
                     style={{ padding: '8px', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                   >
@@ -2536,32 +2615,92 @@ export default function Davora() {
                   </button>
 
                   {showActiveChatMenu && (
-                    <div className="active-chat-dropdown" style={{ position: 'absolute', right: 0, top: '100%', marginTop: '6px', background: 'var(--bg-sidebar)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '4px', width: '160px', display: 'flex', flexDirection: 'column', gap: '2px', zIndex: 100, boxShadow: '0 10px 25px rgba(0,0,0,0.3)' }}>
-                      <button
-                        className="active-chat-dropdown-item"
-                        onClick={() => {
-                          setShowFindInChat(true);
-                          setShowActiveChatMenu(false);
-                          if (inputRef.current) inputRef.current.blur();
-                        }}
-                      >
-                        <Search size={14} />
-                        <span>Find in chat</span>
-                      </button>
-                      <button
-                        className="active-chat-dropdown-item"
-                        onClick={(e) => { togglePin(e, activeSessionId); setShowActiveChatMenu(false); }}
-                      >
-                        <Pin size={14} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
-                        <span>{pinnedSessionIds.includes(activeSessionId) ? 'Unpin chat' : 'Pin chat'}</span>
-                      </button>
-                      <button
-                        className="active-chat-dropdown-item delete-item"
-                        onClick={(e) => { deleteSession(e, activeSessionId); setShowActiveChatMenu(false); }}
-                      >
-                        <Trash2 size={14} />
-                        <span>Delete chat</span>
-                      </button>
+                    <div className="chat-menu-card" role="menu">
+                      {chatMenuView === 'main' ? (
+                        <>
+                          <div className="chat-menu-title">{(activeSession && activeSession.title) || 'Chat'}</div>
+                          <button
+                            className="chat-menu-item"
+                            onClick={() => { closeChatMenu(); setActiveModal('share'); }}
+                          >
+                            <Forward size={20} />
+                            <span>Share</span>
+                          </button>
+                          <button
+                            className="chat-menu-item"
+                            onClick={(e) => { togglePin(e, activeSessionId); closeChatMenu(); }}
+                          >
+                            <Pin size={20} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
+                            <span>{pinnedSessionIds.includes(activeSessionId) ? 'Unpin' : 'Pin'}</span>
+                          </button>
+                          <button
+                            className="chat-menu-item"
+                            onClick={() => setChatMenuView('projects')}
+                          >
+                            <Folder size={20} />
+                            <span>Add to project</span>
+                            <ChevronRight size={18} className="chat-menu-chevron" />
+                          </button>
+                          <button
+                            className="chat-menu-item"
+                            onClick={() => {
+                              setShowFindInChat(true);
+                              closeChatMenu();
+                              if (inputRef.current) inputRef.current.blur();
+                            }}
+                          >
+                            <Search size={20} />
+                            <span>Find in chat</span>
+                          </button>
+                          <button
+                            className="chat-menu-item"
+                            onClick={() => {
+                              if (archivedSessionIds.includes(activeSessionId)) unarchiveSession(activeSessionId);
+                              else archiveSession(activeSessionId);
+                              closeChatMenu();
+                            }}
+                          >
+                            <Archive size={20} />
+                            <span>{archivedSessionIds.includes(activeSessionId) ? 'Unarchive' : 'Archive'}</span>
+                          </button>
+                          <button
+                            className="chat-menu-item danger"
+                            onClick={(e) => { deleteSession(e, activeSessionId); closeChatMenu(); }}
+                          >
+                            <Trash2 size={20} />
+                            <span>Delete</span>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button className="chat-menu-item chat-menu-back" onClick={() => setChatMenuView('main')}>
+                            <ChevronLeft size={20} />
+                            <span>Add to project</span>
+                          </button>
+                          {projectsList.length > 0 ? (
+                            projectsList.map(proj => (
+                              <button
+                                key={proj.id}
+                                className="chat-menu-item"
+                                onClick={() => toggleSessionProject(activeSessionId, proj.id)}
+                              >
+                                <Folder size={20} />
+                                <span>{proj.name}</span>
+                                {activeSession && activeSession.project_id === proj.id && <Check size={18} className="chat-menu-chevron" />}
+                              </button>
+                            ))
+                          ) : (
+                            <p className="chat-menu-empty">No projects yet</p>
+                          )}
+                          <button
+                            className="chat-menu-item"
+                            onClick={() => { closeChatMenu(); setActiveModal('projects'); }}
+                          >
+                            <FolderPlus size={20} />
+                            <span>{projectsList.length > 0 ? 'Manage projects' : 'Create a project'}</span>
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -4480,11 +4619,35 @@ export default function Davora() {
                 {activeModal === 'schedule' && 'Schedule Task'}
                 {activeModal === 'report' && 'Report Issue'}
                 {activeModal === 'share' && 'Share Chat'}
+                {activeModal === 'archived' && 'Archived chats'}
                 {activeModal === 'upgrade' && 'Upgrade your plan'}
               </h2>
               <button className="icon-action-btn" onClick={() => setActiveModal(null)}><X size={20} /></button>
             </div>
             <div className="modal-body">
+              {activeModal === 'archived' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {archivedSessions.length === 0 ? (
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>No archived chats.</p>
+                  ) : archivedSessions.map(session => (
+                    <div key={session.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <button
+                        style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', color: 'inherit', textAlign: 'left', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.95rem', padding: 0 }}
+                        onClick={() => { setActiveSessionId(session.id); setActiveModal(null); if (window.innerWidth < 768) setSidebarOpen(false); }}
+                      >
+                        {session.title}
+                      </button>
+                      <button
+                        className="outline-btn"
+                        style={{ fontSize: '0.8rem', padding: '6px 12px', flexShrink: 0 }}
+                        onClick={() => unarchiveSession(session.id)}
+                      >
+                        Unarchive
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               {activeModal === 'library' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Select a predefined AI persona to start chatting.</p>
