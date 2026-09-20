@@ -1073,10 +1073,20 @@ body.light-theme .user-expand-toggle-btn:hover {
   transition: all 0.2s;
   min-width: 32px;
   min-height: 32px;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.toolbar-btn:hover {
-  color: var(--text-primary, #ffffff);
+/* Hover highlight only on devices with a real mouse. On touch screens :hover sticks
+   after a tap and leaves a grey box behind the icon until you tap somewhere else. */
+@media (hover: hover) and (pointer: fine) {
+  .toolbar-btn:hover {
+    color: var(--text-primary, #ffffff);
+    background: var(--bg-secondary, rgba(255, 255, 255, 0.08));
+  }
+}
+
+/* Quick press feedback that clears the moment the finger lifts */
+.toolbar-btn:active {
   background: var(--bg-secondary, rgba(255, 255, 255, 0.08));
 }
 

@@ -2010,7 +2010,7 @@ export default function Davora() {
     }
     setFeedbackToastId(id);
     if (feedbackToastTimeoutRef.current) clearTimeout(feedbackToastTimeoutRef.current);
-    feedbackToastTimeoutRef.current = setTimeout(() => setFeedbackToastId(null), 4000);
+    feedbackToastTimeoutRef.current = setTimeout(() => setFeedbackToastId(null), 6000);
   };
 
   // Clear the feedback card timer when leaving the page
