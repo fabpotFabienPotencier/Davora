@@ -2623,23 +2623,23 @@ export default function Davora() {
                             className="chat-menu-item"
                             onClick={() => { closeChatMenu(); setActiveModal('share'); }}
                           >
-                            <Forward size={20} />
+                            <Forward size={17} />
                             <span>Share</span>
                           </button>
                           <button
                             className="chat-menu-item"
                             onClick={(e) => { togglePin(e, activeSessionId); closeChatMenu(); }}
                           >
-                            <Pin size={20} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
+                            <Pin size={17} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
                             <span>{pinnedSessionIds.includes(activeSessionId) ? 'Unpin' : 'Pin'}</span>
                           </button>
                           <button
                             className="chat-menu-item"
                             onClick={() => setChatMenuView('projects')}
                           >
-                            <Folder size={20} />
+                            <Folder size={17} />
                             <span>Add to project</span>
-                            <ChevronRight size={18} className="chat-menu-chevron" />
+                            <ChevronRight size={15} className="chat-menu-chevron" />
                           </button>
                           <button
                             className="chat-menu-item"
@@ -2649,7 +2649,7 @@ export default function Davora() {
                               if (inputRef.current) inputRef.current.blur();
                             }}
                           >
-                            <Search size={20} />
+                            <Search size={17} />
                             <span>Find in chat</span>
                           </button>
                           <button
@@ -2660,21 +2660,21 @@ export default function Davora() {
                               closeChatMenu();
                             }}
                           >
-                            <Archive size={20} />
+                            <Archive size={15} style={{ margin: '0 1px' }} />
                             <span>{archivedSessionIds.includes(activeSessionId) ? 'Unarchive' : 'Archive'}</span>
                           </button>
                           <button
                             className="chat-menu-item danger"
                             onClick={(e) => { deleteSession(e, activeSessionId); closeChatMenu(); }}
                           >
-                            <Trash2 size={20} />
+                            <Trash2 size={17} />
                             <span>Delete</span>
                           </button>
                         </>
                       ) : (
                         <>
                           <button className="chat-menu-item chat-menu-back" onClick={() => setChatMenuView('main')}>
-                            <ChevronLeft size={20} />
+                            <ChevronLeft size={17} />
                             <span>Add to project</span>
                           </button>
                           {projectsList.length > 0 ? (
@@ -2684,9 +2684,9 @@ export default function Davora() {
                                 className="chat-menu-item"
                                 onClick={() => toggleSessionProject(activeSessionId, proj.id)}
                               >
-                                <Folder size={20} />
+                                <Folder size={17} />
                                 <span>{proj.name}</span>
-                                {activeSession && activeSession.project_id === proj.id && <Check size={18} className="chat-menu-chevron" />}
+                                {activeSession && activeSession.project_id === proj.id && <Check size={15} className="chat-menu-chevron" />}
                               </button>
                             ))
                           ) : (
@@ -2696,7 +2696,7 @@ export default function Davora() {
                             className="chat-menu-item"
                             onClick={() => { closeChatMenu(); setActiveModal('projects'); }}
                           >
-                            <FolderPlus size={20} />
+                            <FolderPlus size={17} />
                             <span>{projectsList.length > 0 ? 'Manage projects' : 'Create a project'}</span>
                           </button>
                         </>
