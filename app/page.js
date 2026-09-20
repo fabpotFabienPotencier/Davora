@@ -2017,19 +2017,90 @@ export default function Davora() {
     }
   }, [showFindInChat]);
 
-  useEffect(() => {
-    if (matchingMessageIndices.length > 0) {
-      const clampedIndex = Math.min(currentFindIndex, matchingMessageIndices.length - 1);
-      const msgIndex = matchingMessageIndices[clampedIndex];
-      const targetMsg = messages[msgIndex];
-      if (targetMsg) {
-        const targetId = targetMsg.id || msgIndex;
-        const el = document.getElementById(`msg-node-${targetId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }
+  // Pushes any accidental page-level scroll back to 0 so the Find pill (and header)
+  // can never get carried off-screen. Only the chat box is meant to scroll.
+  const resetOuterScroll = () => {
+    if (typeof window === 'undefined') return;
+    let node = chatBoxRef.current ? chatBoxRef.current.parentElement : null;
+    while (node) {
+      if (node.scrollTop) node.scrollTop = 0;
+      if (node.scrollLeft) node.scrollLeft = 0;
+      node = node.parentElement;
     }
+    if (window.pageYOffset || window.pageXOffset) window.scrollTo(0, 0);
+  };
+
+  // While Find is open: keep the page pinned, and tell the chat box how much of its
+  // bottom edge the keyboard covers. Android resizes the WebView (covered = 0), while
+  // iOS keeps the layout viewport and only shrinks visualViewport (covered = keyboard).
+  useEffect(() => {
+    if (!showFindInChat || typeof window === 'undefined') return;
+    const vv = window.visualViewport;
+    const sync = () => {
+      resetOuterScroll();
+      const box = chatBoxRef.current;
+      if (!box) return;
+      const visibleBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+      const covered = Math.max(0, Math.round(box.getBoundingClientRect().bottom - visibleBottom));
+      box.style.setProperty('--find-kb-inset', `${covered}px`);
+    };
+    sync();
+    window.addEventListener('scroll', sync);
+    window.addEventListener('resize', sync);
+    if (vv) {
+      vv.addEventListener('resize', sync);
+      vv.addEventListener('scroll', sync);
+    }
+    return () => {
+      window.removeEventListener('scroll', sync);
+      window.removeEventListener('resize', sync);
+      if (vv) {
+        vv.removeEventListener('resize', sync);
+        vv.removeEventListener('scroll', sync);
+      }
+      if (chatBoxRef.current) chatBoxRef.current.style.removeProperty('--find-kb-inset');
+    };
+  }, [showFindInChat]);
+
+  // Jump to the active match by scrolling ONLY the chat box (never scrollIntoView,
+  // which also scrolls the page/ancestors and dragged the Find pill off-screen).
+  useEffect(() => {
+    if (!showFindInChat || matchingMessageIndices.length === 0) return;
+    const clampedIndex = Math.min(currentFindIndex, matchingMessageIndices.length - 1);
+    const msgIndex = matchingMessageIndices[clampedIndex];
+    const targetMsg = messages[msgIndex];
+    if (!targetMsg) return;
+    const targetId = targetMsg.id || msgIndex;
+
+    const frame = requestAnimationFrame(() => {
+      const box = chatBoxRef.current;
+      const el = document.getElementById(`msg-node-${targetId}`);
+      if (!box || !el) return;
+
+      const boxRect = box.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const vv = window.visualViewport;
+      const vvTop = vv ? vv.offsetTop : 0;
+      const vvBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+
+      // The part of the chat box the user can actually see (above the keyboard)
+      const visibleTop = Math.max(boxRect.top, vvTop);
+      const visibleBottom = Math.min(boxRect.bottom, vvBottom);
+      const visibleHeight = visibleBottom - visibleTop;
+      if (visibleHeight <= 0) return;
+
+      // Centre short messages; for tall ones, line up the top with a little breathing room
+      const margin = 16;
+      const desiredTop = elRect.height > visibleHeight - margin * 2
+        ? visibleTop + margin
+        : visibleTop + (visibleHeight - elRect.height) / 2;
+
+      const elTopInContent = elRect.top - boxRect.top + box.scrollTop;
+      const nextScrollTop = elTopInContent - (desiredTop - boxRect.top);
+      box.scrollTo({ top: Math.max(0, nextScrollTop), behavior: 'smooth' });
+    });
+
+    return () => cancelAnimationFrame(frame);
   }, [currentFindIndex, findQuery]);
 
   const handleNextFind = () => {
@@ -2468,6 +2539,7 @@ export default function Davora() {
               <button
                 type="button"
                 onClick={handleNextFind}
+                onMouseDown={(e) => e.preventDefault()}
                 disabled={matchingMessageIndices.length <= 1}
                 className="find-nav-btn"
                 title="Next match (Enter)"
@@ -2478,6 +2550,7 @@ export default function Davora() {
               <button
                 type="button"
                 onClick={handlePrevFind}
+                onMouseDown={(e) => e.preventDefault()}
                 disabled={matchingMessageIndices.length <= 1}
                 className="find-nav-btn"
                 title="Previous match (Shift+Enter)"
@@ -2490,7 +2563,7 @@ export default function Davora() {
         )}
 
         {/* Chat Box */}
-        <main className="chat-box" ref={chatBoxRef} onScroll={handleScroll}>
+        <main className={`chat-box${showFindInChat ? ' find-open' : ''}`} ref={chatBoxRef} onScroll={handleScroll}>
           {messages.length === 0 && (
             <div className="welcome-screen" style={isTemporary ? { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', padding: '24px' } : {}}>
               {isTemporary ? (
