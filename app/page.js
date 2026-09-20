@@ -74,8 +74,10 @@ export default function Davora() {
   const [editInput, setEditInput] = useState("");
   const [speakingId, setSpeakingId] = useState(null);
   const [ratings, setRatings] = useState({});
-  const [feedbackToastId, setFeedbackToastId] = useState(null);
-  const feedbackToastTimeoutRef = useRef(null);
+  const [feedbackToastId, setFeedbackToastId] = useState(null); // message whose card is visible
+  const [thumbFillId, setThumbFillId] = useState(null); // message whose thumb is shown solid
+  const feedbackDelayTimeoutRef = useRef(null); // waits before the card appears
+  const feedbackToastTimeoutRef = useRef(null); // hides the card once it has been shown
 
   // Settings & Preferences
   const [showSettings, setShowSettings] = useState(false);
@@ -1995,29 +1997,47 @@ export default function Davora() {
     }
   };
 
-  const dismissFeedbackToast = () => {
+  const clearFeedbackTimers = () => {
+    if (feedbackDelayTimeoutRef.current) clearTimeout(feedbackDelayTimeoutRef.current);
     if (feedbackToastTimeoutRef.current) clearTimeout(feedbackToastTimeoutRef.current);
+  };
+
+  // Hides the card AND returns the thumb to its outline
+  const dismissFeedbackToast = () => {
+    clearFeedbackTimers();
     setFeedbackToastId(null);
+    setThumbFillId(null);
   };
 
   const handleRate = (id, rating) => {
-    // The solid thumb only shows while the "thank you" card is up, so tapping a
-    // thumb that is currently filled means "take my rating back".
-    const isFilledNow = feedbackToastId === id && ratings[id] === rating;
+    // A thumb that is currently solid means "take my rating back" (no card in that case,
+    // and if the card is still waiting to appear it is cancelled).
+    const isFilledNow = thumbFillId === id && ratings[id] === rating;
     if (isFilledNow) {
       setRatings(prev => ({ ...prev, [id]: null }));
       dismissFeedbackToast();
       return;
     }
     setRatings(prev => ({ ...prev, [id]: rating }));
-    setFeedbackToastId(id);
-    if (feedbackToastTimeoutRef.current) clearTimeout(feedbackToastTimeoutRef.current);
-    feedbackToastTimeoutRef.current = setTimeout(() => setFeedbackToastId(null), 6000);
+
+    // Thumb turns solid right away; the card shows after 2s and stays for 6s,
+    // then the card and the solid thumb go away together.
+    clearFeedbackTimers();
+    setFeedbackToastId(null);
+    setThumbFillId(id);
+    feedbackDelayTimeoutRef.current = setTimeout(() => {
+      setFeedbackToastId(id);
+      feedbackToastTimeoutRef.current = setTimeout(() => {
+        setFeedbackToastId(null);
+        setThumbFillId(null);
+      }, 6000);
+    }, 2000);
   };
 
-  // Clear the feedback card timer when leaving the page
+  // Clear the feedback timers when leaving the page
   useEffect(() => {
     return () => {
+      if (feedbackDelayTimeoutRef.current) clearTimeout(feedbackDelayTimeoutRef.current);
       if (feedbackToastTimeoutRef.current) clearTimeout(feedbackToastTimeoutRef.current);
     };
   }, []);
@@ -2940,11 +2960,11 @@ export default function Davora() {
                         <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
                           {copiedId === msg.id ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
                         </button>
-                        <button onClick={() => handleRate(msg.id, 'up')} className={`toolbar-btn ${feedbackToastId === msg.id && ratings[msg.id] === 'up' ? 'rated' : ''}`} title="Good response" aria-pressed={feedbackToastId === msg.id && ratings[msg.id] === 'up'}>
-                          <ThumbsUp size={18} fill={feedbackToastId === msg.id && ratings[msg.id] === 'up' ? 'currentColor' : 'none'} />
+                        <button onClick={() => handleRate(msg.id, 'up')} className={`toolbar-btn ${thumbFillId === msg.id && ratings[msg.id] === 'up' ? 'rated' : ''}`} title="Good response" aria-pressed={thumbFillId === msg.id && ratings[msg.id] === 'up'}>
+                          <ThumbsUp size={18} fill={thumbFillId === msg.id && ratings[msg.id] === 'up' ? 'currentColor' : 'none'} />
                         </button>
-                        <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${feedbackToastId === msg.id && ratings[msg.id] === 'down' ? 'rated' : ''}`} title="Bad response" aria-pressed={feedbackToastId === msg.id && ratings[msg.id] === 'down'}>
-                          <ThumbsDown size={18} fill={feedbackToastId === msg.id && ratings[msg.id] === 'down' ? 'currentColor' : 'none'} />
+                        <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${thumbFillId === msg.id && ratings[msg.id] === 'down' ? 'rated' : ''}`} title="Bad response" aria-pressed={thumbFillId === msg.id && ratings[msg.id] === 'down'}>
+                          <ThumbsDown size={18} fill={thumbFillId === msg.id && ratings[msg.id] === 'down' ? 'currentColor' : 'none'} />
                         </button>
                         <button onClick={() => toggleTextToSpeech(msg.content, msg.id)} className={`toolbar-btn ${speakingId === msg.id ? 'active-tts' : ''}`} title={speakingId === msg.id ? "Stop Read Aloud" : "Read Aloud"}>
                           {speakingId === msg.id ? (
