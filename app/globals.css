@@ -3086,7 +3086,9 @@ body.light-theme .user-expand-toggle-btn:hover {
   right: 0;
   top: 100%;
   margin-top: 8px;
-  width: min(224px, calc(100vw - 32px));
+  width: max-content;
+  min-width: 176px;
+  max-width: min(260px, calc(100vw - 32px));
   max-height: calc(100vh - 140px);
   max-height: calc(100dvh - 140px);
   overflow-y: auto;
@@ -3110,6 +3112,9 @@ body.light-theme .chat-menu-card {
 }
 
 .chat-menu-title {
+  box-sizing: border-box;
+  width: 0;
+  min-width: 100%;
   padding: 8px 12px 4px;
   font-size: 0.8rem;
   color: var(--text-secondary);
