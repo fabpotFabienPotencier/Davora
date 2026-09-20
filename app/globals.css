@@ -3095,7 +3095,8 @@ body.light-theme .user-expand-toggle-btn:hover {
   overscroll-behavior: contain;
   box-sizing: border-box;
   padding: 6px;
-  background: #262626;
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #f5f5f5;
   border-radius: 16px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
