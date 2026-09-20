@@ -3080,33 +3080,114 @@ body.light-theme .user-expand-toggle-btn:hover {
   box-shadow: none !important;
 }
 
-/* Active Chat Header Menu Dropdown */
-.active-chat-dropdown-item {
+/* Active Chat Header Menu (ChatGPT-style card) */
+.chat-menu-card {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 8px;
+  width: min(280px, calc(100vw - 32px));
+  max-height: calc(100vh - 140px);
+  max-height: calc(100dvh - 140px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  padding: 8px;
+  background: #262626;
+  color: #f5f5f5;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  z-index: 100;
+  transform-origin: top right;
+  animation: chatMenuIn 0.16s ease-out;
+}
+
+body.light-theme .chat-menu-card {
+  background: #ffffff;
+  color: #0d0d0d;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+.chat-menu-title {
+  padding: 10px 14px 6px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-menu-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
   width: 100%;
-  padding: 8px 12px;
+  min-height: 48px;
+  padding: 0 14px;
   border: none;
+  border-radius: 12px;
   background: transparent;
-  color: var(--text-primary);
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.85rem;
+  color: inherit;
+  font-size: 1rem;
   text-align: left;
-  transition: background 0.15s ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.active-chat-dropdown-item:hover {
-  background: var(--bg-secondary);
+.chat-menu-item > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.active-chat-dropdown-item.delete-item {
-  color: #ef4444;
+.chat-menu-item svg {
+  flex-shrink: 0;
 }
 
-.active-chat-dropdown-item.delete-item:hover {
-  background: rgba(239, 68, 68, 0.1);
+.chat-menu-chevron {
+  opacity: 0.7;
+}
+
+.chat-menu-back {
+  font-weight: 600;
+}
+
+/* Hover highlight only for real mice; touch screens get a press state that clears on release */
+@media (hover: hover) and (pointer: fine) {
+  .chat-menu-item:hover {
+    background: rgba(128, 128, 128, 0.18);
+  }
+}
+
+.chat-menu-item:active {
+  background: rgba(128, 128, 128, 0.18);
+}
+
+.chat-menu-item.danger {
+  color: #f87171;
+}
+
+body.light-theme .chat-menu-item.danger {
+  color: #dc2626;
+}
+
+.chat-menu-empty {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+@keyframes chatMenuIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-menu-card { animation: none; }
 }
 
 .primary-action-btn {
