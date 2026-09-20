@@ -2001,13 +2001,15 @@ export default function Davora() {
   };
 
   const handleRate = (id, rating) => {
-    const isRemoving = ratings[id] === rating;
-    setRatings(prev => ({ ...prev, [id]: prev[id] === rating ? null : rating }));
-    if (isRemoving) {
-      // Taking the rating back: no "thank you" card
+    // The solid thumb only shows while the "thank you" card is up, so tapping a
+    // thumb that is currently filled means "take my rating back".
+    const isFilledNow = feedbackToastId === id && ratings[id] === rating;
+    if (isFilledNow) {
+      setRatings(prev => ({ ...prev, [id]: null }));
       dismissFeedbackToast();
       return;
     }
+    setRatings(prev => ({ ...prev, [id]: rating }));
     setFeedbackToastId(id);
     if (feedbackToastTimeoutRef.current) clearTimeout(feedbackToastTimeoutRef.current);
     feedbackToastTimeoutRef.current = setTimeout(() => setFeedbackToastId(null), 6000);
@@ -2938,11 +2940,11 @@ export default function Davora() {
                         <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
                           {copiedId === msg.id ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
                         </button>
-                        <button onClick={() => handleRate(msg.id, 'up')} className={`toolbar-btn ${ratings[msg.id] === 'up' ? 'rated' : ''}`} title="Good response" aria-pressed={ratings[msg.id] === 'up'}>
-                          <ThumbsUp size={18} fill={ratings[msg.id] === 'up' ? 'currentColor' : 'none'} />
+                        <button onClick={() => handleRate(msg.id, 'up')} className={`toolbar-btn ${feedbackToastId === msg.id && ratings[msg.id] === 'up' ? 'rated' : ''}`} title="Good response" aria-pressed={feedbackToastId === msg.id && ratings[msg.id] === 'up'}>
+                          <ThumbsUp size={18} fill={feedbackToastId === msg.id && ratings[msg.id] === 'up' ? 'currentColor' : 'none'} />
                         </button>
-                        <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${ratings[msg.id] === 'down' ? 'rated' : ''}`} title="Bad response" aria-pressed={ratings[msg.id] === 'down'}>
-                          <ThumbsDown size={18} fill={ratings[msg.id] === 'down' ? 'currentColor' : 'none'} />
+                        <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${feedbackToastId === msg.id && ratings[msg.id] === 'down' ? 'rated' : ''}`} title="Bad response" aria-pressed={feedbackToastId === msg.id && ratings[msg.id] === 'down'}>
+                          <ThumbsDown size={18} fill={feedbackToastId === msg.id && ratings[msg.id] === 'down' ? 'currentColor' : 'none'} />
                         </button>
                         <button onClick={() => toggleTextToSpeech(msg.content, msg.id)} className={`toolbar-btn ${speakingId === msg.id ? 'active-tts' : ''}`} title={speakingId === msg.id ? "Stop Read Aloud" : "Read Aloud"}>
                           {speakingId === msg.id ? (
