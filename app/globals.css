@@ -3187,6 +3187,28 @@ body.light-theme .chat-menu-item.danger {
   color: var(--text-secondary);
 }
 
+/* "Add to project" expands inline instead of switching screens */
+.chat-menu-caret {
+  transition: transform 0.18s ease;
+}
+
+.chat-menu-caret.open {
+  transform: rotate(180deg);
+}
+
+.chat-menu-subsection {
+  display: flex;
+  flex-direction: column;
+  margin: 2px 0 4px;
+  padding-left: 6px;
+  border-left: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.chat-menu-subitem {
+  min-height: 40px;
+}
+
+
 @keyframes chatMenuIn {
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
