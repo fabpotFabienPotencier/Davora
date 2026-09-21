@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import ProjectsPage, { ProjectIcon } from "./ProjectsPage";
 import {
   Send, User, Bot, Loader2, Copy, Check,
   PlusCircle, Download, Square, ArrowDown,
@@ -140,6 +141,8 @@ export default function Davora() {
   // Modals inputs
   const [projectName, setProjectName] = useState("");
   const [projectsList, setProjectsList] = useState([]);
+  const [projectMeta, setProjectMeta] = useState({}); // { [projectId]: { icon, instructions } }
+  const [projectFiles, setProjectFiles] = useState({}); // { [projectId]: [{ id, name, size, ext, text }] } (this device only)
   const [schedulePrompt, setSchedulePrompt] = useState("");
   const [scheduleTime, setScheduleTime] = useState("");
   const [reportText, setReportText] = useState("");
@@ -762,6 +765,7 @@ export default function Davora() {
             try { setPinnedSessionIds(JSON.parse(meta.pins)); } catch (e) { }
             try { setRatings(JSON.parse(meta.ratings)); } catch (e) { }
             try { const a = JSON.parse(meta.archived); if (Array.isArray(a)) setArchivedSessionIds(a); } catch (e) { }
+            try { const pm = JSON.parse(meta.project_meta); if (pm && typeof pm === 'object' && !Array.isArray(pm)) setProjectMeta(pm); } catch (e) { }
 
             const savedActive = meta.active_session_id;
             if (savedActive === "new") {
@@ -1067,6 +1071,24 @@ export default function Davora() {
     syncMetadata({ archived: JSON.stringify(archivedSessionIds) });
   }, [archivedSessionIds, isMetadataLoaded]);
 
+  // Project icons + instructions: restore from this device first (the server value, if any, replaces it on load)
+  useEffect(() => {
+    try {
+      const m = JSON.parse(localStorage.getItem('davora_project_meta') || '{}');
+      if (m && typeof m === 'object' && !Array.isArray(m)) setProjectMeta(m);
+    } catch (e) { }
+    try {
+      const f = JSON.parse(localStorage.getItem('davora_project_files') || '{}');
+      if (f && typeof f === 'object' && !Array.isArray(f)) setProjectFiles(f);
+    } catch (e) { }
+  }, []);
+
+  // Icons + instructions follow the account when the server accepts them; files stay on this device
+  useEffect(() => {
+    if (!isMetadataLoaded) return;
+    syncMetadata({ project_meta: JSON.stringify(projectMeta) });
+  }, [projectMeta, isMetadataLoaded]);
+
   useEffect(() => {
     if (!isMetadataLoaded) return;
     syncMetadata({ canvas: JSON.stringify(canvasArtifacts) });
@@ -1097,6 +1119,100 @@ export default function Davora() {
   const togglePin = (e, id) => {
     e.stopPropagation();
     setPinnedSessionIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
+  };
+
+  // ---- Projects: create / save / delete from the Projects page ----
+  const saveProjectDetails = (id, { icon, instructions, files }) => {
+    const nextMeta = { ...projectMeta, [id]: { icon, instructions } };
+    const nextFiles = { ...projectFiles, [id]: files };
+    setProjectMeta(nextMeta);
+    setProjectFiles(nextFiles);
+    try { localStorage.setItem('davora_project_meta', JSON.stringify(nextMeta)); } catch (e) { }
+    try {
+      localStorage.setItem('davora_project_files', JSON.stringify(nextFiles));
+    } catch (e) {
+      showNotification('Not enough storage on this device to keep all the project files.');
+    }
+  };
+
+  const createProjectFromPage = async ({ name, icon, instructions, files }) => {
+    try {
+      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
+        body: JSON.stringify({ name })
+      });
+      if (!res.ok) throw new Error('Create project failed');
+      const newProj = await res.json();
+      setProjectsList(prev => [...prev, newProj]);
+      saveProjectDetails(newProj.id, { icon, instructions, files });
+      showNotification('Project created!');
+      return true;
+    } catch (e) {
+      showNotification('Failed to create project');
+      return false;
+    }
+  };
+
+  const saveExistingProject = (id, details) => {
+    saveProjectDetails(id, details);
+    showNotification('Project saved!');
+  };
+
+  const deleteProjectFromPage = async (proj) => {
+    if (!confirm("Are you sure you want to delete this project? Any linked chats will be unlinked.")) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/projects/${proj.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` }
+      });
+      if (!res.ok) throw new Error('Delete project failed');
+      setProjectsList(prev => prev.filter(p => p.id !== proj.id));
+      setSessions(prev => prev.map(s => s.project_id === proj.id ? { ...s, project_id: null } : s));
+      const nextMeta = { ...projectMeta };
+      delete nextMeta[proj.id];
+      const nextFiles = { ...projectFiles };
+      delete nextFiles[proj.id];
+      setProjectMeta(nextMeta);
+      setProjectFiles(nextFiles);
+      try { localStorage.setItem('davora_project_meta', JSON.stringify(nextMeta)); } catch (e) { }
+      try { localStorage.setItem('davora_project_files', JSON.stringify(nextFiles)); } catch (e) { }
+      showNotification('Project deleted!');
+    } catch (e) {
+      showNotification('Failed to delete project.');
+    }
+  };
+
+  // Chats inside a project follow that project's instructions and see its text files.
+  // Chats outside a project get exactly the user's own custom instructions, as before.
+  const buildCustomInstructions = (sessionId) => {
+    const base = prefs.customInstructions || '';
+    const session = sessions.find(x => x.id === sessionId) || (sessionsRef.current || []).find(x => x.id === sessionId);
+    const projId = session && session.project_id;
+    if (!projId) return base;
+
+    const parts = [];
+    if (base) parts.push(base);
+
+    const instr = ((projectMeta[projId] && projectMeta[projId].instructions) || '').trim();
+    if (instr) parts.push('Project instructions (follow these for this whole chat):\n' + instr.slice(0, 4000));
+
+    const files = projectFiles[projId] || [];
+    if (files.length > 0) {
+      let budget = 24000;
+      const blocks = [];
+      for (const f of files) {
+        if (budget <= 0) break;
+        const header = `--- ${f.name} ---\n`;
+        const room = budget - header.length;
+        if (room <= 0) break;
+        const text = (f.text || '').slice(0, room);
+        blocks.push(header + text + ((f.text || '').length > room ? '\n[file truncated]' : ''));
+        budget -= header.length + text.length;
+      }
+      if (blocks.length) parts.push('Project files (reference material for this project):\n' + blocks.join('\n\n'));
+    }
+    return parts.join('\n\n');
   };
 
   const closeChatMenu = () => {
@@ -1810,7 +1926,7 @@ export default function Davora() {
       mode: inputMode,
       model: selectedModel,
       isTemporary: isTemporary,
-      customInstructions: prefs.customInstructions,
+      customInstructions: buildCustomInstructions(targetSessionId),
       baseStyle: prefs.baseStyle,
       characteristicsWarm: prefs.characteristicsWarm,
       characteristicsEnthusiastic: prefs.characteristicsEnthusiastic,
@@ -1919,7 +2035,7 @@ export default function Davora() {
       mode: inputMode,
       model: selectedModel,
       isTemporary: isTemporary,
-      customInstructions: prefs.customInstructions,
+      customInstructions: buildCustomInstructions(activeSessionId),
       baseStyle: prefs.baseStyle,
       characteristicsWarm: prefs.characteristicsWarm,
       characteristicsEnthusiastic: prefs.characteristicsEnthusiastic,
@@ -2684,7 +2800,7 @@ export default function Davora() {
                                 className="chat-menu-item"
                                 onClick={() => toggleSessionProject(activeSessionId, proj.id)}
                               >
-                                <Folder size={17} />
+                                <ProjectIcon name={projectMeta[proj.id] && projectMeta[proj.id].icon} size={17} />
                                 <span>{proj.name}</span>
                                 {activeSession && activeSession.project_id === proj.id && <Check size={15} className="chat-menu-chevron" />}
                               </button>
@@ -4605,13 +4721,25 @@ export default function Davora() {
       )}
 
       {/* Dynamic Feature Modals */}
-      {activeModal && (
+      {activeModal === 'projects' && (
+        <ProjectsPage
+          projects={projectsList}
+          sessions={sessions}
+          projectMeta={projectMeta}
+          projectFiles={projectFiles}
+          onClose={() => setActiveModal(null)}
+          onCreate={createProjectFromPage}
+          onSaveExisting={saveExistingProject}
+          onDelete={deleteProjectFromPage}
+          notify={showNotification}
+        />
+      )}
+      {activeModal && activeModal !== 'projects' && (
         <div className="modal-overlay" onClick={() => setActiveModal(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: activeModal === 'upgrade' ? '920px' : '600px', width: '92%' }}>
             <div className="modal-header">
               <h2>
                 {activeModal === 'library' && 'Prompt Library'}
-                {activeModal === 'projects' && 'Your Projects'}
                 {activeModal === 'apps' && 'Connected Apps'}
                 {activeModal === 'codex' && 'Code Snippets'}
                 {activeModal === 'memory' && 'Davora Memory'}
@@ -4656,119 +4784,6 @@ export default function Davora() {
                       <Bot size={16} /> {role}
                     </button>
                   ))}
-                </div>
-              )}
-              {activeModal === 'projects' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {projectsList.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Select a project to link the current chat.</p>
-                      {projectsList.map(proj => {
-                        const activeSession = sessions.find(s => s.id === activeSessionId);
-                        const isLinked = activeSession && activeSession.project_id === proj.id;
-                        return (
-                          <div key={proj.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-primary)', borderRadius: '8px', border: isLinked ? '1px solid #10b981' : '1px solid var(--border-color)' }}>
-                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}><Folder size={18} /> {proj.name}</div>
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              {activeSessionId && (
-                                <button
-                                  className="outline-btn"
-                                  style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                                  onClick={async () => {
-                                    try {
-                                      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/sessions/${activeSessionId}/project`, {
-                                        method: 'PUT',
-                                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
-                                        body: JSON.stringify({ project_id: isLinked ? null : proj.id })
-                                      });
-                                      setSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, project_id: isLinked ? null : proj.id } : s));
-                                      showNotification(isLinked ? 'Chat unlinked.' : 'Chat linked to project!');
-                                    } catch (e) { showNotification('Failed to link chat.'); }
-                                  }}
-                                >
-                                  {isLinked ? (
-                                    <>
-                                      <Link2Off size={14} /> Unlink
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Link2 size={14} /> Link Chat
-                                    </>
-                                  )}
-                                </button>
-                              )}
-                              <button
-                                className="icon-action-btn delete"
-                                style={{ padding: '6px', color: '#ef4444', border: '1px solid var(--border-color)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                onClick={async () => {
-                                  if (!confirm("Are you sure you want to delete this project? Any linked chats will be unlinked.")) return;
-                                  try {
-                                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz'}/api/projects/${proj.id}`, {
-                                      method: 'DELETE',
-                                      headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` }
-                                    });
-                                    if (res.ok) {
-                                      setProjectsList(prev => prev.filter(p => p.id !== proj.id));
-                                      setSessions(prev => prev.map(s => s.project_id === proj.id ? { ...s, project_id: null } : s));
-                                      showNotification('Project deleted!');
-                                    } else {
-                                      showNotification('Failed to delete project.');
-                                    }
-                                  } catch (e) { showNotification('Failed to delete project.'); }
-                                }}
-                                title="Delete Project"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="canvas-empty-state">
-                      <FolderKanban size={32} className="text-secondary mb-4" />
-                      <h3>No Projects Yet</h3>
-                      <p>Group your chats into projects for better organization.</p>
-                    </div>
-                  )}
-                  <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
-                    <input type="text" className="sidebar-search-input" style={{ flex: 1, minWidth: 0, padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)' }} placeholder="New Project Name" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
-                    <button
-                      style={{
-                        padding: '10px 20px',
-                        background: 'var(--text-primary)',
-                        color: 'var(--bg-primary)',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        whiteSpace: 'nowrap',
-                        flexShrink: 0
-                      }}
-                      onClick={async () => {
-                        if (!projectName) return;
-                        try {
-                          const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/projects', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
-                            body: JSON.stringify({ name: projectName })
-                          });
-                          if (res.ok) {
-                            const newProj = await res.json();
-                            setProjectsList(prev => [...prev, newProj]);
-                            setProjectName("");
-                            showNotification('Project created!');
-                          }
-                        } catch (e) { showNotification('Failed to create project'); }
-                      }}
-                    >
-                      <FolderPlus size={16} /> Create
-                    </button>
-                  </div>
                 </div>
               )}
               {activeModal === 'apps' && (
