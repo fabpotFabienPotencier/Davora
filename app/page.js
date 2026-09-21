@@ -63,7 +63,7 @@ export default function Davora() {
   const toastTimeoutRef = useRef(null);
   const [openMoreMenuId, setOpenMoreMenuId] = useState(null);
   const [showActiveChatMenu, setShowActiveChatMenu] = useState(false);
-  const [chatMenuView, setChatMenuView] = useState('main'); // 'main' | 'projects'
+  const [projectSectionOpen, setProjectSectionOpen] = useState(false); // "Add to project" expanded inline
   const [archivedSessionIds, setArchivedSessionIds] = useState([]);
   const [longPressMessageId, setLongPressMessageId] = useState(null);
   const touchTimerRef = useRef(null);
@@ -1217,7 +1217,7 @@ export default function Davora() {
 
   const closeChatMenu = () => {
     setShowActiveChatMenu(false);
-    setChatMenuView('main');
+    setProjectSectionOpen(false);
   };
 
   // Close the chat menu on a tap/click anywhere outside it, or on Escape
@@ -2723,7 +2723,7 @@ export default function Davora() {
                 <div className="active-chat-menu-wrapper" style={{ position: 'relative' }}>
                   <button
                     className="icon-action-btn"
-                    onClick={() => { setChatMenuView('main'); setShowActiveChatMenu(!showActiveChatMenu); }}
+                    onClick={() => { setProjectSectionOpen(false); setShowActiveChatMenu(!showActiveChatMenu); }}
                     title="More actions"
                     style={{ padding: '8px', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                   >
@@ -2732,91 +2732,83 @@ export default function Davora() {
 
                   {showActiveChatMenu && (
                     <div className="chat-menu-card" role="menu">
-                      {chatMenuView === 'main' ? (
-                        <>
-                          <div className="chat-menu-title">{(activeSession && activeSession.title) || 'Chat'}</div>
+                      <div className="chat-menu-title">{(activeSession && activeSession.title) || 'Chat'}</div>
+                      <button
+                        className="chat-menu-item"
+                        onClick={() => { closeChatMenu(); setActiveModal('share'); }}
+                      >
+                        <Forward size={17} />
+                        <span>Share</span>
+                      </button>
+                      <button
+                        className="chat-menu-item"
+                        onClick={(e) => { togglePin(e, activeSessionId); closeChatMenu(); }}
+                      >
+                        <Pin size={17} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
+                        <span>{pinnedSessionIds.includes(activeSessionId) ? 'Unpin' : 'Pin'}</span>
+                      </button>
+
+                      <button
+                        className="chat-menu-item"
+                        onClick={() => setProjectSectionOpen(v => !v)}
+                        aria-expanded={projectSectionOpen}
+                      >
+                        <Folder size={17} />
+                        <span>Add to project</span>
+                        <ChevronDown size={15} className={`chat-menu-chevron chat-menu-caret ${projectSectionOpen ? 'open' : ''}`} />
+                      </button>
+                      {projectSectionOpen && (
+                        <div className="chat-menu-subsection">
+                          {projectsList.map(proj => (
+                            <button
+                              key={proj.id}
+                              className="chat-menu-item chat-menu-subitem"
+                              onClick={() => toggleSessionProject(activeSessionId, proj.id)}
+                            >
+                              <ProjectIcon name={projectMeta[proj.id] && projectMeta[proj.id].icon} size={17} />
+                              <span>{proj.name}</span>
+                              {activeSession && activeSession.project_id === proj.id && <Check size={15} className="chat-menu-chevron" />}
+                            </button>
+                          ))}
                           <button
-                            className="chat-menu-item"
-                            onClick={() => { closeChatMenu(); setActiveModal('share'); }}
-                          >
-                            <Forward size={17} />
-                            <span>Share</span>
-                          </button>
-                          <button
-                            className="chat-menu-item"
-                            onClick={(e) => { togglePin(e, activeSessionId); closeChatMenu(); }}
-                          >
-                            <Pin size={17} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
-                            <span>{pinnedSessionIds.includes(activeSessionId) ? 'Unpin' : 'Pin'}</span>
-                          </button>
-                          <button
-                            className="chat-menu-item"
-                            onClick={() => setChatMenuView('projects')}
-                          >
-                            <Folder size={17} />
-                            <span>Add to project</span>
-                            <ChevronRight size={15} className="chat-menu-chevron" />
-                          </button>
-                          <button
-                            className="chat-menu-item"
-                            onClick={() => {
-                              setShowFindInChat(true);
-                              closeChatMenu();
-                              if (inputRef.current) inputRef.current.blur();
-                            }}
-                          >
-                            <Search size={17} />
-                            <span>Find in chat</span>
-                          </button>
-                          <button
-                            className="chat-menu-item"
-                            onClick={() => {
-                              if (archivedSessionIds.includes(activeSessionId)) unarchiveSession(activeSessionId);
-                              else archiveSession(activeSessionId);
-                              closeChatMenu();
-                            }}
-                          >
-                            <Archive size={15} style={{ margin: '0 1px' }} />
-                            <span>{archivedSessionIds.includes(activeSessionId) ? 'Unarchive' : 'Archive'}</span>
-                          </button>
-                          <button
-                            className="chat-menu-item danger"
-                            onClick={(e) => { deleteSession(e, activeSessionId); closeChatMenu(); }}
-                          >
-                            <Trash2 size={17} />
-                            <span>Delete</span>
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button className="chat-menu-item chat-menu-back" onClick={() => setChatMenuView('main')}>
-                            <ChevronLeft size={17} />
-                            <span>Add to project</span>
-                          </button>
-                          {projectsList.length > 0 ? (
-                            projectsList.map(proj => (
-                              <button
-                                key={proj.id}
-                                className="chat-menu-item"
-                                onClick={() => toggleSessionProject(activeSessionId, proj.id)}
-                              >
-                                <ProjectIcon name={projectMeta[proj.id] && projectMeta[proj.id].icon} size={17} />
-                                <span>{proj.name}</span>
-                                {activeSession && activeSession.project_id === proj.id && <Check size={15} className="chat-menu-chevron" />}
-                              </button>
-                            ))
-                          ) : (
-                            <p className="chat-menu-empty">No projects yet</p>
-                          )}
-                          <button
-                            className="chat-menu-item"
+                            className="chat-menu-item chat-menu-subitem"
                             onClick={() => { closeChatMenu(); setActiveModal('projects'); }}
                           >
                             <FolderPlus size={17} />
-                            <span>{projectsList.length > 0 ? 'Manage projects' : 'Create a project'}</span>
+                            <span>{projectsList.length > 0 ? 'New project' : 'Create a project'}</span>
                           </button>
-                        </>
+                        </div>
                       )}
+
+                      <button
+                        className="chat-menu-item"
+                        onClick={() => {
+                          setShowFindInChat(true);
+                          closeChatMenu();
+                          if (inputRef.current) inputRef.current.blur();
+                        }}
+                      >
+                        <Search size={17} />
+                        <span>Find in chat</span>
+                      </button>
+                      <button
+                        className="chat-menu-item"
+                        onClick={() => {
+                          if (archivedSessionIds.includes(activeSessionId)) unarchiveSession(activeSessionId);
+                          else archiveSession(activeSessionId);
+                          closeChatMenu();
+                        }}
+                      >
+                        <Archive size={15} style={{ margin: '0 1px' }} />
+                        <span>{archivedSessionIds.includes(activeSessionId) ? 'Unarchive' : 'Archive'}</span>
+                      </button>
+                      <button
+                        className="chat-menu-item danger"
+                        onClick={(e) => { deleteSession(e, activeSessionId); closeChatMenu(); }}
+                      >
+                        <Trash2 size={17} />
+                        <span>Delete</span>
+                      </button>
                     </div>
                   )}
                 </div>
