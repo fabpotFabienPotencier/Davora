@@ -63,7 +63,9 @@ export default function Davora() {
   const toastTimeoutRef = useRef(null);
   const [openMoreMenuId, setOpenMoreMenuId] = useState(null);
   const [showActiveChatMenu, setShowActiveChatMenu] = useState(false);
-  const [projectSectionOpen, setProjectSectionOpen] = useState(false); // "Add to project" expanded inline
+  const [projectSectionOpen, setProjectSectionOpen] = useState(false); // "Add to project" popover open
+  const [projectPopoverTop, setProjectPopoverTop] = useState(0);
+  const projectRowRef = useRef(null);
   const [archivedSessionIds, setArchivedSessionIds] = useState([]);
   const [longPressMessageId, setLongPressMessageId] = useState(null);
   const touchTimerRef = useRef(null);
@@ -2749,36 +2751,20 @@ export default function Davora() {
                       </button>
 
                       <button
+                        ref={projectRowRef}
                         className="chat-menu-item"
-                        onClick={() => setProjectSectionOpen(v => !v)}
+                        onClick={() => {
+                          if (!projectSectionOpen && projectRowRef.current) {
+                            setProjectPopoverTop(projectRowRef.current.offsetTop);
+                          }
+                          setProjectSectionOpen(v => !v);
+                        }}
                         aria-expanded={projectSectionOpen}
                       >
                         <Folder size={17} />
                         <span>Add to project</span>
-                        <ChevronDown size={15} className={`chat-menu-chevron chat-menu-caret ${projectSectionOpen ? 'open' : ''}`} />
+                        <ChevronDown size={15} className="chat-menu-chevron" />
                       </button>
-                      {projectSectionOpen && (
-                        <div className="chat-menu-subsection">
-                          {projectsList.map(proj => (
-                            <button
-                              key={proj.id}
-                              className="chat-menu-item chat-menu-subitem"
-                              onClick={() => toggleSessionProject(activeSessionId, proj.id)}
-                            >
-                              <ProjectIcon name={projectMeta[proj.id] && projectMeta[proj.id].icon} size={17} />
-                              <span>{proj.name}</span>
-                              {activeSession && activeSession.project_id === proj.id && <Check size={15} className="chat-menu-chevron" />}
-                            </button>
-                          ))}
-                          <button
-                            className="chat-menu-item chat-menu-subitem"
-                            onClick={() => { closeChatMenu(); setActiveModal('projects'); }}
-                          >
-                            <FolderPlus size={17} />
-                            <span>{projectsList.length > 0 ? 'New project' : 'Create a project'}</span>
-                          </button>
-                        </div>
-                      )}
 
                       <button
                         className="chat-menu-item"
@@ -2810,6 +2796,41 @@ export default function Davora() {
                         <span>Delete</span>
                       </button>
                     </div>
+                  )}
+
+                  {showActiveChatMenu && projectSectionOpen && (
+                    <>
+                      <div className="chat-menu-dim" onClick={() => setProjectSectionOpen(false)} />
+                      <div className="chat-menu-popover" role="menu" style={{ top: projectPopoverTop }}>
+                        <button className="chat-menu-item chat-menu-popover-header" onClick={() => setProjectSectionOpen(false)}>
+                          <Folder size={17} />
+                          <span>Add to project</span>
+                          <ChevronUp size={15} className="chat-menu-chevron" />
+                        </button>
+                        {projectsList.length > 0 && (
+                          <div className="chat-menu-divider" />
+                        )}
+                        {projectsList.map(proj => (
+                          <button
+                            key={proj.id}
+                            className="chat-menu-item"
+                            onClick={() => toggleSessionProject(activeSessionId, proj.id)}
+                          >
+                            <ProjectIcon name={projectMeta[proj.id] && projectMeta[proj.id].icon} size={17} />
+                            <span>{proj.name}</span>
+                            {activeSession && activeSession.project_id === proj.id && <Check size={15} className="chat-menu-chevron" />}
+                          </button>
+                        ))}
+                        {projectsList.length === 0 && <div className="chat-menu-divider" />}
+                        <button
+                          className="chat-menu-item"
+                          onClick={() => { closeChatMenu(); setActiveModal('projects'); }}
+                        >
+                          <FolderPlus size={17} />
+                          <span>{projectsList.length > 0 ? 'New project' : 'Create a project'}</span>
+                        </button>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
