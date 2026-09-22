@@ -67,9 +67,20 @@ jobs:
       run: |
         sed -i 's/compileSdkVersion = [0-9]*/compileSdkVersion = 36/g' android/variables.gradle
         sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 36/g' android/variables.gradle
-        sed -i 's/compileSdkVersion [0-9]*/compileSdkVersion 36/g' android/app/build.gradle || true
-        sed -i 's/targetSdkVersion [0-9]*/targetSdkVersion 36/g' android/app/build.gradle || true
-        echo "subprojects { configurations.all { exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'; exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'; resolutionStrategy.force 'com.android.billingclient:billing:8.0.0'; resolutionStrategy.force 'com.android.billingclient:billing-ktx:8.0.0' } }" >> android/build.gradle
+        sed -i 's/gradle:8.2.1/gradle:8.5.0/g' android/build.gradle
+        cat << 'EOF' >> android/build.gradle
+
+subprojects {
+    configurations.all {
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+        resolutionStrategy {
+            force 'com.android.billingclient:billing:8.0.0'
+            force 'com.android.billingclient:billing-ktx:8.0.0'
+        }
+    }
+}
+EOF
 
     - name: Add Permissions to AndroidManifest
       run: |
