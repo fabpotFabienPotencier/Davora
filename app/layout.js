@@ -16,10 +16,15 @@ export const viewport = {
   viewportFit: 'cover',
 }
 
+import PushNotificationManager from '../components/PushNotificationManager'
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <PushNotificationManager />
+        {children}
+      </body>
     </html>
   )
 }

@@ -33,35 +33,24 @@ jobs:
         EXPORT_MOBILE: 'true'
 
     - name: Install Capacitor Core & Android
-      run: npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/browser@6
+      run: npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/browser@6 @capacitor/push-notifications@6
 
     - name: Add and Sync Android Platform
       run: |
         npx cap add android
         npx cap sync android
+        cp google-services.json android/app/google-services.json
 
     - name: Update Android App Version
       run: |
-        sed -i 's/versionCode 1/versionCode 8/g' android/app/build.gradle
-        sed -i 's/versionName "1.0"/versionName "1.0.4"/g' android/app/build.gradle
+        sed -i 's/versionCode 1/versionCode 5/g' android/app/build.gradle
+        sed -i 's/versionName "1.0"/versionName "1.0.1.0"/g' android/app/build.gradle
 
-    - name: Set up Python for Icon & Splash Generation
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.x'
-
-    - name: Generate Custom Davora App Icons & Splash Screens
+    - name: Update Android SDK Configuration
       run: |
-        python -m pip install Pillow
-        python .github/workflows/generate_icons.py
-
-    - name: Update Android SDK & Play Billing Library Configuration
-      run: |
-        sed -i 's/compileSdkVersion = [0-9]*/compileSdkVersion = 36/g' android/variables.gradle
-        sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 36/g' android/variables.gradle
-        echo "repositories { google(); mavenCentral() }" >> android/app/build.gradle
-        echo "dependencies { implementation 'com.android.billingclient:billing:8.0.0'; implementation 'com.android.billingclient:billing-ktx:8.0.0' }" >> android/app/build.gradle
-        echo "configurations.all { resolutionStrategy { force 'com.android.billingclient:billing:8.0.0', 'com.android.billingclient:billing-ktx:8.0.0' }; exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'; exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7' }" >> android/app/build.gradle
+        sed -i 's/compileSdkVersion = [0-9]*/compileSdkVersion = 35/g' android/variables.gradle
+        sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 35/g' android/variables.gradle
+        echo "subprojects { configurations.all { exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'; exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7' } }" >> android/build.gradle
 
     - name: Add Microphone Permission to AndroidManifest
       run: |
