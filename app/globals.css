@@ -3656,7 +3656,8 @@ body.light-theme .pricing-card-clean:hover {
   margin-top: 10px;
   padding: 12px 14px 12px 18px;
   border-radius: 14px;
-  background: #262626;
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #f5f5f5;
   font-size: 0.95rem;
   line-height: 1.4;
@@ -3664,7 +3665,8 @@ body.light-theme .pricing-card-clean:hover {
 }
 
 body.light-theme .feedback-toast {
-  background: #f0f0f0;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
   color: #0d0d0d;
 }
 
