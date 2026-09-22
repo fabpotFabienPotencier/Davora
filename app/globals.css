@@ -3200,8 +3200,8 @@ body.light-theme .chat-menu-item.danger {
   position: absolute;
   right: 0;
   width: max-content;
-  min-width: 176px;
-  max-width: min(260px, calc(100vw - 32px));
+  min-width: 200px;
+  max-width: min(300px, calc(100vw - 32px));
   max-height: calc(100vh - 140px);
   max-height: calc(100dvh - 140px);
   overflow-y: auto;
@@ -3227,6 +3227,13 @@ body.light-theme .chat-menu-popover {
 
 .chat-menu-popover-header {
   font-weight: 600;
+}
+
+/* Rows inside the "Add to project" popover read a size up, like ChatGPT's active card */
+.chat-menu-item-lg {
+  min-height: 52px;
+  gap: 14px;
+  font-size: 1.08rem;
 }
 
 .chat-menu-divider {
