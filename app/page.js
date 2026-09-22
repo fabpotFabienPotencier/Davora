@@ -2802,10 +2802,10 @@ export default function Davora() {
                     <>
                       <div className="chat-menu-dim" onClick={() => setProjectSectionOpen(false)} />
                       <div className="chat-menu-popover" role="menu" style={{ top: projectPopoverTop }}>
-                        <button className="chat-menu-item chat-menu-popover-header" onClick={() => setProjectSectionOpen(false)}>
-                          <Folder size={17} />
+                        <button className="chat-menu-item chat-menu-item-lg chat-menu-popover-header" onClick={() => setProjectSectionOpen(false)}>
+                          <Folder size={20} />
                           <span>Add to project</span>
-                          <ChevronUp size={15} className="chat-menu-chevron" />
+                          <ChevronUp size={18} className="chat-menu-chevron" />
                         </button>
                         {projectsList.length > 0 && (
                           <div className="chat-menu-divider" />
@@ -2813,20 +2813,20 @@ export default function Davora() {
                         {projectsList.map(proj => (
                           <button
                             key={proj.id}
-                            className="chat-menu-item"
+                            className="chat-menu-item chat-menu-item-lg"
                             onClick={() => toggleSessionProject(activeSessionId, proj.id)}
                           >
-                            <ProjectIcon name={projectMeta[proj.id] && projectMeta[proj.id].icon} size={17} />
+                            <ProjectIcon name={projectMeta[proj.id] && projectMeta[proj.id].icon} size={20} />
                             <span>{proj.name}</span>
-                            {activeSession && activeSession.project_id === proj.id && <Check size={15} className="chat-menu-chevron" />}
+                            {activeSession && activeSession.project_id === proj.id && <Check size={18} className="chat-menu-chevron" />}
                           </button>
                         ))}
                         {projectsList.length === 0 && <div className="chat-menu-divider" />}
                         <button
-                          className="chat-menu-item"
+                          className="chat-menu-item chat-menu-item-lg"
                           onClick={() => { closeChatMenu(); setActiveModal('projects'); }}
                         >
-                          <FolderPlus size={17} />
+                          <FolderPlus size={20} />
                           <span>{projectsList.length > 0 ? 'New project' : 'Create a project'}</span>
                         </button>
                       </div>
