@@ -1,6 +1,42 @@
 import os
 import re
 
+def patch_native_purchases():
+    target_files = []
+    for search_dir in ["node_modules", "android"]:
+        if os.path.exists(search_dir):
+            for root, dirs, files in os.walk(search_dir):
+                for file in files:
+                    if file == "NativePurchasesPlugin.java":
+                        target_files.append(os.path.join(root, file))
+
+    if not target_files:
+        print("Note: NativePurchasesPlugin.java not found to patch.")
+        return
+
+    for plugin_path in set(target_files):
+        print(f"Patching {plugin_path} for Play Billing 8 compatibility...")
+        with open(plugin_path, "r", encoding="utf-8") as f:
+            plugin_code = f.read()
+
+        # Fix 1: enablePendingPurchases() requires PendingPurchasesParams in Billing 8
+        plugin_code = re.sub(
+            r'\.enablePendingPurchases\(\)',
+            '.enablePendingPurchases(com.android.billingclient.api.PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())',
+            plugin_code
+        )
+
+        # Fix 2: onProductDetailsResponse signature changed to (BillingResult, QueryProductDetailsResult) in Billing 8
+        old_sig = re.compile(r'public\s+void\s+onProductDetailsResponse\s*\(\s*BillingResult\s+([^,]+)\s*,\s*List<ProductDetails>\s+([^)]+)\s*\)\s*\{')
+        plugin_code = old_sig.sub(
+            r'public void onProductDetailsResponse(BillingResult \1, com.android.billingclient.api.QueryProductDetailsResult _qRes) {\n                    List<ProductDetails> \2 = _qRes.getProductDetailsList();',
+            plugin_code
+        )
+
+        with open(plugin_path, "w", encoding="utf-8") as f:
+            f.write(plugin_code)
+        print(f"Successfully patched {plugin_path} for Play Billing 8!")
+
 def main():
     print("--- Starting Android Project Configuration ---")
 
@@ -125,6 +161,9 @@ allprojects {
             print("Added permissions to AndroidManifest.xml")
     else:
         print(f"Warning: {manifest_path} not found")
+
+    # 7. Patch @capgo/native-purchases for Play Billing 8 compatibility
+    patch_native_purchases()
 
     print("--- Android Project Configuration Complete ---")
 
