@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProjectsPage, { ProjectIcon } from "./ProjectsPage";
 import {
@@ -29,6 +29,8 @@ export default function Davora() {
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const activeSessionIdRef = useRef(null);
+  const sessionScrollPositions = useRef({}); // { [sessionId]: scrollTop } — remembered while the app stays open
+  const prevActiveSessionIdRef = useRef(undefined); // used to tell a session switch apart from a same-session update
   const sessionsRef = useRef([]);
   const scrollTimeoutRef = useRef(null); // debounce for ChatGPT-style scroll arrow
   const [sidebarOpen, setSidebarOpen] = useState(false); // Start closed on mobile to prevent blocking
@@ -1283,6 +1285,11 @@ export default function Davora() {
       scrollRAFRef.current = null;
       if (!chatBoxRef.current) return;
 
+      // Remember where they are in this chat so re-entering it restores the same spot
+      if (activeSessionIdRef.current) {
+        sessionScrollPositions.current[activeSessionIdRef.current] = chatBoxRef.current.scrollTop;
+      }
+
       // Hide immediately while actively scrolling — visual only, does NOT touch
       // showScrollButton state (that state also drives auto-scroll-to-bottom
       // elsewhere, so flipping it mid-scroll was fighting the user's scroll-up)
@@ -1585,7 +1592,23 @@ export default function Davora() {
     }
   };
 
+  // Entering/switching a chat should never force-jump to the bottom. Put the chat back
+  // where the user left it, or at the top the first time we show this session.
+  useLayoutEffect(() => {
+    const box = chatBoxRef.current;
+    if (!box) return;
+    const saved = sessionScrollPositions.current[activeSessionId];
+    box.scrollTop = typeof saved === 'number' ? saved : 0;
+    const { scrollTop, scrollHeight, clientHeight } = box;
+    setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
+  }, [activeSessionId]);
+
+  // While viewing a chat: follow new messages/streaming down ONLY if already at the bottom.
+  // Skipped right after a session switch — the layout effect above already placed the scroll.
   useEffect(() => {
+    const sessionJustChanged = prevActiveSessionIdRef.current !== activeSessionId;
+    prevActiveSessionIdRef.current = activeSessionId;
+    if (sessionJustChanged) return;
     if (!showScrollButton) scrollToBottom("auto");
   }, [messages, isTyping, showScrollButton, activeSessionId]);
 
