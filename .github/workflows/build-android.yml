@@ -56,7 +56,7 @@ jobs:
         python3 -m pip install Pillow
         python3 .github/workflows/generate_icons.py
 
-    - name: Configure Android Project (SDK 36, Billing 8, Gradle 8.5)
+    - name: Configure Android Project (SDK 36, Billing 8, Gradle 8.7)
       run: python3 .github/workflows/configure_android.py
 
     - name: Build Android Binaries

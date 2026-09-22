@@ -78,16 +78,16 @@ allprojects {
     else:
         print(f"Warning: {root_gradle_path} not found")
 
-    # 4. Update Gradle wrapper to 8.5
+    # 4. Update Gradle wrapper to 8.7
     wrapper_path = "android/gradle/wrapper/gradle-wrapper.properties"
     if os.path.exists(wrapper_path):
         with open(wrapper_path, "r", encoding="utf-8") as f:
             wrapper_content = f.read()
-        wrapper_content = re.sub(r'gradle-[\d\.]+-all\.zip', 'gradle-8.5-all.zip', wrapper_content)
-        wrapper_content = re.sub(r'gradle-[\d\.]+-bin\.zip', 'gradle-8.5-all.zip', wrapper_content)
+        wrapper_content = re.sub(r'gradle-[\d\.]+-all\.zip', 'gradle-8.7-all.zip', wrapper_content)
+        wrapper_content = re.sub(r'gradle-[\d\.]+-bin\.zip', 'gradle-8.7-all.zip', wrapper_content)
         with open(wrapper_path, "w", encoding="utf-8") as f:
             f.write(wrapper_content)
-        print(f"Updated Gradle wrapper to 8.5")
+        print(f"Updated Gradle wrapper to 8.7")
     else:
         print(f"Warning: {wrapper_path} not found")
 
