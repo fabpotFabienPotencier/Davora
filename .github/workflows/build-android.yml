@@ -42,8 +42,89 @@ jobs:
 
     - name: Update Android App Version
       run: |
-        sed -i 's/versionCode 1/versionCode 7/g' android/app/build.gradle
-        sed -i 's/versionName "1.0"/versionName "1.0.3"/g' android/app/build.gradle
+        sed -i 's/versionCode 1/versionCode 8/g' android/app/build.gradle
+        sed -i 's/versionName "1.0"/versionName "1.0.4"/g' android/app/build.gradle
+
+    - name: Set up Python for Icon & Splash Generation
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Generate Custom Davora App Icons & Splash Screens
+      run: |
+        python -m pip install Pillow
+        python -c '
+import os
+from PIL import Image
+
+src_icon = ".github/workflows/app_icon.png"
+if not os.path.exists(src_icon):
+    src_icon = "app_icon.png"
+
+img = Image.open(src_icon).convert("RGBA")
+res_dir = "android/app/src/main/res"
+
+# 1. Launcher and Round icons
+mipmap_sizes = {
+    "mipmap-mdpi": (48, 48),
+    "mipmap-hdpi": (72, 72),
+    "mipmap-xhdpi": (96, 96),
+    "mipmap-xxhdpi": (144, 144),
+    "mipmap-xxxhdpi": (192, 192),
+}
+
+# 2. Adaptive Foreground icons
+foreground_sizes = {
+    "mipmap-mdpi": (108, 108),
+    "mipmap-hdpi": (162, 162),
+    "mipmap-xhdpi": (216, 216),
+    "mipmap-xxhdpi": (324, 324),
+    "mipmap-xxxhdpi": (432, 432),
+}
+
+for folder, size in mipmap_sizes.items():
+    target_folder = os.path.join(res_dir, folder)
+    os.makedirs(target_folder, exist_ok=True)
+    resized = img.resize(size, Image.LANCZOS)
+    resized.save(os.path.join(target_folder, "ic_launcher.png"), "PNG")
+    resized.save(os.path.join(target_folder, "ic_launcher_round.png"), "PNG")
+
+for folder, size in foreground_sizes.items():
+    target_folder = os.path.join(res_dir, folder)
+    os.makedirs(target_folder, exist_ok=True)
+    fg_resized = img.resize(size, Image.LANCZOS)
+    fg_resized.save(os.path.join(target_folder, "ic_launcher_foreground.png"), "PNG")
+
+# 3. Splash screens with sleek dark background (#0a0a0c) and centered Davora logo
+splash_sizes = {
+    "drawable": (480, 800),
+    "drawable-port-mdpi": (320, 480),
+    "drawable-port-hdpi": (480, 800),
+    "drawable-port-xhdpi": (720, 1280),
+    "drawable-port-xxhdpi": (960, 1600),
+    "drawable-port-xxxhdpi": (1280, 1920),
+    "drawable-land-mdpi": (480, 320),
+    "drawable-land-hdpi": (800, 480),
+    "drawable-land-xhdpi": (1280, 720),
+    "drawable-land-xxhdpi": (1600, 960),
+    "drawable-land-xxxhdpi": (1920, 1280),
+}
+
+bg_color = (10, 10, 12, 255)
+
+for folder, (w, h) in splash_sizes.items():
+    target_folder = os.path.join(res_dir, folder)
+    os.makedirs(target_folder, exist_ok=True)
+    splash_img = Image.new("RGBA", (w, h), bg_color)
+    max_logo_size = int(min(w, h) * 0.38)
+    logo_resized = img.resize((max_logo_size, max_logo_size), Image.LANCZOS)
+    x = (w - max_logo_size) // 2
+    y = (h - max_logo_size) // 2
+    splash_img.paste(logo_resized, (x, y), logo_resized)
+    splash_img.save(os.path.join(target_folder, "splash.png"), "PNG")
+
+print("Generated all custom Davora launcher icons & splash screens successfully!")
+'
 
     - name: Update Android SDK & Play Billing Library Configuration
       run: |
