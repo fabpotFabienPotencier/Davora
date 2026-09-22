@@ -56,40 +56,8 @@ jobs:
         python3 -m pip install Pillow
         python3 .github/workflows/generate_icons.py
 
-    - name: Update Android App Version
-      run: |
-        VERSION_CODE=$((200 + ${{ github.run_number }}))
-        echo "Setting unique versionCode to $VERSION_CODE"
-        sed -i "s/versionCode 1/versionCode $VERSION_CODE/g" android/app/build.gradle
-        sed -i 's/versionName "1.0"/versionName "2.5.0"/g' android/app/build.gradle
-
-    - name: Update Android SDK Configuration & Play Billing 8
-      run: |
-        sed -i 's/compileSdkVersion = [0-9]*/compileSdkVersion = 36/g' android/variables.gradle
-        sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 36/g' android/variables.gradle
-        sed -i 's/gradle:8.2.1/gradle:8.5.0/g' android/build.gradle
-        cat << 'EOF' >> android/build.gradle
-
-subprojects {
-    configurations.all {
-        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
-        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
-        resolutionStrategy {
-            force 'com.android.billingclient:billing:8.0.0'
-            force 'com.android.billingclient:billing-ktx:8.0.0'
-        }
-    }
-}
-EOF
-
-    - name: Add Permissions to AndroidManifest
-      run: |
-        sed -i '/<application/i \    <uses-permission android:name="android.permission.RECORD_AUDIO" />' android/app/src/main/AndroidManifest.xml
-        sed -i '/<application/i \    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' android/app/src/main/AndroidManifest.xml
-
-    - name: Upgrade Gradle Wrapper to 8.5
-      run: |
-        sed -i 's/gradle-8.2.1-all.zip/gradle-8.5-all.zip/g' android/gradle/wrapper/gradle-wrapper.properties
+    - name: Configure Android Project (SDK 36, Billing 8, Gradle 8.5)
+      run: python3 .github/workflows/configure_android.py
 
     - name: Build Android Binaries
       run: |
