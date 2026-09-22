@@ -1,4 +1,4 @@
-name: Build Android Appt (APK & AAB Bundle)
+name: Build Android App (APK & AAB Bundle)
 
 on:
   push:
