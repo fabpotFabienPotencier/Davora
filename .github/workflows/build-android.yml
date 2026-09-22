@@ -38,12 +38,68 @@ jobs:
     - name: Add and Sync Android Platform
       run: |
         npx cap add android
+        if [ -f "google-services.json" ]; then
+          cp google-services.json android/app/google-services.json
+          echo "google-services.json successfully copied to android/app/"
+        else
+          echo "Warning: google-services.json not found in root"
+        fi
         npx cap sync android
-        cp google-services.json android/app/google-services.json
+
+    - name: Generate and Apply Davora App Icons & Splash
+      run: |
+        python3 -m pip install Pillow
+        python3 -c '
+from PIL import Image
+import os
+
+icon_path = ".github/workflows/app_icon.png"
+if not os.path.exists(icon_path):
+    print("Warning: app_icon.png not found at " + icon_path)
+    exit(0)
+
+img = Image.open(icon_path).convert("RGBA")
+res_dir = "android/app/src/main/res"
+
+densities = {
+    "mipmap-mdpi": (48, 108),
+    "mipmap-hdpi": (72, 162),
+    "mipmap-xhdpi": (96, 216),
+    "mipmap-xxhdpi": (144, 324),
+    "mipmap-xxxhdpi": (192, 432)
+}
+
+for folder, (icon_size, fg_size) in densities.items():
+    folder_path = os.path.join(res_dir, folder)
+    os.makedirs(folder_path, exist_ok=True)
+    
+    icon_resized = img.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
+    icon_resized.save(os.path.join(folder_path, "ic_launcher.png"), "PNG")
+    icon_resized.save(os.path.join(folder_path, "ic_launcher_round.png"), "PNG")
+    
+    fg_resized = img.resize((fg_size, fg_size), Image.Resampling.LANCZOS)
+    fg_resized.save(os.path.join(folder_path, "ic_launcher_foreground.png"), "PNG")
+
+bg_xml = os.path.join(res_dir, "values", "ic_launcher_background.xml")
+os.makedirs(os.path.dirname(bg_xml), exist_ok=True)
+with open(bg_xml, "w", encoding="utf-8") as f:
+    f.write("""<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>
+""")
+
+for root, dirs, files in os.walk(res_dir):
+    for f in files:
+        if f == "splash.png":
+            img.save(os.path.join(root, f), "PNG")
+
+print("Davora app icons and branding successfully applied!")
+'
 
     - name: Update Android App Version
       run: |
-        sed -i 's/versionCode 1/versionCode 6/g' android/app/build.gradle
+        sed -i 's/versionCode 1/versionCode 7/g' android/app/build.gradle
         sed -i 's/versionName "1.0"/versionName "2.0.0"/g' android/app/build.gradle
 
     - name: Update Android SDK Configuration
@@ -52,9 +108,10 @@ jobs:
         sed -i 's/targetSdkVersion = [0-9]*/targetSdkVersion = 35/g' android/variables.gradle
         echo "subprojects { configurations.all { exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'; exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7' } }" >> android/build.gradle
 
-    - name: Add Microphone Permission to AndroidManifest
+    - name: Add Permissions to AndroidManifest
       run: |
         sed -i '/<application/i \    <uses-permission android:name="android.permission.RECORD_AUDIO" />' android/app/src/main/AndroidManifest.xml
+        sed -i '/<application/i \    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />' android/app/src/main/AndroidManifest.xml
 
     - name: Upgrade Gradle Wrapper to 8.5
       run: |

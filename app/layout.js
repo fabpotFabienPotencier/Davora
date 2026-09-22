@@ -1,5 +1,6 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
+import PushNotificationManager from '../components/PushNotificationManager'
 
 const inter = Inter({ subsets: ['latin'] })
 
