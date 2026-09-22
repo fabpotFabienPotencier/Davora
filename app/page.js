@@ -1592,13 +1592,15 @@ export default function Davora() {
     }
   };
 
-  // Entering/switching a chat should never force-jump to the bottom. Put the chat back
-  // where the user left it, or at the top the first time we show this session.
+  // Entering/switching a chat should never force-jump to the bottom of a chat you're
+  // already mid-way through reading. Put it back where you left it. The first time you
+  // open a given chat this session, show the latest messages (bottom) like any chat app —
+  // there's nothing to "remember" yet, so there's no earlier position to preserve.
   useLayoutEffect(() => {
     const box = chatBoxRef.current;
     if (!box) return;
     const saved = sessionScrollPositions.current[activeSessionId];
-    box.scrollTop = typeof saved === 'number' ? saved : 0;
+    box.scrollTop = typeof saved === 'number' ? saved : box.scrollHeight;
     const { scrollTop, scrollHeight, clientHeight } = box;
     setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
   }, [activeSessionId]);
