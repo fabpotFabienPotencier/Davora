@@ -83,6 +83,7 @@ export default function Davora() {
   const [thumbFillId, setThumbFillId] = useState(null); // message whose thumb is shown solid
   const feedbackDelayTimeoutRef = useRef(null); // waits before the card appears
   const feedbackToastTimeoutRef = useRef(null); // hides the card once it has been shown
+  const feedbackThumbResetRef = useRef(null); // returns the thumb to its outline, just after the card leaves
 
   // Settings & Preferences
   const [showSettings, setShowSettings] = useState(false);
@@ -2190,6 +2191,7 @@ export default function Davora() {
   const clearFeedbackTimers = () => {
     if (feedbackDelayTimeoutRef.current) clearTimeout(feedbackDelayTimeoutRef.current);
     if (feedbackToastTimeoutRef.current) clearTimeout(feedbackToastTimeoutRef.current);
+    if (feedbackThumbResetRef.current) clearTimeout(feedbackThumbResetRef.current);
   };
 
   // Hides the card AND returns the thumb to its outline
@@ -2210,8 +2212,8 @@ export default function Davora() {
     }
     setRatings(prev => ({ ...prev, [id]: rating }));
 
-    // Thumb turns solid right away; the card shows after 2s and stays for 6s,
-    // then the card and the solid thumb go away together.
+    // Thumb turns solid right away; the card shows after 2s and stays for 6s.
+    // The card leaves first, then the thumb reverts half a second later.
     clearFeedbackTimers();
     setFeedbackToastId(null);
     setThumbFillId(id);
@@ -2219,7 +2221,7 @@ export default function Davora() {
       setFeedbackToastId(id);
       feedbackToastTimeoutRef.current = setTimeout(() => {
         setFeedbackToastId(null);
-        setThumbFillId(null);
+        feedbackThumbResetRef.current = setTimeout(() => setThumbFillId(null), 500);
       }, 6000);
     }, 2000);
   };
@@ -2229,6 +2231,7 @@ export default function Davora() {
     return () => {
       if (feedbackDelayTimeoutRef.current) clearTimeout(feedbackDelayTimeoutRef.current);
       if (feedbackToastTimeoutRef.current) clearTimeout(feedbackToastTimeoutRef.current);
+      if (feedbackThumbResetRef.current) clearTimeout(feedbackThumbResetRef.current);
     };
   }, []);
 
