@@ -1600,7 +1600,14 @@ export default function Davora() {
     const box = chatBoxRef.current;
     if (!box) return;
     const saved = sessionScrollPositions.current[activeSessionId];
+    // .chat-box has `scroll-behavior: smooth` in CSS, which animates EVERY scroll change —
+    // including this one. Force this specific jump to be instant so opening/switching a
+    // chat never shows a visible glide; restore smooth right after for things that should
+    // still animate (the down-arrow button, new messages streaming in while you're here).
+    const prevScrollBehavior = box.style.scrollBehavior;
+    box.style.scrollBehavior = 'auto';
     box.scrollTop = typeof saved === 'number' ? saved : box.scrollHeight;
+    box.style.scrollBehavior = prevScrollBehavior;
     const { scrollTop, scrollHeight, clientHeight } = box;
     setShowScrollButton(scrollHeight - scrollTop - clientHeight > 100);
   }, [activeSessionId]);
