@@ -170,6 +170,7 @@ export default function Davora() {
   const ws = useRef(null);
   const streamWatchdogRef = useRef(null);
   const inputRef = useRef(null);
+  const [isComposerFocused, setIsComposerFocused] = useState(false); // keyboard open to type a message (not Find in chat)
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
   const audioRef = useRef(null);
@@ -2319,11 +2320,16 @@ export default function Davora() {
     if (window.pageYOffset || window.pageXOffset) window.scrollTo(0, 0);
   };
 
-  // While Find is open: keep the page pinned, and tell the chat box how much of its
-  // bottom edge the keyboard covers. Android resizes the WebView (covered = 0), while
-  // iOS keeps the layout viewport and only shrinks visualViewport (covered = keyboard).
+  // Keep the page pinned and track how much of the chat box's bottom edge the keyboard
+  // covers, any time the keyboard is up for a reason that matters here: Find in chat, OR
+  // just typing a normal message. Without this, the page can drift on its own when the
+  // keyboard opens, which eats into how far the chat box can actually scroll — cutting
+  // off older messages (an image sent earlier, say) even though nothing looks "stuck".
+  // Android resizes the WebView (covered = 0); iOS keeps the layout viewport and only
+  // shrinks visualViewport (covered = keyboard).
   useEffect(() => {
-    if (!showFindInChat || typeof window === 'undefined') return;
+    const keyboardMatters = showFindInChat || isComposerFocused;
+    if (!keyboardMatters || typeof window === 'undefined') return;
     const vv = window.visualViewport;
     const sync = () => {
       resetOuterScroll();
@@ -2331,7 +2337,7 @@ export default function Davora() {
       if (!box) return;
       const visibleBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
       const covered = Math.max(0, Math.round(box.getBoundingClientRect().bottom - visibleBottom));
-      box.style.setProperty('--find-kb-inset', `${covered}px`);
+      box.style.setProperty('--kb-inset', `${covered}px`);
     };
     sync();
     window.addEventListener('scroll', sync);
@@ -2347,9 +2353,9 @@ export default function Davora() {
         vv.removeEventListener('resize', sync);
         vv.removeEventListener('scroll', sync);
       }
-      if (chatBoxRef.current) chatBoxRef.current.style.removeProperty('--find-kb-inset');
+      if (chatBoxRef.current) chatBoxRef.current.style.removeProperty('--kb-inset');
     };
-  }, [showFindInChat]);
+  }, [showFindInChat, isComposerFocused]);
 
   // Jump to the active match by scrolling ONLY the chat box (never scrollIntoView,
   // which also scrolls the page/ancestors and dragged the Find pill off-screen).
@@ -2930,7 +2936,7 @@ export default function Davora() {
         )}
 
         {/* Chat Box */}
-        <main className={`chat-box${showFindInChat ? ' find-open' : ''}`} ref={chatBoxRef} onScroll={handleScroll}>
+        <main className={`chat-box${(showFindInChat || isComposerFocused) ? ' keyboard-open' : ''}`} ref={chatBoxRef} onScroll={handleScroll}>
           {messages.length === 0 && (
             <div className="welcome-screen" style={isTemporary ? { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', padding: '24px' } : {}}>
               {isTemporary ? (
@@ -3536,6 +3542,8 @@ export default function Davora() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onFocus={() => setIsComposerFocused(true)}
+                  onBlur={() => setIsComposerFocused(false)}
                   placeholder={
                     isTemporary ? "Temporary Chat..." :
                       inputMode === 'deep' ? "(Deep Think)..." :
