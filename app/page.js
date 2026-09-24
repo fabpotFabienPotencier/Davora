@@ -1358,10 +1358,25 @@ export default function Davora() {
         clearStreamWatchdog();
         setIsTyping(false);
         setTimeout(() => inputRef.current?.focus(), 100);
+
+        // Auto-update generic title once first AI answer completes
+        const allSessions = sessionsRef.current || [];
+        const session = allSessions.find(s => s.id === activeSessionIdRef.current);
+        if (session && !session.isTemporary) {
+          const lowerTitle = (session.title || "").trim().toLowerCase();
+          const genericTitles = ['new chat', 'casual greeting', 'casual chat', 'general inquiry', 'chat', 'hey', 'hi', 'hello', 'new conversation', 'hey there'];
+          const isGeneric = !session.title || genericTitles.includes(lowerTitle) || session.title.trim().length <= 4;
+          if (isGeneric && session.messages && session.messages.length > 0) {
+            const firstUser = session.messages.find(m => m.role === 'user');
+            const firstAi = session.messages.find(m => m.role === 'ai');
+            if (firstUser && firstUser.content) {
+              generateSmartTitle(session.id, firstUser.content, firstAi?.content?.substring(0, 300) || "");
+            }
+          }
+        }
+
         // Auto-read aloud if enabled
         if (prefs.autoReadAloud) {
-          const allSessions = sessionsRef.current || [];
-          const session = allSessions.find(s => s.id === activeSessionIdRef.current);
           if (session) {
             const lastMsg = session.messages[session.messages.length - 1];
             if (lastMsg && lastMsg.role === "ai") {
@@ -1623,9 +1638,10 @@ export default function Davora() {
   }, [messages, isTyping, showScrollButton, activeSessionId]);
 
   const createNewSession = (initialMsg) => {
-    const title = initialMsg.length > 35 ? initialMsg.substring(0, 35) : initialMsg;
+    const isGreeting = ['hey', 'hi', 'hello', 'yo', 'sup', 'good morning', 'good evening', 'hey there', 'hola'].includes((initialMsg || '').trim().toLowerCase());
+    const title = isGreeting ? 'New Chat' : (initialMsg.length > 35 ? initialMsg.substring(0, 35) : initialMsg);
     const newId = Date.now().toString();
-    const newSession = { id: newId, title, messages: [], isTemporary };
+    const newSession = { id: newId, title: title || 'New Chat', messages: [], isTemporary };
 
     // Synchronously update refs so beforeunload works immediately even before React re-renders
     activeSessionIdRef.current = newId;
@@ -1636,7 +1652,7 @@ export default function Davora() {
     return newId;
   };
 
-  const generateSmartTitle = async (sessionId, userPrompt) => {
+  const generateSmartTitle = async (sessionId, userPrompt, assistantReply = "") => {
     if (!userPrompt || isTemporary) return;
     const token = localStorage.getItem('davora_token') || '';
     if (!token) return;
@@ -1650,7 +1666,8 @@ export default function Davora() {
         },
         body: JSON.stringify({
           session_id: sessionId,
-          message: userPrompt
+          message: userPrompt,
+          assistant_reply: assistantReply
         })
       });
 
@@ -1930,7 +1947,21 @@ export default function Davora() {
       }
     }
 
-    if (isFirstMessage && !isTemporary) {
+    const isGenericTitle = (title) => {
+      if (!title) return true;
+      const lower = title.trim().toLowerCase();
+      const generic = ['new chat', 'casual greeting', 'casual chat', 'general inquiry', 'chat', 'hello', 'hey', 'hi', 'hey there', 'new conversation'];
+      return generic.includes(lower) || lower.length <= 4;
+    };
+
+    const isGreeting = (msg) => {
+      if (!msg) return true;
+      const lower = msg.trim().toLowerCase();
+      return ['hey', 'hi', 'hello', 'yo', 'sup', 'good morning', 'good evening', 'hey there', 'hola'].includes(lower);
+    };
+
+    const shouldGenTitle = !isTemporary && (isFirstMessage || isGenericTitle(currentSession?.title));
+    if (shouldGenTitle && (!isGreeting(textToSend) || isFirstMessage)) {
       const titlePrompt = textToSend || (docAttachments.length > 0 ? `Analyze ${docAttachments[0].name}` : "Image Upload");
       generateSmartTitle(targetSessionId, titlePrompt);
     }
