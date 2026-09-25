@@ -22,6 +22,21 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus, vs } from "react-syntax-highlighter/dist/esm/styles/prism";
 import TextareaAutosize from "react-textarea-autosize";
 
+const isCasualGreeting = (text) => {
+  if (!text) return true;
+  const cleaned = text.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+  if (cleaned.length <= 2) return true;
+  const greetingPattern = /^(hi|hey|hello|yo|sup|hiya|howdy|hola|good\s*(morning|afternoon|evening|day|night)|whats\s*up|wassup|greetings)(\s+(bro|man|dude|there|mate|friend|davora|bot|ai|guys|all))?$/i;
+  if (greetingPattern.test(cleaned)) return true;
+  const casualPhrases = [
+    'how are you', 'how r u', 'how are you doing', 'how is it going', 'hows it going',
+    'whats up', 'what is up', 'who are you', 'test', 'testing', 'hi bro', 'hey bro',
+    'hello bro', 'yo bro', 'sup bro', 'good morning', 'good evening', 'good day',
+    'casual greeting', 'casual chat', 'general chat', 'new conversation'
+  ];
+  return casualPhrases.includes(cleaned);
+};
+
 export default function Davora() {
   const router = useRouter();
 
@@ -755,7 +770,17 @@ export default function Davora() {
           return;
         }
         if (res.ok) {
-          const dbSessions = await res.json();
+          const rawDbSessions = await res.json();
+          const dbSessions = (rawDbSessions || []).map(s => {
+            if (isCasualGreeting(s.title)) {
+              const substantive = s.messages?.find(m => m.role === 'user' && !isCasualGreeting(m.content));
+              return {
+                ...s,
+                title: substantive ? (substantive.content.length > 32 ? substantive.content.substring(0, 32).trim() + '...' : substantive.content.trim()) : 'New Chat'
+              };
+            }
+            return s;
+          });
           setSessions(dbSessions);
 
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz';
@@ -1359,18 +1384,16 @@ export default function Davora() {
         setIsTyping(false);
         setTimeout(() => inputRef.current?.focus(), 100);
 
-        // Auto-update generic title once first AI answer completes
+        // Auto-update generic title once first substantive AI answer completes
         const allSessions = sessionsRef.current || [];
         const session = allSessions.find(s => s.id === activeSessionIdRef.current);
         if (session && !session.isTemporary) {
-          const lowerTitle = (session.title || "").trim().toLowerCase();
-          const genericTitles = ['new chat', 'casual greeting', 'casual chat', 'general inquiry', 'chat', 'hey', 'hi', 'hello', 'new conversation', 'hey there'];
-          const isGeneric = !session.title || genericTitles.includes(lowerTitle) || session.title.trim().length <= 4;
+          const isGeneric = !session.title || isCasualGreeting(session.title);
           if (isGeneric && session.messages && session.messages.length > 0) {
-            const firstUser = session.messages.find(m => m.role === 'user');
-            const firstAi = session.messages.find(m => m.role === 'ai');
-            if (firstUser && firstUser.content) {
-              generateSmartTitle(session.id, firstUser.content, firstAi?.content?.substring(0, 300) || "");
+            const substantiveUser = session.messages.find(m => m.role === 'user' && !isCasualGreeting(m.content));
+            if (substantiveUser && substantiveUser.content) {
+              const correspAi = session.messages.find(m => m.role === 'ai' && session.messages.indexOf(m) > session.messages.indexOf(substantiveUser));
+              generateSmartTitle(session.id, substantiveUser.content, correspAi?.content?.substring(0, 300) || "");
             }
           }
         }
@@ -1638,8 +1661,8 @@ export default function Davora() {
   }, [messages, isTyping, showScrollButton, activeSessionId]);
 
   const createNewSession = (initialMsg) => {
-    const isGreeting = ['hey', 'hi', 'hello', 'yo', 'sup', 'good morning', 'good evening', 'hey there', 'hola'].includes((initialMsg || '').trim().toLowerCase());
-    const title = isGreeting ? 'New Chat' : (initialMsg.length > 35 ? initialMsg.substring(0, 35) : initialMsg);
+    const isGreeting = isCasualGreeting(initialMsg);
+    const title = isGreeting ? 'New Chat' : (initialMsg.length > 32 ? initialMsg.substring(0, 32).trim() + '...' : initialMsg.trim());
     const newId = Date.now().toString();
     const newSession = { id: newId, title: title || 'New Chat', messages: [], isTemporary };
 
@@ -1654,6 +1677,7 @@ export default function Davora() {
 
   const generateSmartTitle = async (sessionId, userPrompt, assistantReply = "") => {
     if (!userPrompt || isTemporary) return;
+    if (isCasualGreeting(userPrompt) && (!assistantReply || isCasualGreeting(assistantReply))) return;
     const token = localStorage.getItem('davora_token') || '';
     if (!token) return;
 
@@ -1950,18 +1974,11 @@ export default function Davora() {
     const isGenericTitle = (title) => {
       if (!title) return true;
       const lower = title.trim().toLowerCase();
-      const generic = ['new chat', 'casual greeting', 'casual chat', 'general inquiry', 'chat', 'hello', 'hey', 'hi', 'hey there', 'new conversation'];
-      return generic.includes(lower) || lower.length <= 4;
-    };
-
-    const isGreeting = (msg) => {
-      if (!msg) return true;
-      const lower = msg.trim().toLowerCase();
-      return ['hey', 'hi', 'hello', 'yo', 'sup', 'good morning', 'good evening', 'hey there', 'hola'].includes(lower);
+      return isCasualGreeting(title) || lower.length <= 3;
     };
 
     const shouldGenTitle = !isTemporary && (isFirstMessage || isGenericTitle(currentSession?.title));
-    if (shouldGenTitle && (!isGreeting(textToSend) || isFirstMessage)) {
+    if (shouldGenTitle && !isCasualGreeting(textToSend)) {
       const titlePrompt = textToSend || (docAttachments.length > 0 ? `Analyze ${docAttachments[0].name}` : "Image Upload");
       generateSmartTitle(targetSessionId, titlePrompt);
     }
@@ -1979,7 +1996,7 @@ export default function Davora() {
           },
           body: JSON.stringify({
             id: targetSessionId,
-            title: currentSession ? currentSession.title : (textToSend.length > 35 ? textToSend.substring(0, 35) : (textToSend || fallbackTitle)),
+            title: currentSession ? currentSession.title : (isCasualGreeting(textToSend) ? "New Chat" : (textToSend.length > 32 ? textToSend.substring(0, 32).trim() + '...' : (textToSend.trim() || fallbackTitle))),
             isTemporary: false,
             messages: activeMessages
           })
