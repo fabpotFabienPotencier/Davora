@@ -63,7 +63,7 @@ export default function Login() {
           localStorage.setItem('davora_token', data.access_token);
           localStorage.setItem('davora_email', data.email || '');
 
-          if (window.Capacitor || window.location.hostname === 'localhost') {
+          if (window.Capacitor || window.location.hostname === 'localhost' || window.location.host.startsWith('chat.')) {
             router.push('/');
           } else {
             const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
@@ -104,7 +104,7 @@ export default function Login() {
       localStorage.setItem('davora_token', data.access_token);
       localStorage.setItem('davora_email', data.email || '');
 
-      if (window.Capacitor || window.location.hostname === 'localhost') {
+      if (window.Capacitor || window.location.hostname === 'localhost' || window.location.host.startsWith('chat.')) {
         router.push('/');
       } else {
         const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
@@ -225,7 +225,7 @@ export default function Login() {
         if (token) {
           localStorage.setItem('davora_token', token);
           const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
-            headers: { 
+            headers: {
               'Authorization': `Bearer ${token}`,
               'ngrok-skip-browser-warning': 'true'
             }
@@ -300,7 +300,7 @@ export default function Login() {
 
       localStorage.setItem('davora_token', data.access_token);
       localStorage.setItem('davora_email', email);
-      if (window.Capacitor || window.location.hostname === 'localhost') {
+      if (window.Capacitor || window.location.hostname === 'localhost' || window.location.host.startsWith('chat.')) {
         router.push('/');
       } else {
         const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
@@ -387,8 +387,8 @@ export default function Login() {
                   <span>{error}</span>
                   {error.toLowerCase().includes('verify') && (
                     <div style={{ marginTop: '4px' }}>
-                      <button 
-                        onClick={handleResendVerification} 
+                      <button
+                        onClick={handleResendVerification}
                         disabled={isResending}
                         style={{ background: 'transparent', border: '1px solid rgba(239,68,68,0.5)', color: '#ef4444', padding: '6px 12px', borderRadius: '4px', cursor: isResending ? 'not-allowed' : 'pointer', fontSize: '0.8rem' }}
                       >
@@ -402,24 +402,24 @@ export default function Login() {
 
               {hasBiometrics && !requires2FA && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-                  <button 
-                    type="button" 
-                    onClick={handleBiometricLogin} 
+                  <button
+                    type="button"
+                    onClick={handleBiometricLogin}
                     disabled={isLoading}
-                    style={{ 
-                      width: '100%', 
-                      background: 'rgba(168, 85, 247, 0.1)', 
-                      color: '#a855f7', 
-                      border: '1px solid rgba(168, 85, 247, 0.3)', 
-                      padding: '14px', 
-                      borderRadius: '9999px', 
-                      fontWeight: '600', 
-                      fontSize: '0.95rem', 
-                      cursor: 'pointer', 
-                      display: 'flex', 
-                      justifyContent: 'center', 
-                      alignItems: 'center', 
-                      gap: '8px' 
+                    style={{
+                      width: '100%',
+                      background: 'rgba(168, 85, 247, 0.1)',
+                      color: '#a855f7',
+                      border: '1px solid rgba(168, 85, 247, 0.3)',
+                      padding: '14px',
+                      borderRadius: '9999px',
+                      fontWeight: '600',
+                      fontSize: '0.95rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '8px'
                     }}
                   >
                     <Shield size={18} /> Sign in with Biometrics (TouchID / FaceID)
@@ -434,13 +434,13 @@ export default function Login() {
 
               {!requires2FA && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '8px' }}>
-                  <div 
-                    ref={googleBtnRef} 
-                    style={{ 
-                      width: '100%', 
-                      display: 'flex', 
-                      justifyContent: 'center', 
-                      minHeight: '44px' 
+                  <div
+                    ref={googleBtnRef}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      minHeight: '44px'
                     }}
                   >
                     <button

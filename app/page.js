@@ -757,59 +757,55 @@ export default function Davora() {
         if (res.ok) {
           const dbSessions = await res.json();
           setSessions(dbSessions);
-          const metaRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/metadata', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'ngrok-skip-browser-warning': 'true'
-            },
-            cache: 'no-store'
-          });
-          if (metaRes.ok) {
-            const meta = await metaRes.json();
-            try { setPrefs(prev => ({ ...prev, ...JSON.parse(meta.prefs) })); } catch (e) { }
-            try { setCanvasArtifacts(JSON.parse(meta.canvas)); } catch (e) { }
-            try { setPinnedSessionIds(JSON.parse(meta.pins)); } catch (e) { }
-            try { setRatings(JSON.parse(meta.ratings)); } catch (e) { }
-            try { const a = JSON.parse(meta.archived); if (Array.isArray(a)) setArchivedSessionIds(a); } catch (e) { }
-            try { const pm = JSON.parse(meta.project_meta); if (pm && typeof pm === 'object' && !Array.isArray(pm)) setProjectMeta(pm); } catch (e) { }
 
-            const savedActive = meta.active_session_id;
-            if (savedActive === "new") {
-              setActiveSessionId(null);
-            } else if (savedActive && dbSessions.some(s => s.id === savedActive)) {
-              setActiveSessionId(savedActive);
-            } else if (dbSessions.length > 0) {
-              setActiveSessionId(dbSessions[0].id);
-            }
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz';
+          const defaultHeaders = {
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
+          };
+
+          // Parallelize all dependent calls simultaneously instead of sequentially
+          const [metaResult, projResult, codexResult, configResult, subResult] = await Promise.allSettled([
+            fetch(`${apiUrl}/api/metadata`, { headers: defaultHeaders, cache: 'no-store' }),
+            fetch(`${apiUrl}/api/projects`, { headers: defaultHeaders, cache: 'no-store' }),
+            fetch(`${apiUrl}/api/codex`, { headers: defaultHeaders, cache: 'no-store' }),
+            fetch(`${apiUrl}/api/config`, { headers: { 'ngrok-skip-browser-warning': 'true' }, cache: 'no-store' }),
+            fetch(`${apiUrl}/api/subscription`, { headers: defaultHeaders, cache: 'no-store' })
+          ]);
+
+          if (metaResult.status === 'fulfilled' && metaResult.value.ok) {
+            try {
+              const meta = await metaResult.value.json();
+              try { setPrefs(prev => ({ ...prev, ...JSON.parse(meta.prefs) })); } catch (e) { }
+              try { setCanvasArtifacts(JSON.parse(meta.canvas)); } catch (e) { }
+              try { setPinnedSessionIds(JSON.parse(meta.pins)); } catch (e) { }
+              try { setRatings(JSON.parse(meta.ratings)); } catch (e) { }
+              try { const a = JSON.parse(meta.archived); if (Array.isArray(a)) setArchivedSessionIds(a); } catch (e) { }
+              try { const pm = JSON.parse(meta.project_meta); if (pm && typeof pm === 'object' && !Array.isArray(pm)) setProjectMeta(pm); } catch (e) { }
+
+              const savedActive = meta.active_session_id;
+              if (savedActive === "new") {
+                setActiveSessionId(null);
+              } else if (savedActive && dbSessions.some(s => s.id === savedActive)) {
+                setActiveSessionId(savedActive);
+              } else if (dbSessions.length > 0) {
+                setActiveSessionId(dbSessions[0].id);
+              }
+            } catch (e) { }
           }
           setIsMetadataLoaded(true);
 
-          const projRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/projects', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'ngrok-skip-browser-warning': 'true'
-            },
-            cache: 'no-store'
-          });
-          if (projRes.ok) {
-            setProjectsList(await projRes.json());
+          if (projResult.status === 'fulfilled' && projResult.value.ok) {
+            try { setProjectsList(await projResult.value.json()); } catch (e) { }
           }
 
-          const codexRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'ngrok-skip-browser-warning': 'true'
-            },
-            cache: 'no-store'
-          });
-          if (codexRes.ok) {
-            setCodexSnippets(await codexRes.json());
+          if (codexResult.status === 'fulfilled' && codexResult.value.ok) {
+            try { setCodexSnippets(await codexResult.value.json()); } catch (e) { }
           }
 
-          try {
-            const configRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/config', { headers: { 'ngrok-skip-browser-warning': 'true' }, cache: 'no-store' });
-            if (configRes.ok) {
-              const cfg = await configRes.json();
+          if (configResult.status === 'fulfilled' && configResult.value.ok) {
+            try {
+              const cfg = await configResult.value.json();
               setBasicPrice(cfg.basic_price || "3");
               setProPrice(cfg.pro_price || "7");
               setPremiumPrice(cfg.premium_price || "15");
@@ -817,11 +813,15 @@ export default function Davora() {
                 setLogoUrl(cfg.logo_url);
                 localStorage.setItem('davora_logo_url', cfg.logo_url);
               }
-            }
+            } catch (e) { }
+          }
 
-            const subRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/subscription', { headers: { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' }, cache: 'no-store' });
-            if (subRes.ok) { const sub = await subRes.json(); setSubscriptionPlan(sub.plan_name); }
-          } catch (e) { }
+          if (subResult.status === 'fulfilled' && subResult.value.ok) {
+            try {
+              const sub = await subResult.value.json();
+              setSubscriptionPlan(sub.plan_name);
+            } catch (e) { }
+          }
         }
       } catch (err) {
         console.error("Failed to fetch from DB", err);
