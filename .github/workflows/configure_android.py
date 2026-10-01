@@ -42,8 +42,8 @@ def main():
 
     # 1. Update Version Code and Name
     run_num = os.environ.get("GITHUB_RUN_NUMBER", "1")
-    version_code = 1000 + int(run_num)
-    version_name = "2.6.0"
+    version_code = 1010 + int(run_num)
+    version_name = "2.6.1"
     print(f"Setting unique versionCode to {version_code} and versionName to {version_name}")
     
     app_gradle_path = "android/app/build.gradle"
@@ -53,6 +53,7 @@ def main():
         
         content = re.sub(r'versionCode\s+\d+', f'versionCode {version_code}', content)
         content = re.sub(r'versionName\s+"[^"]+"', f'versionName "{version_name}"', content)
+        content = re.sub(r'minSdkVersion\s+(\d+|rootProject\.ext\.minSdkVersion)', 'minSdkVersion 24', content)
         
         # Ensure Play Billing 8.0.0 is explicitly in app dependencies
         if "com.android.billingclient:billing" not in content:
@@ -69,18 +70,23 @@ def main():
     else:
         print(f"Warning: {app_gradle_path} not found")
 
-    # 2. Update SDK versions in variables.gradle (API 36)
+    # 2. Update SDK versions in variables.gradle (minSdk 24, targetSdk 36, compileSdk 36)
     var_gradle_path = "android/variables.gradle"
     if os.path.exists(var_gradle_path):
         with open(var_gradle_path, "r", encoding="utf-8") as f:
             var_content = f.read()
         
+        if "minSdkVersion" in var_content:
+            var_content = re.sub(r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 24', var_content)
+        else:
+            var_content = re.sub(r'(ext\s*\{)', r'\1\n    minSdkVersion = 24', var_content)
+
         var_content = re.sub(r'compileSdkVersion\s*=\s*\d+', 'compileSdkVersion = 36', var_content)
         var_content = re.sub(r'targetSdkVersion\s*=\s*\d+', 'targetSdkVersion = 36', var_content)
         
         with open(var_gradle_path, "w", encoding="utf-8") as f:
             f.write(var_content)
-        print(f"Updated {var_gradle_path} to SDK 36")
+        print(f"Updated {var_gradle_path} to minSdk 24, SDK 36")
     else:
         print(f"Warning: {var_gradle_path} not found")
 
