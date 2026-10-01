@@ -42,8 +42,9 @@ def main():
 
     # 1. Update Version Code and Name
     run_num = os.environ.get("GITHUB_RUN_NUMBER", "1")
-    version_code = 500 + int(run_num)
-    print(f"Setting unique versionCode to {version_code} and versionName to 2.5.0")
+    version_code = 1000 + int(run_num)
+    version_name = "2.6.0"
+    print(f"Setting unique versionCode to {version_code} and versionName to {version_name}")
     
     app_gradle_path = "android/app/build.gradle"
     if os.path.exists(app_gradle_path):
@@ -51,7 +52,7 @@ def main():
             content = f.read()
         
         content = re.sub(r'versionCode\s+\d+', f'versionCode {version_code}', content)
-        content = re.sub(r'versionName\s+"[^"]+"', 'versionName "2.5.0"', content)
+        content = re.sub(r'versionName\s+"[^"]+"', f'versionName "{version_name}"', content)
         
         # Ensure Play Billing 8.0.0 is explicitly in app dependencies
         if "com.android.billingclient:billing" not in content:

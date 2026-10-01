@@ -354,9 +354,10 @@ export default function Login() {
           .auth-container { height: 100dvh; overflow: hidden; }
         }
         @media (max-width: 1023px) {
-          .auth-form-side { background: #000000; border: none; padding: calc(14px + env(safe-area-inset-top, 0px)) 18px calc(18px + env(safe-area-inset-bottom, 0px)) 18px; }
+          .auth-container { overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 100dvh; height: auto; display: block; }
+          .auth-form-side { background: #000000; border: none; padding: calc(14px + env(safe-area-inset-top, 0px)) 18px calc(24px + env(safe-area-inset-bottom, 0px)) 18px; min-height: 100dvh; height: auto; justify-content: flex-start; gap: 20px; }
           .auth-pill { display: none; }
-          .auth-container { overflow-y: auto; height: auto; min-height: 100dvh; }
+          .auth-form-wrapper { flex: 0 0 auto; width: 100%; padding: 12px 0; }
         }
       `}} />
       <div className="auth-container">
