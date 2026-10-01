@@ -2337,11 +2337,11 @@ export default function Davora() {
 
   const matchingMessageIndices = findQuery.trim()
     ? messages.reduce((acc, m, idx) => {
-        if (m.content && m.content.toLowerCase().includes(findQuery.toLowerCase().trim())) {
-          acc.push(idx);
-        }
-        return acc;
-      }, [])
+      if (m.content && m.content.toLowerCase().includes(findQuery.toLowerCase().trim())) {
+        acc.push(idx);
+      }
+      return acc;
+    }, [])
     : [];
 
   useEffect(() => {
@@ -3017,348 +3017,348 @@ export default function Davora() {
             const isActiveMatch = isMatch && matchingMessageIndices[currentFindIndex] === index;
 
             return (
-            <div
-              key={msg.id || index}
-              id={`msg-node-${msg.id || index}`}
-              className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'} ${longPressMessageId === msg.id ? 'long-pressed' : ''} ${isMatch ? (isActiveMatch ? 'find-active-match' : 'find-match') : ''}`}
-              onTouchStart={(e) => handleTouchStart(msg.id, e)}
-              onTouchEnd={handleTouchEnd}
-              onTouchMove={handleTouchMove}
-            >
+              <div
+                key={msg.id || index}
+                id={`msg-node-${msg.id || index}`}
+                className={`message-row ${msg.role === 'user' ? 'row-user' : 'row-ai'} ${longPressMessageId === msg.id ? 'long-pressed' : ''} ${isMatch ? (isActiveMatch ? 'find-active-match' : 'find-match') : ''}`}
+                onTouchStart={(e) => handleTouchStart(msg.id, e)}
+                onTouchEnd={handleTouchEnd}
+                onTouchMove={handleTouchMove}
+              >
 
 
-              <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
-                {msg.role === 'user' && msg.documents && (
-                  <div className="user-doc-attachments" style={{ marginBottom: (msg.content || msg.image_url) ? '8px' : '0', display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', maxWidth: '350px' }}>
-                    {(() => {
-                      try {
-                        const parsedDocs = typeof msg.documents === 'string' ? JSON.parse(msg.documents) : msg.documents;
-                        if (Array.isArray(parsedDocs)) {
-                          return parsedDocs.map((doc, dIdx) => (
-                            <div key={dIdx} className="message-doc-chip" style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: '10px',
-                              padding: '8px 12px',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid var(--border-color)',
-                              borderRadius: '10px',
-                              width: '100%'
-                            }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, overflow: 'hidden' }}>
-                                <div style={{ padding: '6px', borderRadius: '6px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                  {getDocIcon(doc.ext, 18)}
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                                  <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {doc.name}
-                                  </span>
-                                  {doc.size && (
-                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                                      {formatFileSize(doc.size)}
+                <div className={`message-bubble-wrapper ${msg.role === 'user' ? 'wrapper-user' : 'wrapper-ai'}`}>
+                  {msg.role === 'user' && msg.documents && (
+                    <div className="user-doc-attachments" style={{ marginBottom: (msg.content || msg.image_url) ? '8px' : '0', display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', maxWidth: '350px' }}>
+                      {(() => {
+                        try {
+                          const parsedDocs = typeof msg.documents === 'string' ? JSON.parse(msg.documents) : msg.documents;
+                          if (Array.isArray(parsedDocs)) {
+                            return parsedDocs.map((doc, dIdx) => (
+                              <div key={dIdx} className="message-doc-chip" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '10px',
+                                padding: '8px 12px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '10px',
+                                width: '100%'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, overflow: 'hidden' }}>
+                                  <div style={{ padding: '6px', borderRadius: '6px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                    {getDocIcon(doc.ext, 18)}
+                                  </div>
+                                  <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {doc.name}
                                     </span>
-                                  )}
+                                    {doc.size && (
+                                      <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                                        {formatFileSize(doc.size)}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
+                                {doc.url && (
+                                  <a
+                                    href={doc.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{ color: 'var(--text-secondary)', padding: '4px', display: 'flex', alignItems: 'center', borderRadius: '4px', flexShrink: 0 }}
+                                    title="Download / View document"
+                                  >
+                                    <Download size={14} />
+                                  </a>
+                                )}
                               </div>
-                              {doc.url && (
-                                <a
-                                  href={doc.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  style={{ color: 'var(--text-secondary)', padding: '4px', display: 'flex', alignItems: 'center', borderRadius: '4px', flexShrink: 0 }}
-                                  title="Download / View document"
-                                >
-                                  <Download size={14} />
-                                </a>
-                              )}
-                            </div>
-                          ));
-                        }
-                      } catch (e) { }
-                      return null;
-                    })()}
-                  </div>
-                )}
-                {msg.role === 'user' && msg.image_url && (
-                  <div className="user-image-attachments" style={{ marginBottom: msg.content ? '8px' : '0', display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '350px' }}>
-                    {(() => {
-                      try {
-                        const parsed = JSON.parse(msg.image_url);
-                        if (Array.isArray(parsed) && parsed.length > 0) {
-                          const count = parsed.length;
-                          let gridStyle = { display: 'grid', gap: '8px', width: '100%' };
-                          let imgStyle = { width: '100%', borderRadius: '16px', objectFit: 'cover', cursor: 'zoom-in', transition: 'transform 0.15s ease', display: 'block' };
-
-                          if (count === 1) {
-                            gridStyle.gridTemplateColumns = '1fr';
-                            imgStyle.maxHeight = '280px';
-                            imgStyle.objectFit = 'contain';
-                            imgStyle.width = 'auto';
-                            imgStyle.maxWidth = '100%';
-                          } else if (count === 2) {
-                            gridStyle.gridTemplateColumns = 'repeat(2, 1fr)';
-                            imgStyle.aspectRatio = '16 / 10';
-                            imgStyle.maxHeight = '200px';
-                          } else {
-                            gridStyle.gridTemplateColumns = 'repeat(3, 1fr)';
-                            imgStyle.aspectRatio = '1 / 1';
-                            imgStyle.maxHeight = '150px';
+                            ));
                           }
+                        } catch (e) { }
+                        return null;
+                      })()}
+                    </div>
+                  )}
+                  {msg.role === 'user' && msg.image_url && (
+                    <div className="user-image-attachments" style={{ marginBottom: msg.content ? '8px' : '0', display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '350px' }}>
+                      {(() => {
+                        try {
+                          const parsed = JSON.parse(msg.image_url);
+                          if (Array.isArray(parsed) && parsed.length > 0) {
+                            const count = parsed.length;
+                            let gridStyle = { display: 'grid', gap: '8px', width: '100%' };
+                            let imgStyle = { width: '100%', borderRadius: '16px', objectFit: 'cover', cursor: 'zoom-in', transition: 'transform 0.15s ease', display: 'block' };
 
-                          return (
-                            <div style={gridStyle}>
-                              {parsed.map((img, i) => (
-                                <img
-                                  key={i}
-                                  src={img}
-                                  alt="Attached image"
-                                  onClick={() => setActiveLightboxImg(img)}
-                                  className="chat-attached-image"
-                                  style={imgStyle}
-                                />
-                              ))}
-                            </div>
-                          );
-                        }
-                      } catch (e) { }
-                      return (
-                        <img
-                          src={msg.image_url}
-                          alt="Attached image"
-                          onClick={() => setActiveLightboxImg(msg.image_url)}
-                          style={{
-                            maxWidth: '100%',
-                            maxHeight: '280px',
-                            objectFit: 'contain',
-                            borderRadius: '16px',
-                            cursor: 'zoom-in',
-                            display: 'block'
-                          }}
-                        />
-                      );
-                    })()}
-                  </div>
-                )}
+                            if (count === 1) {
+                              gridStyle.gridTemplateColumns = '1fr';
+                              imgStyle.maxHeight = '280px';
+                              imgStyle.objectFit = 'contain';
+                              imgStyle.width = 'auto';
+                              imgStyle.maxWidth = '100%';
+                            } else if (count === 2) {
+                              gridStyle.gridTemplateColumns = 'repeat(2, 1fr)';
+                              imgStyle.aspectRatio = '16 / 10';
+                              imgStyle.maxHeight = '200px';
+                            } else {
+                              gridStyle.gridTemplateColumns = 'repeat(3, 1fr)';
+                              imgStyle.aspectRatio = '1 / 1';
+                              imgStyle.maxHeight = '150px';
+                            }
 
-                {(msg.role !== 'user' || msg.content || editingId === msg.id) && (
-                  <div
-                    className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}
-                    onClick={() => {
-                      if (msg.role === 'user' && !editingId) {
-                        setActiveUserToolbarId(prev => prev === msg.id ? null : msg.id);
-                      }
-                    }}
-                  >
-                    {msg.role === 'user' ? (
-                      editingId === msg.id ? (
-                        <div className="edit-mode-box">
-                          <TextareaAutosize
-                            value={editInput}
-                            onChange={(e) => setEditInput(e.target.value)}
-                            className="edit-textarea"
+                            return (
+                              <div style={gridStyle}>
+                                {parsed.map((img, i) => (
+                                  <img
+                                    key={i}
+                                    src={img}
+                                    alt="Attached image"
+                                    onClick={() => setActiveLightboxImg(img)}
+                                    className="chat-attached-image"
+                                    style={imgStyle}
+                                  />
+                                ))}
+                              </div>
+                            );
+                          }
+                        } catch (e) { }
+                        return (
+                          <img
+                            src={msg.image_url}
+                            alt="Attached image"
+                            onClick={() => setActiveLightboxImg(msg.image_url)}
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '280px',
+                              objectFit: 'contain',
+                              borderRadius: '16px',
+                              cursor: 'zoom-in',
+                              display: 'block'
+                            }}
                           />
-                          <div className="edit-actions">
-                            <button onClick={() => setEditingId(null)} className="edit-cancel">Cancel</button>
-                            <button onClick={() => submitEdit(msg.id)} className="edit-save">Resubmit Prompt</button>
-                          </div>
-                        </div>
-                      ) : (
-                        (() => {
-                          const isLong = (msg.content || '').length > 350 || (msg.content || '').split('\n').length > 7;
-                          const isExpanded = expandedUserMsgIds.includes(msg.id);
+                        );
+                      })()}
+                    </div>
+                  )}
 
-                          return (
-                            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                              <div className={`user-text-container ${isLong && !isExpanded ? 'collapsed' : ''}`}>
-                                <p className="user-text" style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0 }}>
-                                  {msg.content}
-                                  {msg.isPending && (
-                                    <span title="Pending connection sync" style={{ opacity: 0.5, display: 'inline-flex', alignItems: 'center' }}>
-                                      <Clock size={14} style={{ animation: 'spin 2s linear infinite' }} />
-                                    </span>
-                                  )}
-                                </p>
-                                {isLong && !isExpanded && <div className="user-text-fade-overlay" />}
-                              </div>
-                              {isLong && (
-                                <button
-                                  type="button"
-                                  className="user-expand-toggle-btn"
-                                  style={{ background: 'transparent', border: 'none', outline: 'none', padding: '4px 2px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
-                                  title={isExpanded ? "Collapse" : "Expand"}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setExpandedUserMsgIds(prev =>
-                                      prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
-                                    );
-                                  }}
-                                >
-                                  <ChevronDown size={14} style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
-                                </button>
-                              )}
+                  {(msg.role !== 'user' || msg.content || editingId === msg.id) && (
+                    <div
+                      className={`message-bubble ${msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}`}
+                      onClick={() => {
+                        if (msg.role === 'user' && !editingId) {
+                          setActiveUserToolbarId(prev => prev === msg.id ? null : msg.id);
+                        }
+                      }}
+                    >
+                      {msg.role === 'user' ? (
+                        editingId === msg.id ? (
+                          <div className="edit-mode-box">
+                            <TextareaAutosize
+                              value={editInput}
+                              onChange={(e) => setEditInput(e.target.value)}
+                              className="edit-textarea"
+                            />
+                            <div className="edit-actions">
+                              <button onClick={() => setEditingId(null)} className="edit-cancel">Cancel</button>
+                              <button onClick={() => submitEdit(msg.id)} className="edit-save">Resubmit Prompt</button>
                             </div>
-                          );
-                        })()
-                      )
-                    ) : (
-                      <div className="markdown-body">
+                          </div>
+                        ) : (
+                          (() => {
+                            const isLong = (msg.content || '').length > 350 || (msg.content || '').split('\n').length > 7;
+                            const isExpanded = expandedUserMsgIds.includes(msg.id);
 
-                        {(() => {
-                          let contentToRender = msg.content || '';
-                          let thinkContent = '';
-                          const thinkMatch = contentToRender.match(/<think>([\s\S]*?)(<\/think>|$)/);
-                          if (thinkMatch) {
-                            thinkContent = thinkMatch[1].trim();
-                            contentToRender = contentToRender.replace(/<think>[\s\S]*?(<\/think>|$)/, '');
-                          }
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                                <div className={`user-text-container ${isLong && !isExpanded ? 'collapsed' : ''}`}>
+                                  <p className="user-text" style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'pre-wrap', wordBreak: 'break-word', margin: 0 }}>
+                                    {msg.content}
+                                    {msg.isPending && (
+                                      <span title="Pending connection sync" style={{ opacity: 0.5, display: 'inline-flex', alignItems: 'center' }}>
+                                        <Clock size={14} style={{ animation: 'spin 2s linear infinite' }} />
+                                      </span>
+                                    )}
+                                  </p>
+                                  {isLong && !isExpanded && <div className="user-text-fade-overlay" />}
+                                </div>
+                                {isLong && (
+                                  <button
+                                    type="button"
+                                    className="user-expand-toggle-btn"
+                                    style={{ background: 'transparent', border: 'none', outline: 'none', padding: '4px 2px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
+                                    title={isExpanded ? "Collapse" : "Expand"}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setExpandedUserMsgIds(prev =>
+                                        prev.includes(msg.id) ? prev.filter(id => id !== msg.id) : [...prev, msg.id]
+                                      );
+                                    }}
+                                  >
+                                    <ChevronDown size={14} style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })()
+                        )
+                      ) : (
+                        <div className="markdown-body">
 
-                          return (
-                            <>
-                              {thinkContent && (
-                                <details className="reasoning-path" open={!contentToRender.trim()}>
-                                  <summary><BrainCircuit size={14} className="text-purple-400" /> Deep Think Process</summary>
-                                  <div className="reasoning-content">{thinkContent}</div>
-                                </details>
-                              )}
-                              {contentToRender.trim() && (
-                                <ReactMarkdown
-                                  remarkPlugins={[remarkGfm]}
-                                  components={{
-                                    code({ node, inline, className, children, ...props }) {
-                                      const match = /language-(\w+)/.exec(className || '');
-                                      return !inline && match ? (
-                                        <div className="code-block-wrapper">
-                                          <div className="code-header">
-                                            <span className="code-lang">{match[1]}</span>
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                              <button
-                                                onClick={async () => {
-                                                  try {
-                                                    const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', {
-                                                      method: 'POST',
-                                                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
-                                                      body: JSON.stringify({ title: `Snippet from ${new Date().toLocaleDateString()}`, language: match[1], code: String(children).replace(/\n$/, '') })
-                                                    });
-                                                    if (res.ok) {
-                                                      const data = await res.json();
-                                                      if (data.status === 'flagged') {
-                                                        showNotification('Saved to Codex (Warning: Flagged as unsafe)');
-                                                      } else {
-                                                        showNotification('Saved to Codex!');
+                          {(() => {
+                            let contentToRender = msg.content || '';
+                            let thinkContent = '';
+                            const thinkMatch = contentToRender.match(/<think>([\s\S]*?)(<\/think>|$)/);
+                            if (thinkMatch) {
+                              thinkContent = thinkMatch[1].trim();
+                              contentToRender = contentToRender.replace(/<think>[\s\S]*?(<\/think>|$)/, '');
+                            }
+
+                            return (
+                              <>
+                                {thinkContent && (
+                                  <details className="reasoning-path" open={!contentToRender.trim()}>
+                                    <summary><BrainCircuit size={14} className="text-purple-400" /> Deep Think Process</summary>
+                                    <div className="reasoning-content">{thinkContent}</div>
+                                  </details>
+                                )}
+                                {contentToRender.trim() && (
+                                  <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                      code({ node, inline, className, children, ...props }) {
+                                        const match = /language-(\w+)/.exec(className || '');
+                                        return !inline && match ? (
+                                          <div className="code-block-wrapper">
+                                            <div className="code-header">
+                                              <span className="code-lang">{match[1]}</span>
+                                              <div style={{ display: 'flex', gap: '8px' }}>
+                                                <button
+                                                  onClick={async () => {
+                                                    try {
+                                                      const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}` },
+                                                        body: JSON.stringify({ title: `Snippet from ${new Date().toLocaleDateString()}`, language: match[1], code: String(children).replace(/\n$/, '') })
+                                                      });
+                                                      if (res.ok) {
+                                                        const data = await res.json();
+                                                        if (data.status === 'flagged') {
+                                                          showNotification('Saved to Codex (Warning: Flagged as unsafe)');
+                                                        } else {
+                                                          showNotification('Saved to Codex!');
+                                                        }
+                                                        // Refresh codex
+                                                        const codexRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', { headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' } });
+                                                        if (codexRes.ok) setCodexSnippets(await codexRes.json());
                                                       }
-                                                      // Refresh codex
-                                                      const codexRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/codex', { headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' } });
-                                                      if (codexRes.ok) setCodexSnippets(await codexRes.json());
-                                                    }
-                                                  } catch (e) { showNotification('Failed to save to Codex'); }
-                                                }}
-                                                className="copy-code-btn"
-                                              >
-                                                <Bookmark size={14} /> Save
-                                              </button>
-                                              <button
-                                                onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), `${msg.id}-${match[1]}`)}
-                                                className="copy-code-btn"
-                                              >
-                                                {copiedId === `${msg.id}-${match[1]}` ? <Check size={14} /> : <Copy size={14} />}
-                                                {copiedId === `${msg.id}-${match[1]}` ? 'Copied!' : 'Copy'}
-                                              </button>
+                                                    } catch (e) { showNotification('Failed to save to Codex'); }
+                                                  }}
+                                                  className="copy-code-btn"
+                                                >
+                                                  <Bookmark size={14} /> Save
+                                                </button>
+                                                <button
+                                                  onClick={() => copyToClipboard(String(children).replace(/\n$/, ''), `${msg.id}-${match[1]}`)}
+                                                  className="copy-code-btn"
+                                                >
+                                                  {copiedId === `${msg.id}-${match[1]}` ? <Check size={14} /> : <Copy size={14} />}
+                                                  {copiedId === `${msg.id}-${match[1]}` ? 'Copied!' : 'Copy'}
+                                                </button>
+                                              </div>
                                             </div>
+                                            <SyntaxHighlighter
+                                              {...props}
+                                              style={prefs.theme === 'light' ? vs : vscDarkPlus}
+                                              language={match[1]}
+                                              PreTag="div"
+                                              className="syntax-highlighter"
+                                            >
+                                              {String(children).replace(/\n$/, '')}
+                                            </SyntaxHighlighter>
                                           </div>
-                                          <SyntaxHighlighter
-                                            {...props}
-                                            style={prefs.theme === 'light' ? vs : vscDarkPlus}
-                                            language={match[1]}
-                                            PreTag="div"
-                                            className="syntax-highlighter"
-                                          >
-                                            {String(children).replace(/\n$/, '')}
-                                          </SyntaxHighlighter>
-                                        </div>
-                                      ) : (
-                                        <code {...props} className="inline-code">
-                                          {children}
-                                        </code>
-                                      )
-                                    }
-                                  }}
-                                >
-                                  {contentToRender}
-                                </ReactMarkdown>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
-                    )}
-                  </div>
-                )}
+                                        ) : (
+                                          <code {...props} className="inline-code">
+                                            {children}
+                                          </code>
+                                        )
+                                      }
+                                    }}
+                                  >
+                                    {contentToRender}
+                                  </ReactMarkdown>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                {!(msg.role === 'assistant' && index === messages.length - 1 && isTyping) && (
-                  <div
-                    className={`message-toolbar ${msg.role === 'user' ? `toolbar-user ${activeUserToolbarId === msg.id ? 'active-toolbar' : ''}` : 'toolbar-ai'}`}
-                    onClick={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
-                  >
-                    {msg.role === 'user' ? (
-                      !editingId && (
+                  {!(msg.role === 'assistant' && index === messages.length - 1 && isTyping) && (
+                    <div
+                      className={`message-toolbar ${msg.role === 'user' ? `toolbar-user ${activeUserToolbarId === msg.id ? 'active-toolbar' : ''}` : 'toolbar-ai'}`}
+                      onClick={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
+                    >
+                      {msg.role === 'user' ? (
+                        !editingId && (
+                          <>
+                            <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
+                              {copiedId === msg.id ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                            </button>
+                            <button onClick={() => { setEditingId(msg.id); setEditInput(msg.content); }} className="toolbar-btn" title="Edit Prompt">
+                              <Edit2 size={18} />
+                            </button>
+                          </>
+                        )
+                      ) : (
                         <>
                           <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
                             {copiedId === msg.id ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
                           </button>
-                          <button onClick={() => { setEditingId(msg.id); setEditInput(msg.content); }} className="toolbar-btn" title="Edit Prompt">
-                            <Edit2 size={18} />
+                          <button onClick={() => handleRate(msg.id, 'up')} className={`toolbar-btn ${thumbFillId === msg.id && ratings[msg.id] === 'up' ? 'rated' : ''}`} title="Good response" aria-pressed={thumbFillId === msg.id && ratings[msg.id] === 'up'}>
+                            <ThumbsUp size={18} fill={thumbFillId === msg.id && ratings[msg.id] === 'up' ? 'currentColor' : 'none'} />
                           </button>
-                        </>
-                      )
-                    ) : (
-                      <>
-                        <button onClick={() => copyToClipboard(msg.content, msg.id)} className="toolbar-btn" title="Copy message">
-                          {copiedId === msg.id ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
-                        </button>
-                        <button onClick={() => handleRate(msg.id, 'up')} className={`toolbar-btn ${thumbFillId === msg.id && ratings[msg.id] === 'up' ? 'rated' : ''}`} title="Good response" aria-pressed={thumbFillId === msg.id && ratings[msg.id] === 'up'}>
-                          <ThumbsUp size={18} fill={thumbFillId === msg.id && ratings[msg.id] === 'up' ? 'currentColor' : 'none'} />
-                        </button>
-                        <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${thumbFillId === msg.id && ratings[msg.id] === 'down' ? 'rated' : ''}`} title="Bad response" aria-pressed={thumbFillId === msg.id && ratings[msg.id] === 'down'}>
-                          <ThumbsDown size={18} fill={thumbFillId === msg.id && ratings[msg.id] === 'down' ? 'currentColor' : 'none'} />
-                        </button>
-                        <button onClick={() => toggleTextToSpeech(msg.content, msg.id)} className={`toolbar-btn ${speakingId === msg.id ? 'active-tts' : ''}`} title={speakingId === msg.id ? "Stop Read Aloud" : "Read Aloud"}>
-                          {speakingId === msg.id ? (
-                            <div className="tts-equalizer-icon">
-                              <span className="tts-eq-bar bar-1"></span>
-                              <span className="tts-eq-bar bar-2"></span>
-                              <span className="tts-eq-bar bar-3"></span>
-                              <span className="tts-eq-bar bar-4"></span>
-                            </div>
-                          ) : (
-                            <Volume2 size={18} />
+                          <button onClick={() => handleRate(msg.id, 'down')} className={`toolbar-btn ${thumbFillId === msg.id && ratings[msg.id] === 'down' ? 'rated' : ''}`} title="Bad response" aria-pressed={thumbFillId === msg.id && ratings[msg.id] === 'down'}>
+                            <ThumbsDown size={18} fill={thumbFillId === msg.id && ratings[msg.id] === 'down' ? 'currentColor' : 'none'} />
+                          </button>
+                          <button onClick={() => toggleTextToSpeech(msg.content, msg.id)} className={`toolbar-btn ${speakingId === msg.id ? 'active-tts' : ''}`} title={speakingId === msg.id ? "Stop Read Aloud" : "Read Aloud"}>
+                            {speakingId === msg.id ? (
+                              <div className="tts-equalizer-icon">
+                                <span className="tts-eq-bar bar-1"></span>
+                                <span className="tts-eq-bar bar-2"></span>
+                                <span className="tts-eq-bar bar-3"></span>
+                                <span className="tts-eq-bar bar-4"></span>
+                              </div>
+                            ) : (
+                              <Volume2 size={18} />
+                            )}
+                          </button>
+                          <button onClick={() => setActiveModal('share')} className="toolbar-btn" title="Share message">
+                            <Forward size={18} />
+                          </button>
+                          {index === messages.length - 1 && (
+                            <button onClick={regenerateResponse} className="toolbar-btn toolbar-btn-right" title="Regenerate Response">
+                              <RefreshCw size={18} />
+                            </button>
                           )}
-                        </button>
-                        <button onClick={() => setActiveModal('share')} className="toolbar-btn" title="Share message">
-                          <Forward size={18} />
-                        </button>
-                        {index === messages.length - 1 && (
-                          <button onClick={regenerateResponse} className="toolbar-btn toolbar-btn-right" title="Regenerate Response">
-                            <RefreshCw size={18} />
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
+                        </>
+                      )}
+                    </div>
+                  )}
 
-                {msg.role !== 'user' && feedbackToastId === msg.id && (
-                  <div className="feedback-toast" id={`feedback-toast-${msg.id}`} role="status">
-                    <span>Thank you for your feedback!</span>
-                    <button type="button" className="feedback-toast-close" onClick={dismissFeedbackToast} aria-label="Dismiss">
-                      <X size={20} />
-                    </button>
-                  </div>
-                )}
+                  {msg.role !== 'user' && feedbackToastId === msg.id && (
+                    <div className="feedback-toast" id={`feedback-toast-${msg.id}`} role="status">
+                      <span>Thank you for your feedback!</span>
+                      <button type="button" className="feedback-toast-close" onClick={dismissFeedbackToast} aria-label="Dismiss">
+                        <X size={20} />
+                      </button>
+                    </div>
+                  )}
 
+                </div>
               </div>
-            </div>
             );
           })}
 
@@ -3385,267 +3385,267 @@ export default function Davora() {
 
         {/* Input Area - hidden while Find in chat is open */}
         {!showFindInChat && (
-        <div className={`input-wrapper mode-${inputMode} ${isTemporary ? 'mode-incognito' : ''}`}>
-          {/* ChatGPT-Style Centered Scroll to Bottom Down Arrow */}
-          {showScrollButton && (
-            <button
-              type="button"
-              ref={scrollBtnRef}
-              className="scroll-bottom-btn"
-              onClick={() => scrollToBottom("smooth")}
-              title="Scroll to bottom"
-              aria-label="Scroll to bottom"
-            >
-              <ArrowDown size={16} strokeWidth={2.2} />
-            </button>
-          )}
-
-          <form className="input-area" onSubmit={sendMessage}>
-
-            <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
-              <button 
-                type="button" 
-                onClick={() => setShowPlusMenu(!showPlusMenu)} 
-                className={`attach-btn ${showPlusMenu ? 'active' : ''}`} 
-                title={showPlusMenu ? "Close" : "Options"}
-                aria-label={showPlusMenu ? "Close" : "Options"}
-              >
-                {showPlusMenu ? <X size={22} strokeWidth={2.2} /> : <Plus size={24} />}
-              </button>
-
-              {showPlusMenu && (
-                <div className="plus-menu-dropdown">
-                  <button
-                    type="button"
-                    className="plus-menu-item"
-                    onClick={() => {
-                      setShowPlusMenu(false);
-                      setTimeout(() => {
-                        if (cameraInputRef.current) {
-                          cameraInputRef.current.value = "";
-                          cameraInputRef.current.click();
-                        }
-                      }, 50);
-                    }}
-                  >
-                    <Camera size={18} /> Camera
-                  </button>
-                  <button
-                    type="button"
-                    className="plus-menu-item"
-                    onClick={() => {
-                      setShowPlusMenu(false);
-                      setTimeout(() => {
-                        if (fileInputRef.current) {
-                          fileInputRef.current.value = "";
-                          fileInputRef.current.click();
-                        }
-                      }, 50);
-                    }}
-                  >
-                    <Paperclip size={18} /> Add photos & files
-                  </button>
-                  <div className="plus-menu-divider"></div>
-                  <button type="button" className={`plus-menu-item ${inputMode === 'deep' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep' ? 'instant' : 'deep'); setShowPlusMenu(false); }}>
-                    <Lightbulb size={18} className="text-purple-500" /> Thinking
-                  </button>
-                  <button type="button" className={`plus-menu-item ${inputMode === 'deep-search' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep-search' ? 'instant' : 'deep-search'); setShowPlusMenu(false); }}>
-                    <Telescope size={18} className="text-blue-500" /> Deep search
-                  </button>
-                  <button type="button" className={`plus-menu-item ${inputMode === 'research' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'research' ? 'instant' : 'research'); setShowPlusMenu(false); }}>
-                    <Globe size={18} className="text-green-500" /> Web search
-                  </button>
-                </div>
-              )}
-              {/* Hidden file inputs OUTSIDE dropdown so they survive unmount */}
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                ref={cameraInputRef}
-                style={{ display: 'none' }}
-                onChange={handleFileSelect}
-              />
-              <input
-                type="file"
-                accept="image/*,.pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
-                multiple
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                onChange={handleFileSelect}
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-              {attachments.length > 0 && (
-                <div className="attachment-preview" style={{ padding: '10px 16px 4px 16px', display: 'flex', gap: '12px', overflowX: 'auto', alignItems: 'center' }}>
-                  {attachments.map((att, idx) => (
-                    <div key={att.id || idx} style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
-                      {att.type === 'document' ? (
-                        <div className="doc-preview-chip" style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '8px 12px',
-                          background: 'var(--bg-secondary)',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '14px',
-                          maxWidth: '250px',
-                          height: '68px',
-                          opacity: att.uploading ? 0.6 : 1,
-                          position: 'relative'
-                        }}>
-                          <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            {getDocIcon(att.ext, 22)}
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', textAlign: 'left', minWidth: 0 }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {att.name}
-                            </span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                              {formatFileSize(att.size)}
-                            </span>
-                          </div>
-                          {att.uploading && (
-                            <div style={{ marginLeft: '4px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                              <Loader2 size={14} className="animate-spin" style={{ color: 'var(--text-secondary)' }} />
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div style={{
-                          width: '68px',
-                          height: '68px',
-                          borderRadius: '14px',
-                          overflow: 'hidden',
-                          border: '1.5px solid var(--border-color)',
-                          background: 'var(--bg-secondary)',
-                          position: 'relative',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
-                        }}>
-                          <img
-                            src={att.url}
-                            alt="Attachment"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              opacity: att.uploading ? 0.5 : 1,
-                              transition: 'opacity 0.2s'
-                            }}
-                          />
-                          {att.uploading && (
-                            <div style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              background: 'rgba(0,0,0,0.4)'
-                            }}>
-                              <Loader2 size={18} className="animate-spin" style={{ color: '#ffffff' }} />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
-                        style={{
-                          position: 'absolute',
-                          top: '-6px',
-                          right: '-6px',
-                          background: 'rgba(25, 25, 25, 0.9)',
-                          backdropFilter: 'blur(8px)',
-                          borderRadius: '50%',
-                          width: '22px',
-                          height: '22px',
-                          padding: 0,
-                          cursor: 'pointer',
-                          border: '1.5px solid rgba(255, 255, 255, 0.25)',
-                          zIndex: 3,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#ffffff',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
-                        }}
-                        title="Remove attachment"
-                        aria-label="Remove attachment"
-                      >
-                        <X size={12} strokeWidth={2.5} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className={`textarea-container ${isListening ? 'hidden' : ''}`} style={{ position: 'relative' }}>
-                <TextareaAutosize
-                  ref={inputRef}
-                  minRows={1}
-                  maxRows={6}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => setIsComposerFocused(true)}
-                  onBlur={() => setIsComposerFocused(false)}
-                  placeholder={
-                    isTemporary ? "Temporary Chat..." :
-                      inputMode === 'deep' ? "(Deep Think)..." :
-                        inputMode === 'deep-search' ? "(Deep Web Search)..." :
-                          inputMode === 'research' ? "(Web Search)..." :
-                            "Ask anything"
-                  }
-                  disabled={isTyping}
-                  className="auto-resize-textarea"
-                />
-                {autoSuggestion && (
-                  <div className="autocomplete-ghost" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none', padding: 'inherit', overflow: 'hidden' }}>
-                    <span style={{ visibility: 'hidden', whiteSpace: 'pre' }}>{input}</span>
-                    <span style={{ color: 'var(--text-secondary)', opacity: 0.4, whiteSpace: 'pre' }}>{autoSuggestion.slice(input.length)}</span>
-                    <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.5, background: 'var(--bg-secondary)', padding: '1px 6px', borderRadius: '4px' }}>Tab</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {isListening && (
-              <div className="voice-visualizer">
-                <div className="voice-bar"></div>
-                <div className="voice-bar"></div>
-                <div className="voice-bar"></div>
-                <div className="voice-bar"></div>
-                <div className="voice-bar"></div>
-                <span className="voice-text">Listening...</span>
-              </div>
-            )}
-
-            <div className="input-right-actions">
+          <div className={`input-wrapper mode-${inputMode} ${isTemporary ? 'mode-incognito' : ''}`}>
+            {/* ChatGPT-Style Centered Scroll to Bottom Down Arrow */}
+            {showScrollButton && (
               <button
                 type="button"
-                onClick={toggleVoice}
-                className={`mic-btn ${isListening ? 'listening' : ''}`}
-                title="Voice Input (Dictate)"
+                ref={scrollBtnRef}
+                className="scroll-bottom-btn"
+                onClick={() => scrollToBottom("smooth")}
+                title="Scroll to bottom"
+                aria-label="Scroll to bottom"
               >
-                <Mic size={20} />
+                <ArrowDown size={16} strokeWidth={2.2} />
               </button>
+            )}
 
-              {isTyping ? (
-                <button type="button" onClick={stopGenerating} className="send-btn stop-btn" title="Stop generating">
-                  <Square size={16} fill="currentColor" />
+            <form className="input-area" onSubmit={sendMessage}>
+
+              <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowPlusMenu(!showPlusMenu)}
+                  className={`attach-btn ${showPlusMenu ? 'active' : ''}`}
+                  title={showPlusMenu ? "Close" : "Options"}
+                  aria-label={showPlusMenu ? "Close" : "Options"}
+                >
+                  {showPlusMenu ? <X size={22} strokeWidth={2.2} /> : <Plus size={24} />}
                 </button>
-              ) : (
-                <button type="submit" disabled={!input.trim() && attachments.length === 0} className="send-btn" title="Send message">
-                  <Send size={18} />
-                </button>
+
+                {showPlusMenu && (
+                  <div className="plus-menu-dropdown">
+                    <button
+                      type="button"
+                      className="plus-menu-item"
+                      onClick={() => {
+                        setShowPlusMenu(false);
+                        setTimeout(() => {
+                          if (cameraInputRef.current) {
+                            cameraInputRef.current.value = "";
+                            cameraInputRef.current.click();
+                          }
+                        }, 50);
+                      }}
+                    >
+                      <Camera size={18} /> Camera
+                    </button>
+                    <button
+                      type="button"
+                      className="plus-menu-item"
+                      onClick={() => {
+                        setShowPlusMenu(false);
+                        setTimeout(() => {
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = "";
+                            fileInputRef.current.click();
+                          }
+                        }, 50);
+                      }}
+                    >
+                      <Paperclip size={18} /> Add photos & files
+                    </button>
+                    <div className="plus-menu-divider"></div>
+                    <button type="button" className={`plus-menu-item ${inputMode === 'deep' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep' ? 'instant' : 'deep'); setShowPlusMenu(false); }}>
+                      <Lightbulb size={18} className="text-purple-500" /> Thinking
+                    </button>
+                    <button type="button" className={`plus-menu-item ${inputMode === 'deep-search' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep-search' ? 'instant' : 'deep-search'); setShowPlusMenu(false); }}>
+                      <Telescope size={18} className="text-blue-500" /> Deep search
+                    </button>
+                    <button type="button" className={`plus-menu-item ${inputMode === 'research' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'research' ? 'instant' : 'research'); setShowPlusMenu(false); }}>
+                      <Globe size={18} className="text-green-500" /> Web search
+                    </button>
+                  </div>
+                )}
+                {/* Hidden file inputs OUTSIDE dropdown so they survive unmount */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  ref={cameraInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleFileSelect}
+                />
+                <input
+                  type="file"
+                  accept="image/*,.pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
+                  multiple
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleFileSelect}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                {attachments.length > 0 && (
+                  <div className="attachment-preview" style={{ padding: '10px 16px 4px 16px', display: 'flex', gap: '12px', overflowX: 'auto', alignItems: 'center' }}>
+                    {attachments.map((att, idx) => (
+                      <div key={att.id || idx} style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+                        {att.type === 'document' ? (
+                          <div className="doc-preview-chip" style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '8px 12px',
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '14px',
+                            maxWidth: '250px',
+                            height: '68px',
+                            opacity: att.uploading ? 0.6 : 1,
+                            position: 'relative'
+                          }}>
+                            <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              {getDocIcon(att.ext, 22)}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', textAlign: 'left', minWidth: 0 }}>
+                              <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {att.name}
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                {formatFileSize(att.size)}
+                              </span>
+                            </div>
+                            {att.uploading && (
+                              <div style={{ marginLeft: '4px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                                <Loader2 size={14} className="animate-spin" style={{ color: 'var(--text-secondary)' }} />
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div style={{
+                            width: '68px',
+                            height: '68px',
+                            borderRadius: '14px',
+                            overflow: 'hidden',
+                            border: '1.5px solid var(--border-color)',
+                            background: 'var(--bg-secondary)',
+                            position: 'relative',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
+                          }}>
+                            <img
+                              src={att.url}
+                              alt="Attachment"
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                opacity: att.uploading ? 0.5 : 1,
+                                transition: 'opacity 0.2s'
+                              }}
+                            />
+                            {att.uploading && (
+                              <div style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: 'rgba(0,0,0,0.4)'
+                              }}>
+                                <Loader2 size={18} className="animate-spin" style={{ color: '#ffffff' }} />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
+                          style={{
+                            position: 'absolute',
+                            top: '-6px',
+                            right: '-6px',
+                            background: 'rgba(25, 25, 25, 0.9)',
+                            backdropFilter: 'blur(8px)',
+                            borderRadius: '50%',
+                            width: '22px',
+                            height: '22px',
+                            padding: 0,
+                            cursor: 'pointer',
+                            border: '1.5px solid rgba(255, 255, 255, 0.25)',
+                            zIndex: 3,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#ffffff',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
+                          }}
+                          title="Remove attachment"
+                          aria-label="Remove attachment"
+                        >
+                          <X size={12} strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className={`textarea-container ${isListening ? 'hidden' : ''}`} style={{ position: 'relative' }}>
+                  <TextareaAutosize
+                    ref={inputRef}
+                    minRows={1}
+                    maxRows={6}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => setIsComposerFocused(true)}
+                    onBlur={() => setIsComposerFocused(false)}
+                    placeholder={
+                      isTemporary ? "Temporary Chat..." :
+                        inputMode === 'deep' ? "(Deep Think)..." :
+                          inputMode === 'deep-search' ? "(Deep Web Search)..." :
+                            inputMode === 'research' ? "(Web Search)..." :
+                              "Ask anything"
+                    }
+                    disabled={isTyping}
+                    className="auto-resize-textarea"
+                  />
+                  {autoSuggestion && (
+                    <div className="autocomplete-ghost" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none', padding: 'inherit', overflow: 'hidden' }}>
+                      <span style={{ visibility: 'hidden', whiteSpace: 'pre' }}>{input}</span>
+                      <span style={{ color: 'var(--text-secondary)', opacity: 0.4, whiteSpace: 'pre' }}>{autoSuggestion.slice(input.length)}</span>
+                      <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.5, background: 'var(--bg-secondary)', padding: '1px 6px', borderRadius: '4px' }}>Tab</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {isListening && (
+                <div className="voice-visualizer">
+                  <div className="voice-bar"></div>
+                  <div className="voice-bar"></div>
+                  <div className="voice-bar"></div>
+                  <div className="voice-bar"></div>
+                  <div className="voice-bar"></div>
+                  <span className="voice-text">Listening...</span>
+                </div>
               )}
-            </div>
-          </form>
-          <p className="footer-text">Davora can make mistakes. Consider verifying important information.</p>
-        </div>
+
+              <div className="input-right-actions">
+                <button
+                  type="button"
+                  onClick={toggleVoice}
+                  className={`mic-btn ${isListening ? 'listening' : ''}`}
+                  title="Voice Input (Dictate)"
+                >
+                  <Mic size={20} />
+                </button>
+
+                {isTyping ? (
+                  <button type="button" onClick={stopGenerating} className="send-btn stop-btn" title="Stop generating">
+                    <Square size={16} fill="currentColor" />
+                  </button>
+                ) : (
+                  <button type="submit" disabled={!input.trim() && attachments.length === 0} className="send-btn" title="Send message">
+                    <Send size={18} />
+                  </button>
+                )}
+              </div>
+            </form>
+            <p className="footer-text">Davora can make mistakes. Consider verifying important information.</p>
+          </div>
         )}
       </div>
 
