@@ -14,7 +14,7 @@ import {
   VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert, Ghost,
   Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint,
   Bell, Grid, CreditCard, HardDrive, Users, UserPlus, Key, FolderPlus, Link2, Link2Off, Type, LogOut,
-  FileText, FileCode, FileSpreadsheet, Camera
+  FileText, FileCode, FileSpreadsheet, Camera, Palette
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -3225,6 +3225,55 @@ export default function Davora() {
                                   <ReactMarkdown
                                     remarkPlugins={[remarkGfm]}
                                     components={{
+                                      img({ node, src, alt, ...props }) {
+                                        return (
+                                          <div className="generated-artwork-card">
+                                            <div className="artwork-image-container">
+                                              <img
+                                                src={src}
+                                                alt={alt || "Davora Studio artwork"}
+                                                onClick={() => setActiveLightboxImg(src)}
+                                                className="generated-artwork-img"
+                                                loading="lazy"
+                                              />
+                                              <div className="artwork-overlay-badge">
+                                                <Sparkles size={12} /> Davora Studio
+                                              </div>
+                                              <div className="artwork-hover-actions">
+                                                <button
+                                                  type="button"
+                                                  className="artwork-action-btn"
+                                                  title="Download artwork"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const link = document.createElement('a');
+                                                    link.href = src;
+                                                    link.target = '_blank';
+                                                    link.download = `davora-artwork-${Date.now()}.jpg`;
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    document.body.removeChild(link);
+                                                    showNotification("Downloading artwork...");
+                                                  }}
+                                                >
+                                                  <Download size={15} />
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  className="artwork-action-btn"
+                                                  title="View Fullscreen"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setActiveLightboxImg(src);
+                                                  }}
+                                                >
+                                                  <Telescope size={15} />
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      },
                                       code({ node, inline, className, children, ...props }) {
                                         const match = /language-(\w+)/.exec(className || '');
                                         return !inline && match ? (
@@ -3446,6 +3495,9 @@ export default function Davora() {
                       <Paperclip size={18} /> Add photos & files
                     </button>
                     <div className="plus-menu-divider"></div>
+                    <button type="button" className={`plus-menu-item ${inputMode === 'image' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'image' ? 'instant' : 'image'); setShowPlusMenu(false); inputRef.current?.focus(); }}>
+                      <Palette size={18} className="text-amber-500" /> Create image
+                    </button>
                     <button type="button" className={`plus-menu-item ${inputMode === 'deep' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep' ? 'instant' : 'deep'); setShowPlusMenu(false); }}>
                       <Lightbulb size={18} className="text-purple-500" /> Thinking
                     </button>
@@ -3582,6 +3634,19 @@ export default function Davora() {
                     ))}
                   </div>
                 )}
+                {inputMode === 'image' && (
+                  <div className="studio-mode-pill">
+                    <Sparkles size={13} /> Davora Studio Mode
+                    <button
+                      type="button"
+                      onClick={() => setInputMode('instant')}
+                      style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, marginLeft: '6px', display: 'inline-flex', alignItems: 'center' }}
+                      title="Exit Image Mode"
+                    >
+                      <X size={12} strokeWidth={2.5} />
+                    </button>
+                  </div>
+                )}
                 <div className={`textarea-container ${isListening ? 'hidden' : ''}`} style={{ position: 'relative' }}>
                   <TextareaAutosize
                     ref={inputRef}
@@ -3594,10 +3659,11 @@ export default function Davora() {
                     onBlur={() => setIsComposerFocused(false)}
                     placeholder={
                       isTemporary ? "Temporary Chat..." :
-                        inputMode === 'deep' ? "(Deep Think)..." :
-                          inputMode === 'deep-search' ? "(Deep Web Search)..." :
-                            inputMode === 'research' ? "(Web Search)..." :
-                              "Ask anything"
+                        inputMode === 'image' ? "Describe the image you want Davora Studio to create..." :
+                          inputMode === 'deep' ? "(Deep Think)..." :
+                            inputMode === 'deep-search' ? "(Deep Web Search)..." :
+                              inputMode === 'research' ? "(Web Search)..." :
+                                "Ask anything"
                     }
                     disabled={isTyping}
                     className="auto-resize-textarea"
