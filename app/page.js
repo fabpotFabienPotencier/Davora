@@ -3541,9 +3541,9 @@ export default function Davora() {
                             padding: '8px 12px',
                             background: 'var(--bg-secondary)',
                             border: '1px solid var(--border-color)',
-                            borderRadius: '14px',
+                            borderRadius: '16px',
                             maxWidth: '250px',
-                            height: '68px',
+                            height: '96px',
                             opacity: att.uploading ? 0.6 : 1,
                             position: 'relative'
                           }}>
@@ -3566,9 +3566,9 @@ export default function Davora() {
                           </div>
                         ) : (
                           <div style={{
-                            width: '68px',
-                            height: '68px',
-                            borderRadius: '14px',
+                            width: '96px',
+                            height: '96px',
+                            borderRadius: '16px',
                             overflow: 'hidden',
                             border: '1.5px solid var(--border-color)',
                             background: 'var(--bg-secondary)',
@@ -3598,7 +3598,7 @@ export default function Davora() {
                                 justifyContent: 'center',
                                 background: 'rgba(0,0,0,0.4)'
                               }}>
-                                <Loader2 size={18} className="animate-spin" style={{ color: '#ffffff' }} />
+                                <Loader2 size={20} className="animate-spin" style={{ color: '#ffffff' }} />
                               </div>
                             )}
                           </div>
@@ -3608,13 +3608,13 @@ export default function Davora() {
                           onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
                           style={{
                             position: 'absolute',
-                            top: '-6px',
-                            right: '-6px',
+                            top: '-8px',
+                            right: '-8px',
                             background: 'rgba(25, 25, 25, 0.9)',
                             backdropFilter: 'blur(8px)',
                             borderRadius: '50%',
-                            width: '22px',
-                            height: '22px',
+                            width: '26px',
+                            height: '26px',
                             padding: 0,
                             cursor: 'pointer',
                             border: '1.5px solid rgba(255, 255, 255, 0.25)',
@@ -3628,7 +3628,7 @@ export default function Davora() {
                           title="Remove attachment"
                           aria-label="Remove attachment"
                         >
-                          <X size={12} strokeWidth={2.5} />
+                          <X size={14} strokeWidth={2.5} />
                         </button>
                       </div>
                     ))}
