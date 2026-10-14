@@ -3531,13 +3531,8 @@ export default function Davora() {
               <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                 {attachments.length > 0 && (
                   <div className="attachment-preview" style={{ padding: '10px 16px 4px 16px', display: 'flex', gap: '12px', overflowX: 'auto', alignItems: 'center' }}>
-                    {attachments.map((att, idx) => {
-                      // A single image attachment gets to fill the available width instead of
-                      // sitting as a small fixed square with empty space beside it. Multiple
-                      // attachments keep the compact side-by-side thumbnail row.
-                      const isSoloImage = attachments.length === 1 && att.type !== 'document';
-                      return (
-                      <div key={att.id || idx} style={{ position: 'relative', display: isSoloImage ? 'block' : 'inline-flex', flexShrink: isSoloImage ? undefined : 0, width: isSoloImage ? '100%' : undefined }}>
+                    {attachments.map((att, idx) => (
+                      <div key={att.id || idx} style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
                         {att.type === 'document' ? (
                           <div className="doc-preview-chip" style={{
                             display: 'flex',
@@ -3571,8 +3566,8 @@ export default function Davora() {
                           </div>
                         ) : (
                           <div style={{
-                            width: isSoloImage ? '100%' : '96px',
-                            height: isSoloImage ? '180px' : '96px',
+                            width: '96px',
+                            height: '96px',
                             borderRadius: '16px',
                             overflow: 'hidden',
                             border: '1.5px solid var(--border-color)',
@@ -3636,8 +3631,7 @@ export default function Davora() {
                           <X size={14} strokeWidth={2.5} />
                         </button>
                       </div>
-                      );
-                    })}
+                    ))}
                   </div>
                 )}
                 {inputMode === 'image' && (
