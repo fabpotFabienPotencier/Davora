@@ -3530,7 +3530,7 @@ export default function Davora() {
 
               <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                 {attachments.length > 0 && (
-                  <div className="attachment-preview" style={{ padding: '10px 16px 4px 16px', display: 'flex', gap: '12px', overflowX: 'auto', alignItems: 'center' }}>
+                  <div className="attachment-preview" style={{ padding: '10px 0 4px 0', display: 'flex', gap: '12px', overflowX: 'auto', alignItems: 'center' }}>
                     {attachments.map((att, idx) => (
                       <div key={att.id || idx} style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
                         {att.type === 'document' ? (
