@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Davora "D" monogram -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M38,30 L38,78 L54,78 C67.4,78 78,67.4 78,54 C78,40.6 67.4,30 54,30 Z M47,40 L54,40 C61.7,40 68,46.3 68,54 C68,61.7 61.7,68 54,68 L47,68 Z"/>
+</vector>
