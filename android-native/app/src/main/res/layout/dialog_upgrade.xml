@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/davora_surface"
+    android:orientation="vertical"
+    android:padding="28dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/upgrade"
+        android:textColor="@color/davora_text"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnBasic"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/bg_bubble_user"
+        android:text="Davora Basic"
+        android:textAllCaps="false"
+        android:textColor="@color/davora_text" />
+
+    <Button
+        android:id="@+id/btnPro"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_button_primary"
+        android:text="Davora Pro"
+        android:textAllCaps="false"
+        android:textColor="@color/davora_accent_text"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/btnPremium"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_bubble_user"
+        android:text="Davora Premium"
+        android:textAllCaps="false"
+        android:textColor="@color/davora_text" />
+
+    <TextView
+        android:id="@+id/btnClose"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="16dp"
+        android:padding="12dp"
+        android:text="@string/error_generic"
+        android:textColor="@color/davora_text_muted"
+        android:visibility="gone" />
+</LinearLayout>
