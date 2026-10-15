@@ -3451,87 +3451,9 @@ export default function Davora() {
 
             <form className="input-area" onSubmit={sendMessage}>
 
-              <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowPlusMenu(!showPlusMenu)}
-                  className={`attach-btn ${showPlusMenu ? 'active' : ''}`}
-                  title={showPlusMenu ? "Close" : "Options"}
-                  aria-label={showPlusMenu ? "Close" : "Options"}
-                >
-                  {showPlusMenu ? <X size={22} strokeWidth={2.2} /> : <Plus size={24} />}
-                </button>
-
-                {showPlusMenu && (
-                  <div className="plus-menu-dropdown">
-                    <button
-                      type="button"
-                      className="plus-menu-item"
-                      onClick={() => {
-                        setShowPlusMenu(false);
-                        setTimeout(() => {
-                          if (cameraInputRef.current) {
-                            cameraInputRef.current.value = "";
-                            cameraInputRef.current.click();
-                          }
-                        }, 50);
-                      }}
-                    >
-                      <Camera size={18} /> Camera
-                    </button>
-                    <button
-                      type="button"
-                      className="plus-menu-item"
-                      onClick={() => {
-                        setShowPlusMenu(false);
-                        setTimeout(() => {
-                          if (fileInputRef.current) {
-                            fileInputRef.current.value = "";
-                            fileInputRef.current.click();
-                          }
-                        }, 50);
-                      }}
-                    >
-                      <Paperclip size={18} /> Add photos & files
-                    </button>
-                    <div className="plus-menu-divider"></div>
-                    <button type="button" className={`plus-menu-item ${inputMode === 'image' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'image' ? 'instant' : 'image'); setShowPlusMenu(false); inputRef.current?.focus(); }}>
-                      <Palette size={18} className="text-amber-500" /> Create image
-                    </button>
-                    <button type="button" className={`plus-menu-item ${inputMode === 'deep' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep' ? 'instant' : 'deep'); setShowPlusMenu(false); }}>
-                      <Lightbulb size={18} className="text-purple-500" /> Thinking
-                    </button>
-                    <button type="button" className={`plus-menu-item ${inputMode === 'deep-search' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep-search' ? 'instant' : 'deep-search'); setShowPlusMenu(false); }}>
-                      <Telescope size={18} className="text-blue-500" /> Deep search
-                    </button>
-                    <button type="button" className={`plus-menu-item ${inputMode === 'research' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'research' ? 'instant' : 'research'); setShowPlusMenu(false); }}>
-                      <Globe size={18} className="text-green-500" /> Web search
-                    </button>
-                  </div>
-                )}
-                {/* Hidden file inputs OUTSIDE dropdown so they survive unmount */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  ref={cameraInputRef}
-                  style={{ display: 'none' }}
-                  onChange={handleFileSelect}
-                />
-                <input
-                  type="file"
-                  accept="image/*,.pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
-                  multiple
-                  ref={fileInputRef}
-                  style={{ display: 'none' }}
-                  onChange={handleFileSelect}
-                />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                {attachments.length > 0 && (
-                  <div className="attachment-preview" style={{ padding: '10px 0 4px 0', display: 'flex', gap: '12px', overflowX: 'auto', alignItems: 'center' }}>
-                    {attachments.map((att, idx) => (
+              {attachments.length > 0 && (
+                <div className="attachment-preview" style={{ padding: '4px 0 10px 0', display: 'flex', gap: '12px', overflowX: 'auto', alignItems: 'center', width: '100%' }}>
+{attachments.map((att, idx) => (
                       <div key={att.id || idx} style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
                         {att.type === 'document' ? (
                           <div className="doc-preview-chip" style={{
@@ -3632,8 +3554,89 @@ export default function Davora() {
                         </button>
                       </div>
                     ))}
+                </div>
+              )}
+
+              <div className="input-bottom-row" style={{ display: 'flex', alignItems: 'flex-end', width: '100%' }}>
+
+              <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowPlusMenu(!showPlusMenu)}
+                  className={`attach-btn ${showPlusMenu ? 'active' : ''}`}
+                  title={showPlusMenu ? "Close" : "Options"}
+                  aria-label={showPlusMenu ? "Close" : "Options"}
+                >
+                  {showPlusMenu ? <X size={22} strokeWidth={2.2} /> : <Plus size={24} />}
+                </button>
+
+                {showPlusMenu && (
+                  <div className="plus-menu-dropdown">
+                    <button
+                      type="button"
+                      className="plus-menu-item"
+                      onClick={() => {
+                        setShowPlusMenu(false);
+                        setTimeout(() => {
+                          if (cameraInputRef.current) {
+                            cameraInputRef.current.value = "";
+                            cameraInputRef.current.click();
+                          }
+                        }, 50);
+                      }}
+                    >
+                      <Camera size={18} /> Camera
+                    </button>
+                    <button
+                      type="button"
+                      className="plus-menu-item"
+                      onClick={() => {
+                        setShowPlusMenu(false);
+                        setTimeout(() => {
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = "";
+                            fileInputRef.current.click();
+                          }
+                        }, 50);
+                      }}
+                    >
+                      <Paperclip size={18} /> Add photos & files
+                    </button>
+                    <div className="plus-menu-divider"></div>
+                    <button type="button" className={`plus-menu-item ${inputMode === 'image' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'image' ? 'instant' : 'image'); setShowPlusMenu(false); inputRef.current?.focus(); }}>
+                      <Palette size={18} className="text-amber-500" /> Create image
+                    </button>
+                    <button type="button" className={`plus-menu-item ${inputMode === 'deep' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep' ? 'instant' : 'deep'); setShowPlusMenu(false); }}>
+                      <Lightbulb size={18} className="text-purple-500" /> Thinking
+                    </button>
+                    <button type="button" className={`plus-menu-item ${inputMode === 'deep-search' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep-search' ? 'instant' : 'deep-search'); setShowPlusMenu(false); }}>
+                      <Telescope size={18} className="text-blue-500" /> Deep search
+                    </button>
+                    <button type="button" className={`plus-menu-item ${inputMode === 'research' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'research' ? 'instant' : 'research'); setShowPlusMenu(false); }}>
+                      <Globe size={18} className="text-green-500" /> Web search
+                    </button>
                   </div>
                 )}
+                {/* Hidden file inputs OUTSIDE dropdown so they survive unmount */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  ref={cameraInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleFileSelect}
+                />
+                <input
+                  type="file"
+                  accept="image/*,.pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
+                  multiple
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleFileSelect}
+                />
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                 {inputMode === 'image' && (
                   <div className="studio-mode-pill">
                     <Sparkles size={13} /> Davora Studio Mode
@@ -3708,6 +3711,8 @@ export default function Davora() {
                     <Send size={18} />
                   </button>
                 )}
+              </div>
+
               </div>
             </form>
             <p className="footer-text">Davora can make mistakes. Consider verifying important information.</p>

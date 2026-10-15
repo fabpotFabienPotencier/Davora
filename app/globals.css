@@ -1371,7 +1371,8 @@ body.light-theme .user-expand-toggle-btn:hover {
 
 .input-area {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: stretch;
   background: var(--input-bg);
   border: 1.5px solid var(--input-border);
   border-radius: 26px;
