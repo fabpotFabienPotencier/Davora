@@ -1657,7 +1657,21 @@ export default function Davora() {
     const sessionJustChanged = prevActiveSessionIdRef.current !== activeSessionId;
     prevActiveSessionIdRef.current = activeSessionId;
     if (sessionJustChanged) return;
-    if (!showScrollButton) scrollToBottom("auto");
+    if (!showScrollButton) {
+      scrollToBottom("auto");
+      return;
+    }
+    // A short chat that fits on screen never fires a native 'scroll' event (there's no
+    // distance to scroll), so the arrow's state otherwise only gets set once, whenever a
+    // chat is opened. If that single check landed a moment before the layout fully settled
+    // (composer height, safe-area insets, a reply still streaming in), the arrow can get
+    // stuck on with nothing left to scroll down to — nothing else re-checks it afterward.
+    // This runs on every new message and when streaming finishes, so it self-corrects
+    // instead of relying on one snapshot in time.
+    const box = chatBoxRef.current;
+    if (!box) return;
+    const { scrollTop, scrollHeight, clientHeight } = box;
+    if (scrollHeight - scrollTop - clientHeight <= 100) setShowScrollButton(false);
   }, [messages, isTyping, showScrollButton, activeSessionId]);
 
   const createNewSession = (initialMsg) => {
