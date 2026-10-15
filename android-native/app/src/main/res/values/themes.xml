@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Davora" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">@color/davora_accent</item>
+        <item name="colorPrimaryVariant">@color/davora_surface</item>
+        <item name="colorOnPrimary">@color/davora_accent_text</item>
+        <item name="colorSecondary">@color/davora_accent</item>
+        <item name="android:colorBackground">@color/davora_bg</item>
+        <item name="colorSurface">@color/davora_surface</item>
+        <item name="android:statusBarColor">@color/davora_bg</item>
+        <item name="android:navigationBarColor">@color/davora_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/davora_bg</item>
+        <item name="android:textColorPrimary">@color/davora_text</item>
+        <item name="android:textColorSecondary">@color/davora_text_secondary</item>
+    </style>
+</resources>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Davora brand: pure black design, matching web app -->
+    <color name="black">#FF000000</color>
+    <color name="davora_bg">#FF000000</color>
+    <color name="davora_surface">#FF111111</color>
+    <color name="davora_surface_2">#FF1A1A1A</color>
+    <color name="davora_surface_3">#FF222222</color>
+    <color name="davora_border">#1AFFFFFF</color>
+    <color name="davora_text">#FFFFFFFF</color>
+    <color name="davora_text_secondary">#FFAAAAAA</color>
+    <color name="davora_text_muted">#FF666666</color>
+    <color name="davora_accent">#FFFFFFFF</color>
+    <color name="davora_accent_text">#FF000000</color>
+    <color name="davora_danger">#FFEF4444</color>
+    <color name="davora_user_bubble">#FF1F1F1F</color>
+    <color name="davora_ai_bubble">#FF111111</color>
+</resources>
