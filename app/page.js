@@ -558,7 +558,12 @@ export default function Davora() {
       }
     };
 
-    if (isMobile) {
+    const isNativeAndroid = typeof window !== "undefined" && (
+      window.Capacitor?.getPlatform() === 'android' || 
+      (Boolean(window.Capacitor) && window.location.hostname === 'localhost')
+    );
+
+    if (isNativeAndroid) {
       showNotification(`Connecting to Google Play Store...`);
       try {
         const productMap = {
@@ -566,11 +571,11 @@ export default function Davora() {
           pro: "davora_sub_pro",
           premium: "davora_sub_premium"
         };
-        const productId = productMap[tier];
+        const productId = productMap[tier] || `davora_sub_${tier}`;
 
         const { NativePurchases } = await import('@capgo/native-purchases');
 
-        // Gracefully query billing support to avoid native app crashes on unpublished devices
+        // 1. Check if Google Play Billing is supported on device
         let isBillingSupported = false;
         try {
           const support = await NativePurchases.isBillingSupported();
@@ -580,21 +585,41 @@ export default function Davora() {
         }
 
         if (!isBillingSupported) {
-          showNotification("Google Play Billing not active on this device. Using web checkout...");
-          await runWebCheckout();
+          showNotification("Google Play Billing is unavailable on this device.");
           return;
         }
 
-        const billingResult = await NativePurchases.purchaseProduct({
+        // 2. Query product details to fetch active base plan ID
+        let planId = undefined;
+        try {
+          const productsRes = await NativePurchases.getProducts({
+            productIdentifiers: [productId],
+            productType: 'SUBS'
+          });
+          const productList = productsRes?.products || [];
+          if (productList.length > 0) {
+            const prod = productList[0];
+            planId = prod?.plans?.[0]?.planIdentifier || prod?.defaultPlanId || prod?.subscriptionOfferDetails?.[0]?.basePlanId;
+          }
+        } catch (queryErr) {
+          console.warn("Could not query product details, proceeding with default plan:", queryErr);
+        }
+
+        // 3. Launch native Google Play Billing sheet
+        const purchaseParams = {
           productIdentifier: productId,
           productType: 'SUBS',
           quantity: 1
-        });
+        };
+        if (planId) {
+          purchaseParams.planIdentifier = planId;
+        }
 
-        const token = billingResult.purchaseToken || billingResult.transactionId;
+        const billingResult = await NativePurchases.purchaseProduct(purchaseParams);
+        const token = billingResult?.purchaseToken || billingResult?.transactionId;
 
         if (token) {
-          showNotification("Purchase successful! Verifying subscription...");
+          showNotification("Purchase successful! Activating subscription...");
 
           const verifyRes = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/subscription/verify-google', {
             method: 'POST',
@@ -611,15 +636,21 @@ export default function Davora() {
           });
 
           if (verifyRes.ok) {
-            showNotification("Subscription active! Enjoy your benefits.");
-            window.location.reload();
+            showNotification(`Upgraded to Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)} successfully!`);
+            setSubscriptionPlan(`Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)} Active`);
+            setTimeout(() => window.location.reload(), 1500);
           } else {
-            showNotification("Verification failed. Please contact support.");
+            showNotification("Subscription verification failed. Please contact support.");
           }
         }
       } catch (err) {
-        console.warn("Google Play Billing error occurred, fallback to web:", err);
-        await runWebCheckout();
+        console.warn("Google Play Billing error:", err);
+        const errStr = String(err?.message || err).toLowerCase();
+        if (errStr.includes("cancel") || errStr.includes("user_canceled")) {
+          showNotification("Subscription checkout cancelled.");
+        } else {
+          showNotification(`Google Play Billing: ${err?.message || "Payment could not be completed."}`);
+        }
       }
       return;
     }

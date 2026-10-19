@@ -42,8 +42,8 @@ def main():
 
     # 1. Update Version Code and Name
     run_num = os.environ.get("GITHUB_RUN_NUMBER", "1")
-    version_code = 1010 + int(run_num)
-    version_name = "2.6.1"
+    version_code = 3000 + int(run_num)
+    version_name = "2.7.0"
     print(f"Setting unique versionCode to {version_code} and versionName to {version_name}")
     
     app_gradle_path = "android/app/build.gradle"
@@ -157,7 +157,8 @@ allprojects {
         
         perms = [
             '<uses-permission android:name="android.permission.RECORD_AUDIO" />',
-            '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />'
+            '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />',
+            '<uses-permission android:name="com.android.vending.BILLING" />'
         ]
         to_add = [p for p in perms if p not in manifest_content]
         if to_add:
@@ -165,7 +166,7 @@ allprojects {
             manifest_content = manifest_content.replace("<application", insert_str + "<application")
             with open(manifest_path, "w", encoding="utf-8") as f:
                 f.write(manifest_content)
-            print("Added permissions to AndroidManifest.xml")
+            print("Added permissions (including Google Play Billing) to AndroidManifest.xml")
     else:
         print(f"Warning: {manifest_path} not found")
 
