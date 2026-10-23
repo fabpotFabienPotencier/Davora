@@ -2664,19 +2664,19 @@ export default function Davora() {
 
         <div className="sidebar-nav-group">
           <button className="sidebar-nav-btn new-chat-btn" onClick={startNewChat} disabled={isTyping}>
-            <Edit2 size={16} /> New chat
+            <Edit2 size={22} strokeWidth={2.2} /> New chat
           </button>
           <button className="sidebar-nav-btn" onClick={() => setActiveModal('library')}>
-            <FolderKanban size={16} /> Library
+            <FolderKanban size={22} strokeWidth={2.2} /> Library
           </button>
           <button className="sidebar-nav-btn" onClick={() => setActiveModal('projects')}>
-            <Folder size={16} /> Projects
+            <Folder size={22} strokeWidth={2.2} /> Projects
           </button>
           <button className="sidebar-nav-btn" onClick={() => setActiveModal('apps')}>
-            <Compass size={16} /> Apps
+            <Compass size={22} strokeWidth={2.2} /> Apps
           </button>
           <button className="sidebar-nav-btn" onClick={() => setActiveModal('codex')}>
-            <Code size={16} /> Codex
+            <Code size={22} strokeWidth={2.2} /> Codex
           </button>
         </div>
 
