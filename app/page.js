@@ -559,7 +559,7 @@ export default function Davora() {
     };
 
     const isNativeAndroid = typeof window !== "undefined" && (
-      window.Capacitor?.getPlatform() === 'android' || 
+      window.Capacitor?.getPlatform() === 'android' ||
       (Boolean(window.Capacitor) && window.location.hostname === 'localhost')
     );
 
@@ -575,17 +575,38 @@ export default function Davora() {
 
         const { NativePurchases } = await import('@capgo/native-purchases');
 
-        // 1. Check if Google Play Billing is supported on device
+        // 1. Check if Google Play Billing is supported on device (with connection retry)
         let isBillingSupported = false;
-        try {
-          const support = await NativePurchases.isBillingSupported();
-          isBillingSupported = support?.isBillingSupported;
-        } catch (e) {
-          console.warn("Billing support check caught native exception:", e);
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const support = await NativePurchases.isBillingSupported();
+            if (support?.isBillingSupported) {
+              isBillingSupported = true;
+              break;
+            }
+          } catch (e) {
+            console.warn(`Billing support check attempt ${attempt + 1} caught exception:`, e);
+          }
+          await new Promise(r => setTimeout(r, 600));
+        }
+
+        // If support check was inconclusive, probe products directly to verify store connectivity
+        if (!isBillingSupported) {
+          try {
+            const probe = await NativePurchases.getProducts({
+              productIdentifiers: [productId],
+              productType: 'SUBS'
+            });
+            if (probe?.products && probe.products.length > 0) {
+              isBillingSupported = true;
+            }
+          } catch (probeErr) {
+            console.warn("Product probe check error:", probeErr);
+          }
         }
 
         if (!isBillingSupported) {
-          showNotification("Google Play Billing is unavailable on this device.");
+          showNotification("Google Play Billing is unavailable on this device. (Please verify Play Store login)");
           return;
         }
 
@@ -607,6 +628,7 @@ export default function Davora() {
 
         // 3. Launch native Google Play Billing sheet
         const purchaseParams = {
+          productId: productId,
           productIdentifier: productId,
           productType: 'SUBS',
           quantity: 1
@@ -631,7 +653,7 @@ export default function Davora() {
             body: JSON.stringify({
               productId: productId,
               purchaseToken: token,
-              packageName: "xyz.davora.chatdave"
+              packageName: "com.davora.xyz"
             })
           });
 
@@ -3498,265 +3520,265 @@ export default function Davora() {
 
               {attachments.length > 0 && (
                 <div className="attachment-preview" style={{ padding: '4px 0 10px 0', display: 'flex', gap: '12px', overflowX: 'auto', alignItems: 'center', width: '100%' }}>
-{attachments.map((att, idx) => (
-                      <div key={att.id || idx} style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
-                        {att.type === 'document' ? (
-                          <div className="doc-preview-chip" style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            padding: '8px 12px',
-                            background: 'var(--bg-secondary)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '16px',
-                            maxWidth: '250px',
-                            height: '96px',
-                            opacity: att.uploading ? 0.6 : 1,
-                            position: 'relative'
-                          }}>
-                            <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              {getDocIcon(att.ext, 22)}
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', textAlign: 'left', minWidth: 0 }}>
-                              <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {att.name}
-                              </span>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                {formatFileSize(att.size)}
-                              </span>
-                            </div>
-                            {att.uploading && (
-                              <div style={{ marginLeft: '4px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                                <Loader2 size={14} className="animate-spin" style={{ color: 'var(--text-secondary)' }} />
-                              </div>
-                            )}
+                  {attachments.map((att, idx) => (
+                    <div key={att.id || idx} style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+                      {att.type === 'document' ? (
+                        <div className="doc-preview-chip" style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          padding: '8px 12px',
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '16px',
+                          maxWidth: '250px',
+                          height: '96px',
+                          opacity: att.uploading ? 0.6 : 1,
+                          position: 'relative'
+                        }}>
+                          <div style={{ padding: '8px', borderRadius: '8px', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            {getDocIcon(att.ext, 22)}
                           </div>
-                        ) : (
-                          <div style={{
-                            width: '96px',
-                            height: '96px',
-                            borderRadius: '16px',
-                            overflow: 'hidden',
-                            border: '1.5px solid var(--border-color)',
-                            background: 'var(--bg-secondary)',
-                            position: 'relative',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
-                          }}>
-                            <img
-                              src={att.url}
-                              alt="Attachment"
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                opacity: att.uploading ? 0.5 : 1,
-                                transition: 'opacity 0.2s'
-                              }}
-                            />
-                            {att.uploading && (
-                              <div style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                background: 'rgba(0,0,0,0.4)'
-                              }}>
-                                <Loader2 size={20} className="animate-spin" style={{ color: '#ffffff' }} />
-                              </div>
-                            )}
+                          <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', textAlign: 'left', minWidth: 0 }}>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {att.name}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                              {formatFileSize(att.size)}
+                            </span>
                           </div>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
-                          style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            right: '-8px',
-                            background: 'rgba(25, 25, 25, 0.9)',
-                            backdropFilter: 'blur(8px)',
-                            borderRadius: '50%',
-                            width: '26px',
-                            height: '26px',
-                            padding: 0,
-                            cursor: 'pointer',
-                            border: '1.5px solid rgba(255, 255, 255, 0.25)',
-                            zIndex: 3,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#ffffff',
-                            boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
-                          }}
-                          title="Remove attachment"
-                          aria-label="Remove attachment"
-                        >
-                          <X size={14} strokeWidth={2.5} />
-                        </button>
-                      </div>
-                    ))}
+                          {att.uploading && (
+                            <div style={{ marginLeft: '4px', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                              <Loader2 size={14} className="animate-spin" style={{ color: 'var(--text-secondary)' }} />
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{
+                          width: '96px',
+                          height: '96px',
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          border: '1.5px solid var(--border-color)',
+                          background: 'var(--bg-secondary)',
+                          position: 'relative',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
+                        }}>
+                          <img
+                            src={att.url}
+                            alt="Attachment"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              opacity: att.uploading ? 0.5 : 1,
+                              transition: 'opacity 0.2s'
+                            }}
+                          />
+                          {att.uploading && (
+                            <div style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: 'rgba(0,0,0,0.4)'
+                            }}>
+                              <Loader2 size={20} className="animate-spin" style={{ color: '#ffffff' }} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
+                        style={{
+                          position: 'absolute',
+                          top: '-8px',
+                          right: '-8px',
+                          background: 'rgba(25, 25, 25, 0.9)',
+                          backdropFilter: 'blur(8px)',
+                          borderRadius: '50%',
+                          width: '26px',
+                          height: '26px',
+                          padding: 0,
+                          cursor: 'pointer',
+                          border: '1.5px solid rgba(255, 255, 255, 0.25)',
+                          zIndex: 3,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#ffffff',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.4)'
+                        }}
+                        title="Remove attachment"
+                        aria-label="Remove attachment"
+                      >
+                        <X size={14} strokeWidth={2.5} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
 
               <div className="input-bottom-row" style={{ display: 'flex', alignItems: 'flex-end', width: '100%' }}>
 
-              <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowPlusMenu(!showPlusMenu)}
-                  className={`attach-btn ${showPlusMenu ? 'active' : ''}`}
-                  title={showPlusMenu ? "Close" : "Options"}
-                  aria-label={showPlusMenu ? "Close" : "Options"}
-                >
-                  {showPlusMenu ? <X size={22} strokeWidth={2.2} /> : <Plus size={24} />}
-                </button>
+                <div ref={plusMenuRef} className="plus-menu-wrapper" style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowPlusMenu(!showPlusMenu)}
+                    className={`attach-btn ${showPlusMenu ? 'active' : ''}`}
+                    title={showPlusMenu ? "Close" : "Options"}
+                    aria-label={showPlusMenu ? "Close" : "Options"}
+                  >
+                    {showPlusMenu ? <X size={22} strokeWidth={2.2} /> : <Plus size={24} />}
+                  </button>
 
-                {showPlusMenu && (
-                  <div className="plus-menu-dropdown">
-                    <button
-                      type="button"
-                      className="plus-menu-item"
-                      onClick={() => {
-                        setShowPlusMenu(false);
-                        setTimeout(() => {
-                          if (cameraInputRef.current) {
-                            cameraInputRef.current.value = "";
-                            cameraInputRef.current.click();
-                          }
-                        }, 50);
-                      }}
-                    >
-                      <Camera size={18} /> Camera
-                    </button>
-                    <button
-                      type="button"
-                      className="plus-menu-item"
-                      onClick={() => {
-                        setShowPlusMenu(false);
-                        setTimeout(() => {
-                          if (fileInputRef.current) {
-                            fileInputRef.current.value = "";
-                            fileInputRef.current.click();
-                          }
-                        }, 50);
-                      }}
-                    >
-                      <Paperclip size={18} /> Add photos & files
-                    </button>
-                    <div className="plus-menu-divider"></div>
-                    <button type="button" className={`plus-menu-item ${inputMode === 'image' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'image' ? 'instant' : 'image'); setShowPlusMenu(false); inputRef.current?.focus(); }}>
-                      <Palette size={18} className="text-amber-500" /> Create image
-                    </button>
-                    <button type="button" className={`plus-menu-item ${inputMode === 'deep' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep' ? 'instant' : 'deep'); setShowPlusMenu(false); }}>
-                      <Lightbulb size={18} className="text-purple-500" /> Thinking
-                    </button>
-                    <button type="button" className={`plus-menu-item ${inputMode === 'deep-search' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep-search' ? 'instant' : 'deep-search'); setShowPlusMenu(false); }}>
-                      <Telescope size={18} className="text-blue-500" /> Deep search
-                    </button>
-                    <button type="button" className={`plus-menu-item ${inputMode === 'research' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'research' ? 'instant' : 'research'); setShowPlusMenu(false); }}>
-                      <Globe size={18} className="text-green-500" /> Web search
-                    </button>
-                  </div>
-                )}
-                {/* Hidden file inputs OUTSIDE dropdown so they survive unmount */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  ref={cameraInputRef}
-                  style={{ display: 'none' }}
-                  onChange={handleFileSelect}
-                />
-                <input
-                  type="file"
-                  accept="image/*,.pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
-                  multiple
-                  ref={fileInputRef}
-                  style={{ display: 'none' }}
-                  onChange={handleFileSelect}
-                />
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
-                {inputMode === 'image' && (
-                  <div className="studio-mode-pill">
-                    <Sparkles size={13} /> Davora Studio Mode
-                    <button
-                      type="button"
-                      onClick={() => setInputMode('instant')}
-                      style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, marginLeft: '6px', display: 'inline-flex', alignItems: 'center' }}
-                      title="Exit Image Mode"
-                    >
-                      <X size={12} strokeWidth={2.5} />
-                    </button>
-                  </div>
-                )}
-                <div className={`textarea-container ${isListening ? 'hidden' : ''}`} style={{ position: 'relative' }}>
-                  <TextareaAutosize
-                    ref={inputRef}
-                    minRows={1}
-                    maxRows={6}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onFocus={() => setIsComposerFocused(true)}
-                    onBlur={() => setIsComposerFocused(false)}
-                    placeholder={
-                      isTemporary ? "Temporary Chat..." :
-                        inputMode === 'image' ? "Describe the image you want Davora Studio to create..." :
-                          inputMode === 'deep' ? "(Deep Think)..." :
-                            inputMode === 'deep-search' ? "(Deep Web Search)..." :
-                              inputMode === 'research' ? "(Web Search)..." :
-                                "Ask anything"
-                    }
-                    disabled={isTyping}
-                    className="auto-resize-textarea"
-                  />
-                  {autoSuggestion && (
-                    <div className="autocomplete-ghost" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none', padding: 'inherit', overflow: 'hidden' }}>
-                      <span style={{ visibility: 'hidden', whiteSpace: 'pre' }}>{input}</span>
-                      <span style={{ color: 'var(--text-secondary)', opacity: 0.4, whiteSpace: 'pre' }}>{autoSuggestion.slice(input.length)}</span>
-                      <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.5, background: 'var(--bg-secondary)', padding: '1px 6px', borderRadius: '4px' }}>Tab</span>
+                  {showPlusMenu && (
+                    <div className="plus-menu-dropdown">
+                      <button
+                        type="button"
+                        className="plus-menu-item"
+                        onClick={() => {
+                          setShowPlusMenu(false);
+                          setTimeout(() => {
+                            if (cameraInputRef.current) {
+                              cameraInputRef.current.value = "";
+                              cameraInputRef.current.click();
+                            }
+                          }, 50);
+                        }}
+                      >
+                        <Camera size={18} /> Camera
+                      </button>
+                      <button
+                        type="button"
+                        className="plus-menu-item"
+                        onClick={() => {
+                          setShowPlusMenu(false);
+                          setTimeout(() => {
+                            if (fileInputRef.current) {
+                              fileInputRef.current.value = "";
+                              fileInputRef.current.click();
+                            }
+                          }, 50);
+                        }}
+                      >
+                        <Paperclip size={18} /> Add photos & files
+                      </button>
+                      <div className="plus-menu-divider"></div>
+                      <button type="button" className={`plus-menu-item ${inputMode === 'image' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'image' ? 'instant' : 'image'); setShowPlusMenu(false); inputRef.current?.focus(); }}>
+                        <Palette size={18} className="text-amber-500" /> Create image
+                      </button>
+                      <button type="button" className={`plus-menu-item ${inputMode === 'deep' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep' ? 'instant' : 'deep'); setShowPlusMenu(false); }}>
+                        <Lightbulb size={18} className="text-purple-500" /> Thinking
+                      </button>
+                      <button type="button" className={`plus-menu-item ${inputMode === 'deep-search' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'deep-search' ? 'instant' : 'deep-search'); setShowPlusMenu(false); }}>
+                        <Telescope size={18} className="text-blue-500" /> Deep search
+                      </button>
+                      <button type="button" className={`plus-menu-item ${inputMode === 'research' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'research' ? 'instant' : 'research'); setShowPlusMenu(false); }}>
+                        <Globe size={18} className="text-green-500" /> Web search
+                      </button>
                     </div>
                   )}
+                  {/* Hidden file inputs OUTSIDE dropdown so they survive unmount */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    ref={cameraInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleFileSelect}
+                  />
+                  <input
+                    type="file"
+                    accept="image/*,.pdf,.docx,.doc,.txt,.csv,.tsv,.json,.md,.markdown,.py,.js,.ts,.jsx,.tsx,.html,.htm,.css,.scss,.sql,.xml,.yaml,.yml,.log,.sh,.env,.c,.cpp,.h,.java,.rs,.go"
+                    multiple
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleFileSelect}
+                  />
                 </div>
-              </div>
 
-              {isListening && (
-                <div className="voice-visualizer">
-                  <div className="voice-bar"></div>
-                  <div className="voice-bar"></div>
-                  <div className="voice-bar"></div>
-                  <div className="voice-bar"></div>
-                  <div className="voice-bar"></div>
-                  <span className="voice-text">Listening...</span>
+                <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                  {inputMode === 'image' && (
+                    <div className="studio-mode-pill">
+                      <Sparkles size={13} /> Davora Studio Mode
+                      <button
+                        type="button"
+                        onClick={() => setInputMode('instant')}
+                        style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, marginLeft: '6px', display: 'inline-flex', alignItems: 'center' }}
+                        title="Exit Image Mode"
+                      >
+                        <X size={12} strokeWidth={2.5} />
+                      </button>
+                    </div>
+                  )}
+                  <div className={`textarea-container ${isListening ? 'hidden' : ''}`} style={{ position: 'relative' }}>
+                    <TextareaAutosize
+                      ref={inputRef}
+                      minRows={1}
+                      maxRows={6}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      onFocus={() => setIsComposerFocused(true)}
+                      onBlur={() => setIsComposerFocused(false)}
+                      placeholder={
+                        isTemporary ? "Temporary Chat..." :
+                          inputMode === 'image' ? "Describe the image you want Davora Studio to create..." :
+                            inputMode === 'deep' ? "(Deep Think)..." :
+                              inputMode === 'deep-search' ? "(Deep Web Search)..." :
+                                inputMode === 'research' ? "(Web Search)..." :
+                                  "Ask anything"
+                      }
+                      disabled={isTyping}
+                      className="auto-resize-textarea"
+                    />
+                    {autoSuggestion && (
+                      <div className="autocomplete-ghost" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', pointerEvents: 'none', padding: 'inherit', overflow: 'hidden' }}>
+                        <span style={{ visibility: 'hidden', whiteSpace: 'pre' }}>{input}</span>
+                        <span style={{ color: 'var(--text-secondary)', opacity: 0.4, whiteSpace: 'pre' }}>{autoSuggestion.slice(input.length)}</span>
+                        <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.5, background: 'var(--bg-secondary)', padding: '1px 6px', borderRadius: '4px' }}>Tab</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
 
-              <div className="input-right-actions">
-                <button
-                  type="button"
-                  onClick={toggleVoice}
-                  className={`mic-btn ${isListening ? 'listening' : ''}`}
-                  title="Voice Input (Dictate)"
-                >
-                  <Mic size={20} />
-                </button>
-
-                {isTyping ? (
-                  <button type="button" onClick={stopGenerating} className="send-btn stop-btn" title="Stop generating">
-                    <Square size={16} fill="currentColor" />
-                  </button>
-                ) : (
-                  <button type="submit" disabled={!input.trim() && attachments.length === 0} className="send-btn" title="Send message">
-                    <Send size={18} />
-                  </button>
+                {isListening && (
+                  <div className="voice-visualizer">
+                    <div className="voice-bar"></div>
+                    <div className="voice-bar"></div>
+                    <div className="voice-bar"></div>
+                    <div className="voice-bar"></div>
+                    <div className="voice-bar"></div>
+                    <span className="voice-text">Listening...</span>
+                  </div>
                 )}
-              </div>
+
+                <div className="input-right-actions">
+                  <button
+                    type="button"
+                    onClick={toggleVoice}
+                    className={`mic-btn ${isListening ? 'listening' : ''}`}
+                    title="Voice Input (Dictate)"
+                  >
+                    <Mic size={20} />
+                  </button>
+
+                  {isTyping ? (
+                    <button type="button" onClick={stopGenerating} className="send-btn stop-btn" title="Stop generating">
+                      <Square size={16} fill="currentColor" />
+                    </button>
+                  ) : (
+                    <button type="submit" disabled={!input.trim() && attachments.length === 0} className="send-btn" title="Send message">
+                      <Send size={18} />
+                    </button>
+                  )}
+                </div>
 
               </div>
             </form>

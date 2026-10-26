@@ -22,7 +22,7 @@ def patch_native_purchases():
         # Fix 1: enablePendingPurchases() requires PendingPurchasesParams in Billing 8
         plugin_code = re.sub(
             r'\.enablePendingPurchases\(\)',
-            '.enablePendingPurchases(com.android.billingclient.api.PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())',
+            '.enablePendingPurchases(com.android.billingclient.api.PendingPurchasesParams.newBuilder().enableOneTimeProducts().enablePrepaidPlans().build())',
             plugin_code
         )
 
@@ -43,7 +43,7 @@ def main():
     # 1. Update Version Code and Name
     run_num = os.environ.get("GITHUB_RUN_NUMBER", "1")
     version_code = 3000 + int(run_num)
-    version_name = "2.7.0"
+    version_name = "2.8.0"
     print(f"Setting unique versionCode to {version_code} and versionName to {version_name}")
     
     app_gradle_path = "android/app/build.gradle"
