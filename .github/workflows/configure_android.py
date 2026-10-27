@@ -50,7 +50,7 @@ def main():
 
     # 1. Update Version Code and Name
     run_num = os.environ.get("GITHUB_RUN_NUMBER", "1")
-    version_code = 3000 + int(run_num)
+    version_code = 40000 + int(run_num)  # Keep future Play releases above previously used codes
     version_name = "2.8.0"
     print(f"Setting unique versionCode to {version_code} and versionName to {version_name}")
     
