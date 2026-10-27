@@ -694,60 +694,11 @@ export default function Davora() {
           return;
         }
 
-        // 2. Query the exact Play subscription SKU and log safe product metadata.
-        billingStage = "query_product";
-        let productList = [];
-        try {
-          const productsRes = await NativePurchases.getProducts({
-            productIdentifiers: [productId],
-            productType: subType
-          });
-          productList = Array.isArray(productsRes?.products) ? productsRes.products : [];
-          console.info("[Davora billing] getProducts result", {
-            packageName: "com.davora.xyz",
-            requestedProductId: productId,
-            productType: subType,
-            productCount: productList.length,
-            products: productList.map((prod) => ({
-              identifier: prod?.identifier ?? null,
-              planIdentifier: prod?.planIdentifier ?? null,
-              offerId: prod?.offerId ?? null,
-              hasOfferToken: Boolean(prod?.offerToken),
-              priceString: prod?.priceString ?? null,
-              title: prod?.title ?? null
-            }))
-          });
-        } catch (queryErr) {
-          console.error("[Davora billing] getProducts failed", {
-            stage: billingStage,
-            productId,
-            message: queryErr?.message || String(queryErr),
-            code: queryErr?.code ?? null,
-            details: queryErr
-          });
-          showNotification("Google Play could not load this subscription. Please try again.");
-          return;
-        }
-
-        if (productList.length === 0) {
-          console.error("[Davora billing] Google Play returned zero matching products", {
-            stage: billingStage,
-            productId,
-            productType: subType,
-            packageName: "com.davora.xyz"
-          });
-          showNotification("Google Play cannot find this subscription in the installed app.");
-          return;
-        }
-
-        // All three active Davora subscriptions have the confirmed Play Console base plan ID "monthly".
-        // Product.identifier is the base-plan ID on Android; planIdentifier is the subscription SKU.
-        const matchingProduct = productList.find((prod) =>
-          prod?.planIdentifier === productId && prod?.identifier === "monthly"
-        ) || productList.find((prod) => prod?.identifier === "monthly") || productList[0];
+        // The base plan ID is confirmed in Play Console for all three subscriptions.
+        // Do not pre-query the same SKU here: purchaseProduct performs its own native
+        // ProductDetails query. Keeping this flow to one query avoids back-to-back
+        // BillingClient product queries before launching the purchase sheet.
         const planId = "monthly";
-
-        // 3. Launch native Google Play Billing with stage-specific diagnostics.
         const purchaseParams = {
           productIdentifier: productId,
           planIdentifier: planId,
@@ -759,9 +710,7 @@ export default function Davora() {
           productId,
           planId,
           productType: subType,
-          returnedIdentifier: matchingProduct?.identifier ?? null,
-          returnedPlanIdentifier: matchingProduct?.planIdentifier ?? null,
-          hasOfferToken: Boolean(matchingProduct?.offerToken)
+          nativeProductLookup: "delegated to purchaseProduct"
         });
 
         let billingResult;
