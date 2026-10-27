@@ -106,6 +106,9 @@ export default function Davora() {
   const [showSettings, setShowSettings] = useState(false);
   const [settingsTab, setSettingsTab] = useState('Personalization');
   const [mobileSettingsView, setMobileSettingsView] = useState('menu');
+  const [settingsSearchQuery, setSettingsSearchQuery] = useState('');
+  const [settingsAppearanceOpen, setSettingsAppearanceOpen] = useState(false);
+  const [settingsAccentOpen, setSettingsAccentOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [changeOldPassword, setChangeOldPassword] = useState("");
   const [changeNewPassword, setChangeNewPassword] = useState("");
@@ -1117,6 +1120,74 @@ export default function Davora() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
+
+  useEffect(() => {
+    if (mobileSettingsView !== 'menu') {
+      if (settingsSearchQuery) setSettingsSearchQuery('');
+      return;
+    }
+    const sidebar = document.querySelector('.settings-sidebar');
+    const nav = sidebar?.querySelector('.settings-nav');
+    if (!sidebar || !nav) return;
+    const query = settingsSearchQuery.trim().toLowerCase();
+    const profile = sidebar.querySelector('.settings-profile-header');
+    const search = sidebar.querySelector('.settings-search-pill');
+    const groups = Array.from(nav.querySelectorAll('.settings-nav-group'));
+    let visibleCount = 0;
+    groups.forEach(group => {
+      const buttons = Array.from(group.querySelectorAll('.settings-nav-btn'));
+      let groupCount = 0;
+      buttons.forEach(button => {
+        const matches = !query || button.textContent.toLowerCase().includes(query);
+        button.style.display = matches ? '' : 'none';
+        if (matches) groupCount++;
+      });
+      group.style.display = groupCount ? '' : 'none';
+      visibleCount += groupCount;
+    });
+    if (profile) profile.style.display = query ? 'none' : '';
+    let empty = sidebar.querySelector('.settings-no-results');
+    if (query && visibleCount === 0) {
+      if (!empty) {
+        empty = document.createElement('div');
+        empty.className = 'settings-no-results';
+        empty.textContent = 'No results';
+        nav.appendChild(empty);
+      }
+    } else if (empty) {
+      empty.remove();
+    }
+    if (search) search.style.marginTop = query ? 'auto' : '';
+    return () => {
+      groups.forEach(group => {
+        group.style.display = '';
+        group.querySelectorAll('.settings-nav-btn').forEach(button => { button.style.display = ''; });
+      });
+      if (profile) profile.style.display = '';
+      sidebar.querySelector('.settings-no-results')?.remove();
+    };
+  }, [settingsSearchQuery, mobileSettingsView, showSettings]);
+
+  useEffect(() => {
+    const accentMap = {
+      blue: ['#3b82f6', '#2563eb', '#ffffff'],
+      green: ['#22c55e', '#16a34a', '#000000'],
+      purple: ['#a855f7', '#9333ea', '#ffffff'],
+      orange: ['#f97316', '#ea580c', '#000000'],
+      pink: ['#ec4899', '#db2777', '#ffffff']
+    };
+    const accent = accentMap[prefs.accentColor];
+    if (!accent) {
+      ['--accent-color','--accent-hover','--accent-text','--send-btn-active-bg','--send-btn-active-color','--send-btn-active-border'].forEach(key => document.body.style.removeProperty(key));
+    } else {
+      document.body.style.setProperty('--accent-color', accent[0]);
+      document.body.style.setProperty('--accent-hover', accent[1]);
+      document.body.style.setProperty('--accent-text', accent[2]);
+      document.body.style.setProperty('--send-btn-active-bg', accent[0]);
+      document.body.style.setProperty('--send-btn-active-color', accent[2]);
+      document.body.style.setProperty('--send-btn-active-border', accent[0]);
+    }
+  }, [prefs.accentColor]);
 
   useEffect(() => {
     document.body.classList.remove('light-theme', 'amoled-theme');
@@ -3819,23 +3890,45 @@ export default function Davora() {
                 <h2>Settings</h2>
                 <button className="icon-action-btn" onClick={() => { setShowSettings(false); setMobileSettingsView('menu'); }}><X size={20} /></button>
               </div>
+              <div className="settings-profile-header">
+                <button className="settings-profile-button" onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }} aria-label="Open General settings">
+                  {prefs.profilePictureUrl ? <img src={prefs.profilePictureUrl} alt="" className="settings-profile-avatar" /> : <span className="settings-profile-avatar settings-profile-initials">{(userEmail || 'DV').slice(0, 2).toUpperCase()}</span>}
+                  <span className="settings-profile-name">{prefs.nickname || (userEmail ? userEmail.split('@')[0] : 'Your profile')}</span>
+                  {userEmail && <span className="settings-profile-email">{userEmail}</span>}
+                </button>
+              </div>
               <div className="settings-nav">
-                <button className={`settings-nav-btn ${settingsTab === 'General' ? 'active' : ''}`} onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }}><Settings size={18} /> General</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Notifications' ? 'active' : ''}`} onClick={() => { setSettingsTab('Notifications'); setMobileSettingsView('pane'); }}><Bell size={18} /> Notifications</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Personalization' ? 'active' : ''}`} onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Fingerprint size={18} /> Personalization</button>
-
-                <button className={`settings-nav-btn ${settingsTab === 'Voice' ? 'active' : ''}`} onClick={() => { setSettingsTab('Voice'); setMobileSettingsView('pane'); }}><Mic size={18} /> Voice</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Billing' ? 'active' : ''}`} onClick={() => { setSettingsTab('Billing'); setMobileSettingsView('pane'); }}><CreditCard size={18} /> Billing</button>
-
-                <button className={`settings-nav-btn ${settingsTab === 'Storage' ? 'active' : ''}`} onClick={() => { setSettingsTab('Storage'); setMobileSettingsView('pane'); }}><HardDrive size={18} /> Storage</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Safety' ? 'active' : ''}`} onClick={() => { setSettingsTab('Safety'); setMobileSettingsView('pane'); }}><Shield size={18} /> Safety</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Security' ? 'active' : ''}`} onClick={() => { setSettingsTab('Security'); setMobileSettingsView('pane'); }}><Settings size={18} /> Security and login</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Parental controls' ? 'active' : ''}`} onClick={() => { setSettingsTab('Parental controls'); setMobileSettingsView('pane'); }}><Users size={18} /> Parental controls</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Trusted contact' ? 'active' : ''}`} onClick={() => { setSettingsTab('Trusted contact'); setMobileSettingsView('pane'); }}><UserPlus size={18} /> Trusted contact</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Account' ? 'active' : ''}`} onClick={() => { setSettingsTab('Account'); setMobileSettingsView('pane'); }}><User size={18} /> Account</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Tasks' ? 'active' : ''}`} onClick={() => { setSettingsTab('Tasks'); setMobileSettingsView('pane'); }}><Activity size={18} /> Scheduled Tasks</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Reports' ? 'active' : ''}`} onClick={() => { setSettingsTab('Reports'); setMobileSettingsView('pane'); }}><Shield size={18} /> Bug Reports</button>
-                <button className={`settings-nav-btn ${settingsTab === 'Developer' ? 'active' : ''}`} onClick={() => { setSettingsTab('Developer'); setMobileSettingsView('pane'); }}><Key size={18} /> Developer keys</button>
+                <div className="settings-nav-group">
+                  <button className="settings-nav-btn settings-order-personalization" onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Fingerprint size={24} strokeWidth={2.2} /> Personalization</button>
+                  <button className="settings-nav-btn settings-order-voice" onClick={() => { setSettingsTab('Voice'); setMobileSettingsView('pane'); }}><Mic size={24} strokeWidth={2.2} /> Voice</button>
+                  <button className="settings-nav-btn settings-order-tasks" onClick={() => { setSettingsTab('Tasks'); setMobileSettingsView('pane'); }}><Activity size={24} strokeWidth={2.2} /> Scheduled Tasks</button>
+                </div>
+                <div className="settings-nav-group">
+                  <button className="settings-nav-btn settings-order-account" onClick={() => { setSettingsTab('Account'); setMobileSettingsView('pane'); }}><User size={24} strokeWidth={2.2} /> Account</button>
+                  <button className="settings-nav-btn settings-order-billing" onClick={() => { setSettingsTab('Billing'); setMobileSettingsView('pane'); }}><CreditCard size={24} strokeWidth={2.2} /> Billing</button>
+                  <button className="settings-nav-btn settings-order-trusted" onClick={() => { setSettingsTab('Trusted contact'); setMobileSettingsView('pane'); }}><UserPlus size={24} strokeWidth={2.2} /> Trusted contact</button>
+                  <button className="settings-nav-btn settings-order-parental" onClick={() => { setSettingsTab('Parental controls'); setMobileSettingsView('pane'); }}><Users size={24} strokeWidth={2.2} /> Parental controls</button>
+                </div>
+                <div className="settings-nav-group settings-appearance-group">
+                  <button className="settings-nav-btn settings-appearance-trigger" onClick={() => setSettingsAppearanceOpen(v => !v)} aria-expanded={settingsAppearanceOpen}><Sun size={24} strokeWidth={2.2} /> Appearance <span className="settings-nav-value">{prefs.theme === 'light' ? 'Light' : prefs.theme === 'amoled' ? 'OLED' : 'Dark'}</span><ChevronDown size={18} /></button>
+                  {settingsAppearanceOpen && <div className="settings-inline-options">{[{label:'Light',value:'light'},{label:'Dark',value:'dark'},{label:'OLED',value:'amoled'}].map(option => <button key={option.value} className={prefs.theme === option.value ? 'selected' : ''} onClick={() => setPrefs(prev => ({...prev, theme: option.value}))}>{option.label}</button>)}</div>}
+                  <button className="settings-nav-btn settings-accent-trigger" onClick={() => setSettingsAccentOpen(v => !v)} aria-expanded={settingsAccentOpen}><Palette size={24} strokeWidth={2.2} /> Accent color <span className="settings-nav-value">{(prefs.accentColor || 'default').replace(/^./, c => c.toUpperCase())}</span><ChevronDown size={18} /></button>
+                  {settingsAccentOpen && <div className="settings-accent-options">{[{label:'Default',value:'default',color:'currentColor'},{label:'Blue',value:'blue',color:'#3b82f6'},{label:'Green',value:'green',color:'#22c55e'},{label:'Purple',value:'purple',color:'#a855f7'},{label:'Orange',value:'orange',color:'#f97316'},{label:'Pink',value:'pink',color:'#ec4899'}].map(option => <button key={option.value} aria-label={option.label} title={option.label} className={(prefs.accentColor || 'default') === option.value ? 'selected' : ''} onClick={() => setPrefs(prev => ({...prev, accentColor: option.value}))}><span style={{background:option.color}} />{option.label}</button>)}</div>}
+                </div>
+                <div className="settings-nav-group">
+                  <button className="settings-nav-btn settings-order-general" onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }}><Settings size={24} strokeWidth={2.2} /> General</button>
+                  <button className="settings-nav-btn settings-order-notifications" onClick={() => { setSettingsTab('Notifications'); setMobileSettingsView('pane'); }}><Bell size={24} strokeWidth={2.2} /> Notifications</button>
+                  <button className="settings-nav-btn settings-order-safety" onClick={() => { setSettingsTab('Safety'); setMobileSettingsView('pane'); }}><Shield size={24} strokeWidth={2.2} /> Safety</button>
+                  <button className="settings-nav-btn settings-order-security" onClick={() => { setSettingsTab('Security'); setMobileSettingsView('pane'); }}><Settings size={24} strokeWidth={2.2} /> Security and login</button>
+                  <button className="settings-nav-btn settings-order-storage" onClick={() => { setSettingsTab('Storage'); setMobileSettingsView('pane'); }}><HardDrive size={24} strokeWidth={2.2} /> Storage</button>
+                  <button className="settings-nav-btn settings-order-reports" onClick={() => { setSettingsTab('Reports'); setMobileSettingsView('pane'); }}><Shield size={24} strokeWidth={2.2} /> Bug Reports</button>
+                  <button className="settings-nav-btn settings-order-developer" onClick={() => { setSettingsTab('Developer'); setMobileSettingsView('pane'); }}><Key size={24} strokeWidth={2.2} /> Developer keys</button>
+                </div>
+              </div>
+              <div className="settings-search-pill">
+                <Search size={20} aria-hidden="true" />
+                <input aria-label="Search settings" placeholder="Search settings" value={settingsSearchQuery} onChange={e => setSettingsSearchQuery(e.target.value)} />
+                {settingsSearchQuery && <button className="settings-search-clear" aria-label="Clear search" onClick={() => setSettingsSearchQuery('')}><X size={18} /></button>}
               </div>
             </div>
 
