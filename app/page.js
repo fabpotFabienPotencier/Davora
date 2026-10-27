@@ -795,7 +795,14 @@ export default function Davora() {
             setSubscriptionPlan(`Davora ${tier.charAt(0).toUpperCase() + tier.slice(1)} Active`);
             setTimeout(() => window.location.reload(), 1500);
           } else {
-            showNotification("Subscription verification failed. Please contact support.");
+            let errorDetail = "Subscription verification failed. Please contact support.";
+            try {
+              const errData = await verifyRes.json();
+              if (errData?.detail) {
+                errorDetail = `Verification error (${verifyRes.status}): ${errData.detail}`;
+              }
+            } catch (jsonErr) {}
+            showNotification(errorDetail);
           }
         }
       } catch (err) {
