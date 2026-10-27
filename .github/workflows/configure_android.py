@@ -15,20 +15,35 @@ def patch_native_purchases():
         return
 
     for plugin_path in set(target_files):
-        print(f"Patching {plugin_path} for Play Billing 7+ compatibility...")
+        print(f"Patching {plugin_path} for Play Billing 8 compatibility...")
         with open(plugin_path, "r", encoding="utf-8") as f:
             plugin_code = f.read()
 
-        # Ensure enablePendingPurchases() passes PendingPurchasesParams (required in Billing 7+)
+        # Import QueryProductDetailsResult if not present
+        if "import com.android.billingclient.api.QueryProductDetailsResult;" not in plugin_code:
+            plugin_code = plugin_code.replace(
+                "import com.android.billingclient.api.ProductDetails;",
+                "import com.android.billingclient.api.ProductDetails;\nimport com.android.billingclient.api.QueryProductDetailsResult;"
+            )
+
+        # Fix 1: enablePendingPurchases() requires PendingPurchasesParams in Billing 8
         plugin_code = re.sub(
             r'\.enablePendingPurchases\(\)',
             '.enablePendingPurchases(com.android.billingclient.api.PendingPurchasesParams.newBuilder().enableOneTimeProducts().enablePrepaidPlans().build())',
             plugin_code
         )
 
+        # Fix 2: onProductDetailsResponse signature changed to (BillingResult, QueryProductDetailsResult) in Billing 8
+        old_sig = re.compile(r'public\s+void\s+onProductDetailsResponse\s*\(\s*BillingResult\s+([^,]+)\s*,\s*List<ProductDetails>\s+([^)]+)\s*\)\s*\{')
+        safe_method = (
+            r'public void onProductDetailsResponse(BillingResult \1, com.android.billingclient.api.QueryProductDetailsResult _qRes) {\n'
+            r'                    List<ProductDetails> \2 = (_qRes != null && _qRes.getProductDetailsList() != null) ? _qRes.getProductDetailsList() : new java.util.ArrayList<ProductDetails>();'
+        )
+        plugin_code = old_sig.sub(safe_method, plugin_code)
+
         with open(plugin_path, "w", encoding="utf-8") as f:
             f.write(plugin_code)
-        print(f"Successfully patched {plugin_path} for Play Billing 7+!")
+        print(f"Successfully patched {plugin_path} for Play Billing 8!")
 
 def main():
     print("--- Starting Android Project Configuration ---")
@@ -48,14 +63,14 @@ def main():
         content = re.sub(r'versionName\s+"[^"]+"', f'versionName "{version_name}"', content)
         content = re.sub(r'minSdkVersion\s+(\d+|rootProject\.ext\.minSdkVersion)', 'minSdkVersion 24', content)
         
-        # Ensure Play Billing 7.1.1 is explicitly in app dependencies
+        # Ensure Play Billing 8.0.0 is explicitly in app dependencies
         if "com.android.billingclient:billing" not in content:
             dep_block = (
-                "\n    implementation 'com.android.billingclient:billing:7.1.1'\n"
-                "    implementation 'com.android.billingclient:billing-ktx:7.1.1'\n"
+                "\n    implementation 'com.android.billingclient:billing:8.0.0'\n"
+                "    implementation 'com.android.billingclient:billing-ktx:8.0.0'\n"
             )
             content = re.sub(r'(dependencies\s*\{)', r'\1' + dep_block, content, count=1)
-            print("Added Play Billing 7.1.1 dependencies to app/build.gradle")
+            print("Added Play Billing 8.0.0 dependencies to app/build.gradle")
         
         with open(app_gradle_path, "w", encoding="utf-8") as f:
             f.write(content)
@@ -83,7 +98,7 @@ def main():
     else:
         print(f"Warning: {var_gradle_path} not found")
 
-    # 3. Update AGP version & Force Billing 7.1.1 in root build.gradle
+    # 3. Update AGP version & Force Billing 8.0.0 in root build.gradle
     root_gradle_path = "android/build.gradle"
     if os.path.exists(root_gradle_path):
         with open(root_gradle_path, "r", encoding="utf-8") as f:
@@ -98,8 +113,8 @@ allprojects {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
         resolutionStrategy {
-            force 'com.android.billingclient:billing:7.1.1'
-            force 'com.android.billingclient:billing-ktx:7.1.1'
+            force 'com.android.billingclient:billing:8.0.0'
+            force 'com.android.billingclient:billing-ktx:8.0.0'
         }
     }
 }
