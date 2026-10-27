@@ -4671,12 +4671,9 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
 .personalization-custom-instructions > label { font-size: 1rem; font-weight: 600; }
 .personalization-custom-instructions .custom-instructions-input { width: 100%; box-sizing: border-box; min-height: 132px; line-height: 1.55; border-radius: 20px; }
 @media (max-width: 600px) {
-  /* Allow floating option menus to escape settings modal clipping on mobile. */
-  .settings-modal-content { overflow: visible !important; }
-  .settings-body { overflow: visible !important; }
   .personalization-pane { padding: 14px !important; gap: 18px !important; }
   .personalization-pane .personalization-card { padding-top: 18px; border-radius: 20px; }
   .personalization-card-title { margin: 0 18px 14px !important; }
   .personalization-select-row { min-height: 60px; padding: 15px 18px; font-size: .95rem; }
-  .personalization-options { position: absolute; top: calc(100% - 2px); bottom: auto; right: 8px; left: auto; width: min(390px, calc(100vw - 64px)); max-height: min(60vh, 460px); border-radius: 22px; }
+  .personalization-options { position: fixed; top: auto; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 18px; width: auto; max-height: 58vh; border-radius: 22px; }
 }
