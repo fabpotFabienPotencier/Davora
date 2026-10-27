@@ -698,54 +698,89 @@ export default function Davora() {
         // Do not pre-query the same SKU here: purchaseProduct performs its own native
         // ProductDetails query. Keeping this flow to one query avoids back-to-back
         // BillingClient product queries before launching the purchase sheet.
-        const planId = "monthly";
-        const purchaseParams = {
-          productIdentifier: productId,
-          planIdentifier: planId,
-          productType: subType
-        };
-        billingStage = "purchase_product";
-        console.info("[Davora billing] purchaseProduct starting", {
-          stage: billingStage,
-          productId,
-          planId,
-          productType: subType,
-          nativeProductLookup: "delegated to purchaseProduct"
-        });
+        let billingResult = null;
+        let purchaseErr = null;
 
-        let billingResult;
+        // Strategy 1: Backwards-compatible purchase without planIdentifier (since Backwards Compatible is Enabled in Play Console)
         try {
-          billingResult = await NativePurchases.purchaseProduct(purchaseParams);
-        } catch (purchaseErr) {
-          console.error("[Davora billing] purchaseProduct failed", {
-            stage: billingStage,
-            productId,
-            planId,
-            productType: subType,
-            message: purchaseErr?.message || String(purchaseErr),
-            code: purchaseErr?.code ?? null,
-            details: purchaseErr
+          console.info("[Davora billing] Strategy 1: Attempting purchase without planIdentifier (Backwards Compatible mode)...");
+          billingResult = await NativePurchases.purchaseProduct({
+            productIdentifier: productId,
+            productType: subType
           });
+        } catch (e1) {
+          purchaseErr = e1;
+          console.warn("[Davora billing] Strategy 1 failed:", e1);
+        }
 
-          // If product not found, perform a diagnostic probe with getProducts to pinpoint the exact failure
-          const errMessage = String(purchaseErr?.message || purchaseErr).toLowerCase();
-          if (errMessage.includes("not found")) {
-            try {
-              const probe = await NativePurchases.getProducts({
-                productIdentifiers: [productId],
-                productType: subType
-              });
-              if (!probe?.products || probe.products.length === 0) {
-                showNotification(`Google Play: '${productId}' not returned by store. Check: 1) App installed from Play Store test link? 2) Tester accepted invite? 3) Subscription Active in Play Console?`);
-                return;
-              } else {
-                showNotification(`Google Play: Product '${productId}' found, but Base Plan '${planId}' was not found. Please verify the Base Plan ID in Play Console matches '${planId}'.`);
+        // Strategy 2: If Strategy 1 failed, try with planIdentifier: 'monthly'
+        if (!billingResult) {
+          try {
+            console.info("[Davora billing] Strategy 2: Attempting purchase with planIdentifier: 'monthly'...");
+            billingResult = await NativePurchases.purchaseProduct({
+              productIdentifier: productId,
+              planIdentifier: "monthly",
+              productType: subType
+            });
+          } catch (e2) {
+            purchaseErr = e2;
+            console.warn("[Davora billing] Strategy 2 failed:", e2);
+          }
+        }
+
+        // Strategy 3: Minimal purchase with productIdentifier only
+        if (!billingResult) {
+          try {
+            console.info("[Davora billing] Strategy 3: Attempting minimal purchase with productIdentifier only...");
+            billingResult = await NativePurchases.purchaseProduct({
+              productIdentifier: productId
+            });
+          } catch (e3) {
+            purchaseErr = e3;
+            console.warn("[Davora billing] Strategy 3 failed:", e3);
+          }
+        }
+
+        // Strategy 4: If all direct attempts failed, probe getProducts to inspect exact structure
+        if (!billingResult) {
+          try {
+            const probe = await NativePurchases.getProducts({
+              productIdentifiers: [productId],
+              productType: subType
+            });
+            console.info("[Davora billing] Probe products:", probe);
+
+            if (probe?.products && probe.products.length > 0) {
+              const p = probe.products[0];
+              const pDetails = `ID: ${p.identifier || p.id}, Price: ${p.priceString || p.price}`;
+
+              // If the returned product identifier is different, attempt purchase with it
+              if (p.identifier && p.identifier !== productId) {
+                console.info("[Davora billing] Strategy 4: Attempting purchase with returned identifier:", p.identifier);
+                try {
+                  billingResult = await NativePurchases.purchaseProduct({
+                    productIdentifier: p.identifier,
+                    productType: subType
+                  });
+                } catch (e4) {
+                  console.warn("[Davora billing] Strategy 4 failed:", e4);
+                }
+              }
+
+              if (!billingResult) {
+                showNotification(`Google Play returned: [${pDetails}]. Please try again in a few moments.`);
                 return;
               }
-            } catch (probeErr) {
-              console.warn("Product diagnostic probe error:", probeErr);
+            } else {
+              showNotification(`Google Play: '${productId}' not returned by store. Check tester status or wait for Google Play sync.`);
+              return;
             }
+          } catch (probeErr) {
+            console.warn("Product diagnostic probe error:", probeErr);
           }
+        }
+
+        if (!billingResult && purchaseErr) {
           throw purchaseErr;
         }
         const token = billingResult?.purchaseToken || billingResult?.transactionId;
