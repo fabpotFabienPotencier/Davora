@@ -150,6 +150,45 @@ export default function Davora() {
   const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   const [profileDraftName, setProfileDraftName] = useState("");
   const [profileDraftUsername, setProfileDraftUsername] = useState("");
+  const profileSheetDragRef = useRef(null);
+
+  // Allow the profile editor bottom sheet to be dismissed by dragging its handle down.
+  const handleProfileSheetDragStart = (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const sheet = event.currentTarget.closest('.profile-editor-sheet');
+    if (!sheet) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    profileSheetDragRef.current = {
+      startY: event.clientY,
+      lastY: event.clientY,
+      startTime: performance.now(),
+      sheet
+    };
+    sheet.style.transition = 'none';
+  };
+
+  const handleProfileSheetDragMove = (event) => {
+    const drag = profileSheetDragRef.current;
+    if (!drag) return;
+    const distance = Math.max(0, event.clientY - drag.startY);
+    drag.lastY = event.clientY;
+    drag.sheet.style.transform = `translateY(${distance}px)`;
+  };
+
+  const handleProfileSheetDragEnd = (event) => {
+    const drag = profileSheetDragRef.current;
+    if (!drag) return;
+    profileSheetDragRef.current = null;
+    const distance = Math.max(0, event.clientY - drag.startY);
+    const elapsed = Math.max(1, performance.now() - drag.startTime);
+    const velocity = (drag.lastY - drag.startY) / elapsed;
+    if (distance > 110 || (distance > 24 && velocity > 0.65)) {
+      setProfileEditorOpen(false);
+      return;
+    }
+    drag.sheet.style.transition = '';
+    drag.sheet.style.transform = '';
+  };
 
   const [activeModal, setActiveModal] = useState(null);
   const [canvasArtifacts, setCanvasArtifacts] = useState([]);
@@ -3888,7 +3927,16 @@ export default function Davora() {
       {profileEditorOpen && (
         <div className="profile-editor-overlay" onClick={() => setProfileEditorOpen(false)}>
           <section className="profile-editor-sheet" role="dialog" aria-modal="true" aria-labelledby="profile-editor-title" onClick={e => e.stopPropagation()}>
-            <div className="profile-editor-handle" />
+            <div
+              className="profile-editor-handle"
+              role="button"
+              aria-label="Swipe down to close edit profile"
+              title="Swipe down to close"
+              onPointerDown={handleProfileSheetDragStart}
+              onPointerMove={handleProfileSheetDragMove}
+              onPointerUp={handleProfileSheetDragEnd}
+              onPointerCancel={handleProfileSheetDragEnd}
+            />
             <h2 id="profile-editor-title" className="sr-only">Edit profile</h2>
             <div className="profile-editor-avatar-wrap">
               {prefs.profilePictureUrl

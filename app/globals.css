@@ -4481,7 +4481,7 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
 .settings-profile-pencil{position:absolute;right:0;bottom:0;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text-primary);background:var(--bg-secondary);border:2px solid var(--bg-primary);box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .profile-editor-overlay{position:fixed;inset:0;z-index:10000;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.58);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 .profile-editor-sheet{box-sizing:border-box;width:100%;max-width:560px;max-height:92dvh;overflow-y:auto;padding:20px 24px calc(24px + env(safe-area-inset-bottom));border-radius:28px 28px 0 0;background:var(--bg-secondary,#2d2d2d);color:var(--text-primary);display:flex;flex-direction:column;align-items:stretch;gap:20px;animation:profileSheetIn 220ms cubic-bezier(.2,.8,.2,1) both}
-.profile-editor-handle{width:60px;height:6px;border-radius:99px;background:var(--text-secondary);opacity:.7;align-self:center;margin-bottom:24px}
+.profile-editor-handle{width:60px;height:6px;border-radius:99px;background:var(--text-secondary);opacity:.7;align-self:center;margin-bottom:24px;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .profile-editor-avatar-wrap{width:148px;height:148px;position:relative;align-self:center;margin:0 auto 8px}
 .profile-editor-avatar{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
 .profile-editor-initials{display:flex;align-items:center;justify-content:center;background:var(--user-avatar-bg,#f87171);color:white;font-size:2rem;font-weight:650}
