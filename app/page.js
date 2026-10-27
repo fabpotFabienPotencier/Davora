@@ -225,9 +225,7 @@ export default function Davora() {
     }
   };
 
-  const profileSheetDragRef = useRef(null);
-
- = useState(null);
+  const [activeModal, setActiveModal] = useState(null);
   const [canvasArtifacts, setCanvasArtifacts] = useState([]);
   const [selectedArtifactId, setSelectedArtifactId] = useState(null);
   const [editCanvasText, setEditCanvasText] = useState("");
