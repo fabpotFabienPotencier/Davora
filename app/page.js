@@ -147,6 +147,10 @@ export default function Davora() {
   });
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
+  const [profileDraftName, setProfileDraftName] = useState("");
+  const [profileDraftUsername, setProfileDraftUsername] = useState("");
+
   const [activeModal, setActiveModal] = useState(null);
   const [canvasArtifacts, setCanvasArtifacts] = useState([]);
   const [selectedArtifactId, setSelectedArtifactId] = useState(null);
@@ -3881,6 +3885,44 @@ export default function Davora() {
         </div>
       )}
 
+      {profileEditorOpen && (
+        <div className="profile-editor-overlay" onClick={() => setProfileEditorOpen(false)}>
+          <section className="profile-editor-sheet" role="dialog" aria-modal="true" aria-labelledby="profile-editor-title" onClick={e => e.stopPropagation()}>
+            <div className="profile-editor-handle" />
+            <h2 id="profile-editor-title" className="sr-only">Edit profile</h2>
+            <div className="profile-editor-avatar-wrap">
+              {prefs.profilePictureUrl
+                ? <img src={prefs.profilePictureUrl} alt="Profile preview" className="profile-editor-avatar" />
+                : <div className="profile-editor-avatar profile-editor-initials">{(profileDraftName || userEmail || 'DV').slice(0, 2).toUpperCase()}</div>}
+              <label className="profile-editor-camera" aria-label="Change profile photo" title="Change profile photo">
+                <Camera size={23} strokeWidth={2.2} />
+                <input type="file" accept="image/*" hidden onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (!file.type.startsWith('image/')) return;
+                  const reader = new FileReader();
+                  reader.onload = () => setPrefs(prev => ({ ...prev, profilePictureUrl: String(reader.result || '') }));
+                  reader.readAsDataURL(file);
+                  e.target.value = '';
+                }} />
+              </label>
+            </div>
+            <label className="profile-editor-field"><span>Name</span><input value={profileDraftName} maxLength={80} onChange={e => setProfileDraftName(e.target.value)} autoComplete="name" /></label>
+            <label className="profile-editor-field"><span>Username</span><input value={profileDraftUsername} maxLength={30} onChange={e => setProfileDraftUsername(e.target.value.replace(/[^a-zA-Z0-9_.]/g, ''))} autoComplete="username" /></label>
+            <p className="profile-editor-note">Your profile helps people recognize you.</p>
+            <button className="profile-editor-save" onClick={() => {
+              const name = profileDraftName.trim();
+              const username = profileDraftUsername.trim();
+              if (!name || !username) return;
+              setPrefs(prev => ({ ...prev, nickname: name }));
+              localStorage.setItem('davora_profile_username', username);
+              setProfileEditorOpen(false);
+            }}>Save profile</button>
+            <button className="profile-editor-cancel" onClick={() => setProfileEditorOpen(false)}>Cancel</button>
+          </section>
+        </div>
+      )}
+
       {/* Settings Modal Overlay */}
       {showSettings && (
         <div className="modal-overlay" onClick={() => { setShowSettings(false); setMobileSettingsView('menu'); }}>
@@ -3891,11 +3933,20 @@ export default function Davora() {
                 <button className="icon-action-btn" onClick={() => { setShowSettings(false); setMobileSettingsView('menu'); }}><X size={20} /></button>
               </div>
               <div className="settings-profile-header">
-                <button className="settings-profile-button" onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }} aria-label="Open General settings">
-                  {prefs.profilePictureUrl ? <img src={prefs.profilePictureUrl} alt="" className="settings-profile-avatar" /> : <span className="settings-profile-avatar settings-profile-initials">{(userEmail || 'DV').slice(0, 2).toUpperCase()}</span>}
-                  <span className="settings-profile-name">{prefs.nickname || (userEmail ? userEmail.split('@')[0] : 'Your profile')}</span>
-                  {userEmail && <span className="settings-profile-email">{userEmail}</span>}
-                </button>
+                <div className="settings-profile-edit-wrap">
+                  <button className="settings-profile-avatar-trigger" aria-label="Edit profile" onClick={() => {
+                    setProfileDraftName(prefs.nickname || (userEmail ? userEmail.split('@')[0] : ''));
+                    setProfileDraftUsername(localStorage.getItem('davora_profile_username') || (userEmail ? userEmail.split('@')[0] : ''));
+                    setProfileEditorOpen(true);
+                  }}>
+                    {prefs.profilePictureUrl ? <img src={prefs.profilePictureUrl} alt="" className="settings-profile-avatar" /> : <span className="settings-profile-avatar settings-profile-initials">{(userEmail || 'DV').slice(0, 2).toUpperCase()}</span>}
+                    <span className="settings-profile-pencil"><Pencil size={18} strokeWidth={2.2} /></span>
+                  </button>
+                  <button className="settings-profile-button" onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }} aria-label="Open General settings">
+                    <span className="settings-profile-name">{prefs.nickname || (userEmail ? userEmail.split('@')[0] : 'Your profile')}</span>
+                    {userEmail && <span className="settings-profile-email">{userEmail}</span>}
+                  </button>
+                </div>
               </div>
               <div className="settings-nav">
                 <div className="settings-nav-group">
