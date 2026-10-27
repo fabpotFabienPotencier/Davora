@@ -1122,6 +1122,53 @@ export default function Davora() {
   }, []);
 
   useEffect(() => {
+    if (mobileSettingsView !== 'menu') {
+      if (settingsSearchQuery) setSettingsSearchQuery('');
+      return;
+    }
+    const sidebar = document.querySelector('.settings-sidebar');
+    const nav = sidebar?.querySelector('.settings-nav');
+    if (!sidebar || !nav) return;
+    const query = settingsSearchQuery.trim().toLowerCase();
+    const profile = sidebar.querySelector('.settings-profile-header');
+    const search = sidebar.querySelector('.settings-search-pill');
+    const groups = Array.from(nav.querySelectorAll('.settings-nav-group'));
+    let visibleCount = 0;
+    groups.forEach(group => {
+      const buttons = Array.from(group.querySelectorAll('.settings-nav-btn'));
+      let groupCount = 0;
+      buttons.forEach(button => {
+        const matches = !query || button.textContent.toLowerCase().includes(query);
+        button.style.display = matches ? '' : 'none';
+        if (matches) groupCount++;
+      });
+      group.style.display = groupCount ? '' : 'none';
+      visibleCount += groupCount;
+    });
+    if (profile) profile.style.display = query ? 'none' : '';
+    let empty = sidebar.querySelector('.settings-no-results');
+    if (query && visibleCount === 0) {
+      if (!empty) {
+        empty = document.createElement('div');
+        empty.className = 'settings-no-results';
+        empty.textContent = 'No results';
+        nav.appendChild(empty);
+      }
+    } else if (empty) {
+      empty.remove();
+    }
+    if (search) search.style.marginTop = query ? 'auto' : '';
+    return () => {
+      groups.forEach(group => {
+        group.style.display = '';
+        group.querySelectorAll('.settings-nav-btn').forEach(button => { button.style.display = ''; });
+      });
+      if (profile) profile.style.display = '';
+      sidebar.querySelector('.settings-no-results')?.remove();
+    };
+  }, [settingsSearchQuery, mobileSettingsView, showSettings]);
+
+  useEffect(() => {
     const accentMap = {
       blue: ['#3b82f6', '#2563eb', '#ffffff'],
       green: ['#22c55e', '#16a34a', '#000000'],
