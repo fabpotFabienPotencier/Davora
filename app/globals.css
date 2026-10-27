@@ -4325,3 +4325,18 @@ body.light-theme .pp-icon-btn.pp-danger {
 body:not(.light-theme):not(.amoled-theme) { --input-bg: #262626; --input-border: rgba(255,255,255,.10); --input-border-focus: rgba(255,255,255,.30); --send-btn-disabled-bg: rgba(255,255,255,.14); --send-btn-disabled-border: transparent; --send-btn-disabled-color: rgba(255,255,255,.5); }
 body.amoled-theme { --input-bg: #1a1a1a; --input-border: rgba(255,255,255,.10); --input-border-focus: rgba(255,255,255,.30); --send-btn-disabled-bg: rgba(255,255,255,.14); --send-btn-disabled-border: transparent; }
 body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input-border-focus: rgba(0,0,0,.30); --send-btn-disabled-bg: rgba(0,0,0,.10); --send-btn-disabled-border: transparent; }
+
+/* Keep the shared desktop settings buttons in their original flat flex layout. */
+.settings-nav-group { display: contents; }
+.settings-profile-header, .settings-search-pill,
+.settings-appearance-trigger, .settings-accent-trigger,
+.settings-inline-options, .settings-accent-options { display: none; }
+.settings-no-results { padding: 24px 16px; text-align: center; color: var(--text-secondary); }
+@media (max-width: 768px) {
+  .settings-sidebar { display: flex; flex-direction: column; overflow-y: auto; }
+  .settings-nav-group { display: flex; }
+  .settings-profile-header, .settings-search-pill { display: flex; }
+  .settings-appearance-trigger, .settings-accent-trigger { display: flex; }
+  .settings-inline-options, .settings-accent-options { display: flex; }
+  .settings-nav { flex-shrink: 0; }
+}
