@@ -710,9 +710,7 @@ export default function Davora() {
           productId,
           planId,
           productType: subType,
-          returnedIdentifier: matchingProduct?.identifier ?? null,
-          returnedPlanIdentifier: matchingProduct?.planIdentifier ?? null,
-          hasOfferToken: Boolean(matchingProduct?.offerToken)
+          nativeProductLookup: "delegated to purchaseProduct"
         });
 
         let billingResult;
