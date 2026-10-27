@@ -153,44 +153,83 @@ export default function Davora() {
   const profileSheetDragRef = useRef(null);
 
   // Allow the profile editor bottom sheet to be dismissed by dragging its handle down.
+  // Profile sheet drag: track the pointer directly and render on animation frames.
   const handleProfileSheetDragStart = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    const sheet = event.currentTarget.closest('.profile-editor-sheet');
+    const handle = event.currentTarget;
+    const sheet = handle.closest('.profile-editor-sheet');
     if (!sheet) return;
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+
+    const previous = profileSheetDragRef.current;
+    if (previous?.rafId) cancelAnimationFrame(previous.rafId);
+
     profileSheetDragRef.current = {
+      pointerId: event.pointerId,
       startY: event.clientY,
       lastY: event.clientY,
-      startTime: performance.now(),
-      sheet
+      lastTime: performance.now(),
+      velocityY: 0,
+      currentY: 0,
+      sheet,
+      rafId: 0,
+      dragging: false
     };
-    sheet.style.transition = 'none';
+    handle.setAttribute('data-dragging', 'false');
+    // Do not capture the pointer on the tiny handle: on some mobile WebViews
+    // capture plus touch-action handling can make the gesture feel unresponsive.
   };
 
   const handleProfileSheetDragMove = (event) => {
     const drag = profileSheetDragRef.current;
-    if (!drag) return;
-    const distance = Math.max(0, event.clientY - drag.startY);
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const now = performance.now();
+    const delta = event.clientY - drag.startY;
+    if (delta < -12) return; // upward movement should not drag the sheet
+    const distance = Math.max(0, delta);
+    const elapsed = Math.max(1, now - drag.lastTime);
+    drag.velocityY = (event.clientY - drag.lastY) / elapsed;
     drag.lastY = event.clientY;
-    drag.sheet.style.transform = `translateY(${distance}px)`;
+    drag.lastTime = now;
+    drag.currentY = distance;
+    drag.dragging = true;
+
+    if (!drag.rafId) {
+      drag.rafId = requestAnimationFrame(() => {
+        const activeDrag = profileSheetDragRef.current;
+        if (!activeDrag) return;
+        activeDrag.rafId = 0;
+        activeDrag.sheet.style.transition = 'none';
+        activeDrag.sheet.style.transform = `translate3d(0, ${activeDrag.currentY}px, 0)`;
+      });
+    }
   };
 
   const handleProfileSheetDragEnd = (event) => {
     const drag = profileSheetDragRef.current;
-    if (!drag) return;
+    if (!drag || (event.pointerId != null && drag.pointerId !== event.pointerId)) return;
+    if (drag.rafId) cancelAnimationFrame(drag.rafId);
     profileSheetDragRef.current = null;
+
     const distance = Math.max(0, event.clientY - drag.startY);
-    const elapsed = Math.max(1, performance.now() - drag.startTime);
-    const velocity = (drag.lastY - drag.startY) / elapsed;
-    if (distance > 110 || (distance > 24 && velocity > 0.65)) {
-      setProfileEditorOpen(false);
-      return;
+    const elapsed = Math.max(1, performance.now() - drag.lastTime);
+    const releaseVelocity = (event.clientY - drag.lastY) / elapsed;
+    const shouldDismiss = distance > 120 || (distance > 28 && Math.max(drag.velocityY, releaseVelocity) > 0.7);
+
+    // Animate the release rather than leaving an inline transform behind.
+    drag.sheet.style.transition = 'transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1)';
+    drag.sheet.style.transform = shouldDismiss ? 'translate3d(0, 105%, 0)' : 'translate3d(0, 0, 0)';
+    if (shouldDismiss) {
+      window.setTimeout(() => setProfileEditorOpen(false), 190);
+    } else {
+      window.setTimeout(() => {
+        drag.sheet.style.transition = '';
+        drag.sheet.style.transform = '';
+      }, 240);
     }
-    drag.sheet.style.transition = '';
-    drag.sheet.style.transform = '';
   };
 
-  const [activeModal, setActiveModal] = useState(null);
+    const [activeModal, setActiveModal] = useState(null);
   const [canvasArtifacts, setCanvasArtifacts] = useState([]);
   const [selectedArtifactId, setSelectedArtifactId] = useState(null);
   const [editCanvasText, setEditCanvasText] = useState("");
@@ -3936,6 +3975,7 @@ export default function Davora() {
               onPointerMove={handleProfileSheetDragMove}
               onPointerUp={handleProfileSheetDragEnd}
               onPointerCancel={handleProfileSheetDragEnd}
+              onLostPointerCapture={handleProfileSheetDragEnd}
             />
             <h2 id="profile-editor-title" className="sr-only">Edit profile</h2>
             <div className="profile-editor-avatar-wrap">
