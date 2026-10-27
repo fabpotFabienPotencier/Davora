@@ -3943,7 +3943,7 @@ export default function Davora() {
               </div>
 
               {settingsTab === 'Personalization' && (
-                <div className="settings-pane">
+                <div className="settings-pane personalization-pane">
                   <div className="settings-row">
                     <div className="settings-info">
                       <label>Base style and tone</label>
