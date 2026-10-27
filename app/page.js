@@ -573,7 +573,8 @@ export default function Davora() {
         };
         const productId = productMap[tier] || `davora_sub_${tier}`;
 
-        const { NativePurchases } = await import('@capgo/native-purchases');
+        const { NativePurchases, PURCHASE_TYPE } = await import('@capgo/native-purchases');
+        const subType = PURCHASE_TYPE?.SUBS || 'SUBS';
 
         // 1. Check if Google Play Billing is supported on device (with connection retry)
         let isBillingSupported = false;
@@ -595,7 +596,7 @@ export default function Davora() {
           try {
             const probe = await NativePurchases.getProducts({
               productIdentifiers: [productId],
-              productType: 'SUBS'
+              productType: subType
             });
             if (probe?.products && probe.products.length > 0) {
               isBillingSupported = true;
@@ -615,7 +616,7 @@ export default function Davora() {
         try {
           const productsRes = await NativePurchases.getProducts({
             productIdentifiers: [productId],
-            productType: 'SUBS'
+            productType: subType
           });
           const productList = productsRes?.products || [];
           if (productList.length > 0) {
@@ -630,7 +631,7 @@ export default function Davora() {
         const purchaseParams = {
           productId: productId,
           productIdentifier: productId,
-          productType: 'SUBS',
+          productType: subType,
           quantity: 1
         };
         if (planId) {
