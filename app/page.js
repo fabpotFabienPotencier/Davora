@@ -1142,6 +1142,13 @@ export default function Davora() {
     }).catch(err => console.error("Meta Sync error", err));
   };
 
+  // Persist personalization changes after saved metadata has loaded.
+  // This prevents the initial default state from overwriting the user's saved preferences.
+  useEffect(() => {
+    if (!isMetadataLoaded) return;
+    syncMetadata({ prefs: JSON.stringify(prefs) });
+  }, [prefs, isMetadataLoaded]);
+
   useEffect(() => {
     activeSessionIdRef.current = activeSessionId;
     syncMetadata({ active_session_id: activeSessionId || "new" });
