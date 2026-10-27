@@ -152,6 +152,81 @@ export default function Davora() {
   const [profileDraftUsername, setProfileDraftUsername] = useState("");
   const profileSheetDragRef = useRef(null);
 
+  // Allow a downward touch gesture from the sheet itself to dismiss it.
+  const handleProfileSheetTouchStart = (event) => {
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    const sheet = event.currentTarget;
+    profileSheetDragRef.current = {
+      startY: touch.clientY,
+      lastY: touch.clientY,
+      lastTime: performance.now(),
+      velocityY: 0,
+      currentY: 0,
+      sheet,
+      dragging: false,
+      rafId: 0
+    };
+  };
+
+  const handleProfileSheetTouchMove = (event) => {
+    const drag = profileSheetDragRef.current;
+    if (!drag || event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    const deltaY = touch.clientY - drag.startY;
+    if (!drag.dragging) {
+      if (deltaY < 8) return;
+      // Let normal content scrolling work until it reaches the top.
+      if (drag.sheet.scrollTop > 0) return;
+      drag.dragging = true;
+      drag.sheet.style.transition = 'none';
+      drag.sheet.style.willChange = 'transform';
+    }
+    if (event.cancelable) event.preventDefault();
+
+    const now = performance.now();
+    drag.velocityY = (touch.clientY - drag.lastY) / Math.max(1, now - drag.lastTime);
+    drag.lastY = touch.clientY;
+    drag.lastTime = now;
+    drag.currentY = Math.max(0, deltaY);
+
+    if (!drag.rafId) {
+      drag.rafId = requestAnimationFrame(() => {
+        const active = profileSheetDragRef.current;
+        if (!active) return;
+        active.rafId = 0;
+        active.sheet.style.transform = `translate3d(0, ${active.currentY}px, 0)`;
+      });
+    }
+  };
+
+  const handleProfileSheetTouchEnd = (event) => {
+    const drag = profileSheetDragRef.current;
+    if (!drag) return;
+    if (drag.rafId) cancelAnimationFrame(drag.rafId);
+    profileSheetDragRef.current = null;
+    if (!drag.dragging) return;
+
+    const endTouch = event.changedTouches?.[0];
+    const distance = Math.max(0, (endTouch?.clientY ?? drag.lastY) - drag.startY);
+    const shouldDismiss = distance > 120 || (distance > 28 && drag.velocityY > 0.7);
+    drag.sheet.style.transition = 'transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1)';
+    drag.sheet.style.transform = shouldDismiss ? 'translate3d(0, 105%, 0)' : 'translate3d(0, 0, 0)';
+
+    if (shouldDismiss) {
+      window.setTimeout(() => setProfileEditorOpen(false), 190);
+    } else {
+      window.setTimeout(() => {
+        if (!drag.sheet.isConnected) return;
+        drag.sheet.style.transition = '';
+        drag.sheet.style.transform = '';
+        drag.sheet.style.willChange = '';
+      }, 240);
+    }
+  };
+
+  const profileSheetDragRef = useRef(null);
+
  = useState(null);
   const [canvasArtifacts, setCanvasArtifacts] = useState([]);
   const [selectedArtifactId, setSelectedArtifactId] = useState(null);
@@ -3901,18 +3976,18 @@ export default function Davora() {
 
       {profileEditorOpen && (
         <div className="profile-editor-overlay" onClick={() => setProfileEditorOpen(false)}>
-          <section className="profile-editor-sheet" role="dialog" aria-modal="true" aria-labelledby="profile-editor-title" onClick={e => e.stopPropagation()}>
-            <div
-              className="profile-editor-handle"
-              role="button"
-              aria-label="Swipe down to close edit profile"
-              title="Swipe down to close"
-              onPointerDown={handleProfileSheetDragStart}
-              onPointerMove={handleProfileSheetDragMove}
-              onPointerUp={handleProfileSheetDragEnd}
-              onPointerCancel={handleProfileSheetDragEnd}
-              onLostPointerCapture={handleProfileSheetDragEnd}
-            />
+          <section
+            className="profile-editor-sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="profile-editor-title"
+            onClick={e => e.stopPropagation()}
+            onTouchStart={handleProfileSheetTouchStart}
+            onTouchMove={handleProfileSheetTouchMove}
+            onTouchEnd={handleProfileSheetTouchEnd}
+            onTouchCancel={handleProfileSheetTouchEnd}
+          >
+            <div className="profile-editor-handle" aria-hidden="true" />
             <h2 id="profile-editor-title" className="sr-only">Edit profile</h2>
             <div className="profile-editor-avatar-wrap">
               {prefs.profilePictureUrl
