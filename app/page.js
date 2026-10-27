@@ -768,19 +768,31 @@ export default function Davora() {
         });
 
         let billingResult;
-        try {
-          billingResult = await NativePurchases.purchaseProduct(purchaseParams);
-        } catch (purchaseErr) {
-          console.error("[Davora billing] purchaseProduct failed", {
-            stage: billingStage,
-            productId,
-            planId,
-            productType: subType,
-            message: purchaseErr?.message || String(purchaseErr),
-            code: purchaseErr?.code ?? null,
-            details: purchaseErr
-          });
-          throw purchaseErr;
+        // Google Play can transiently return an empty ProductDetails list during the
+        // purchase flow even after getProducts succeeded. Retry only that specific
+        // lookup failure; do not retry user cancellations or other billing errors.
+        for (let purchaseAttempt = 1; purchaseAttempt <= 3; purchaseAttempt++) {
+          try {
+            billingResult = await NativePurchases.purchaseProduct(purchaseParams);
+            break;
+          } catch (purchaseErr) {
+            const purchaseMessage = purchaseErr?.message || String(purchaseErr);
+            const isProductLookupMiss = /product not found/i.test(purchaseMessage);
+            console.error("[Davora billing] purchaseProduct attempt failed", {
+              stage: billingStage,
+              attempt: purchaseAttempt,
+              maxAttempts: 3,
+              productId,
+              planId,
+              productType: subType,
+              message: purchaseMessage,
+              code: purchaseErr?.code ?? null
+            });
+            if (!isProductLookupMiss || purchaseAttempt === 3) {
+              throw purchaseErr;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 900 * purchaseAttempt));
+          }
         }
         const token = billingResult?.purchaseToken || billingResult?.transactionId;
 
