@@ -4340,3 +4340,136 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
   .settings-inline-options, .settings-accent-options { display: flex; }
   .settings-nav { flex-shrink: 0; }
 }
+
+
+/* Personalization refresh: mobile-only cards and smoother in-app navigation. */
+@keyframes settingsPaneEnter {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@media (max-width: 768px) {
+  .personalization-pane {
+    padding: 16px !important;
+    gap: 16px !important;
+    animation: settingsPaneEnter 180ms ease-out both;
+  }
+  .personalization-pane > .settings-row,
+  .personalization-pane > .settings-section {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding: 18px !important;
+    margin: 0 !important;
+    gap: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    background: var(--bg-secondary);
+  }
+  .personalization-pane > .settings-row.border-top,
+  .personalization-pane > .settings-section.border-top {
+    border-top: 1px solid var(--border-color);
+    padding-top: 18px !important;
+  }
+  .personalization-pane .settings-info label,
+  .personalization-pane > .settings-section > label,
+  .personalization-pane .settings-input-group > label {
+    font-size: 1rem;
+    line-height: 1.4;
+    font-weight: 600;
+  }
+  .personalization-pane .settings-info p,
+  .personalization-pane .setting-hint {
+    font-size: .9rem;
+    line-height: 1.5;
+    margin-top: 5px;
+  }
+  .personalization-pane .settings-row {
+    gap: 12px;
+  }
+  .personalization-pane .settings-row.nested {
+    align-items: center !important;
+    padding: 12px 0 !important;
+    border-top: 1px solid var(--border-color);
+    gap: 12px !important;
+  }
+  .personalization-pane .settings-row.nested > label {
+    min-width: 0;
+    flex: 1;
+    font-size: .95rem;
+    line-height: 1.35;
+  }
+  .personalization-pane .toggle-btns.compact {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: flex-start;
+    gap: 6px !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+  .personalization-pane > .settings-row:first-child .toggle-btns.compact {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .personalization-pane .toggle-btns.compact button {
+    min-height: 44px;
+    padding: 10px 12px !important;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--surface-bg);
+    color: var(--text-primary);
+    font-size: .9rem !important;
+    transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .personalization-pane .toggle-btns.compact button.active {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    border-color: var(--text-primary);
+  }
+  .personalization-pane .toggle-btns.compact button:active,
+  .personalization-pane .manage-btn:active {
+    transform: scale(.98);
+  }
+  .personalization-pane .custom-instructions-input.premium,
+  .personalization-pane .premium-input-field {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 48px;
+    font-size: 16px;
+    border-radius: 12px;
+    background: var(--bg-primary);
+    border-color: var(--border-color);
+  }
+  .personalization-pane .custom-instructions-input.premium {
+    min-height: 112px;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  .personalization-pane .settings-input-group {
+    width: 100%;
+    gap: 8px;
+  }
+  .personalization-pane .toggle-switch {
+    flex-shrink: 0;
+    min-width: 44px;
+    min-height: 24px;
+  }
+  .personalization-pane .manage-btn {
+    min-height: 44px;
+    padding: 10px 16px !important;
+    transition: transform 140ms ease, background 160ms ease;
+  }
+  .personalization-pane .help-icon {
+    flex-shrink: 0;
+  }
+  .personalization-pane .settings-row[style*="flex-direction: column"] {
+    align-items: stretch;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .personalization-pane { animation: none !important; }
+  .personalization-pane button { transition: none !important; }
+}
