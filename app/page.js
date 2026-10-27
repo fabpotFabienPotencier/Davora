@@ -117,6 +117,7 @@ export default function Davora() {
   const [deleteAccountPassword, setDeleteAccountPassword] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
+  const [personalizationOpenMenu, setPersonalizationOpenMenu] = useState(null);
   const [prefs, setPrefs] = useState({
     theme: 'dark',
     fontSize: 'medium',
@@ -4142,60 +4143,54 @@ export default function Davora() {
 
               {settingsTab === 'Personalization' && (
                 <div className="settings-pane personalization-pane">
-                  <div className="settings-row">
-                    <div className="settings-info">
-                      <label>Base style and tone</label>
-                      <p>Set the style and tone of how Davora responds to you. This doesn't impact capabilities.</p>
-                    </div>
-                    <div className="toggle-btns compact" style={{ flexWrap: 'wrap', flex: '1 1 auto', maxWidth: '300px' }}>
-                      {['Default', 'Professional', 'Friendly', 'Candid', 'Quirky', 'Efficient', 'Cynical'].map(style => (
-                        <button key={style} onClick={() => setPrefs({ ...prefs, baseStyle: style })} className={prefs.baseStyle === style ? 'active' : ''} style={{ flex: '1 1 30%', fontSize: '0.8rem', padding: '6px' }}>{style}</button>
+                  <section className="personalization-card">
+                    <h3 className="personalization-card-title">Personalization</h3>
+                    <div className="personalization-select-list">
+                      {[
+                        { key: 'baseStyle', label: 'Base style and tone', value: prefs.baseStyle, options: [
+                          ['Default', 'Preset style and tone'], ['Professional', 'Polished and precise'], ['Friendly', 'Warm and chatty'], ['Candid', 'Direct and encouraging'], ['Quirky', 'Playful and imaginative'], ['Efficient', 'Concise and plain'], ['Cynical', 'Critical and sarcastic']
+                        ]},
+                        { key: 'characteristicsWarm', label: 'Warmth', value: prefs.characteristicsWarm, options: [
+                          ['More', 'Friendlier and more personable'], ['Default', 'Balanced warmth'], ['Less', 'More professional and factual']
+                        ]},
+                        { key: 'characteristicsEnthusiastic', label: 'Enthusiasm', value: prefs.characteristicsEnthusiastic, options: [
+                          ['More', 'More energy and excitement'], ['Default', 'Balanced energy'], ['Less', 'Calmer and more neutral']
+                        ]},
+                        { key: 'characteristicsHeaders', label: 'Headers and lists', value: prefs.characteristicsHeaders, options: [
+                          ['More', 'Use clear formatting and lists'], ['Default', 'Balanced formatting'], ['Less', 'More paragraphs instead of lists']
+                        ]},
+                        { key: 'characteristicsEmoji', label: 'Emoji', value: prefs.characteristicsEmoji, options: [
+                          ['More', 'Use more emoji'], ['Default', 'Balanced emoji use'], ['Less', "Don't use as many emoji"]
+                        ]}
+                      ].map(item => (
+                        <div className="personalization-select-wrap" key={item.key}>
+                          <button type="button" className="personalization-select-row"
+                            aria-expanded={personalizationOpenMenu === item.key}
+                            onClick={() => setPersonalizationOpenMenu(personalizationOpenMenu === item.key ? null : item.key)}>
+                            <span>{item.label}</span>
+                            <span className="personalization-select-value">{item.value}<ChevronDown size={18} className={personalizationOpenMenu === item.key ? 'personalization-chevron open' : 'personalization-chevron'} /></span>
+                          </button>
+                          {personalizationOpenMenu === item.key && (
+                            <div className="personalization-options" role="listbox" aria-label={item.label}>
+                              {item.options.map(([value, description]) => (
+                                <button type="button" role="option" aria-selected={item.value === value}
+                                  className={item.value === value ? 'personalization-option selected' : 'personalization-option'}
+                                  key={value} onClick={() => {
+                                    setPrefs(prev => ({ ...prev, [item.key]: value }));
+                                    setPersonalizationOpenMenu(null);
+                                  }}>
+                                  <span className="personalization-option-copy"><strong>{value}</strong><small>{description}</small></span>
+                                  {item.value === value && <Check size={22} aria-hidden="true" />}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
-                  </div>
+                  </section>
 
-                  <div className="settings-section">
-                    <h3>Characteristics</h3>
-                    <p className="setting-hint">Choose additional customizations on top of your base style and tone.</p>
-
-                    <div className="settings-row nested">
-                      <label>Warm</label>
-                      <div className="toggle-btns compact">
-                        {['Less', 'Default', 'More'].map(val => (
-                          <button key={val} onClick={() => setPrefs({ ...prefs, characteristicsWarm: val })} className={prefs.characteristicsWarm === val ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>{val}</button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="settings-row nested">
-                      <label>Enthusiastic</label>
-                      <div className="toggle-btns compact">
-                        {['Less', 'Default', 'More'].map(val => (
-                          <button key={val} onClick={() => setPrefs({ ...prefs, characteristicsEnthusiastic: val })} className={prefs.characteristicsEnthusiastic === val ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>{val}</button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="settings-row nested">
-                      <label>Headers & Lists</label>
-                      <div className="toggle-btns compact">
-                        {['Less', 'Default', 'More'].map(val => (
-                          <button key={val} onClick={() => setPrefs({ ...prefs, characteristicsHeaders: val })} className={prefs.characteristicsHeaders === val ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>{val}</button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="settings-row nested">
-                      <label>Emoji</label>
-                      <div className="toggle-btns compact">
-                        {['Less', 'Default', 'More'].map(val => (
-                          <button key={val} onClick={() => setPrefs({ ...prefs, characteristicsEmoji: val })} className={prefs.characteristicsEmoji === val ? 'active' : ''} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>{val}</button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="settings-row border-top">
+                  <div className="settings-row border-top personalization-fast-answers">
                     <div className="settings-info">
                       <label>Fast answers</label>
                       <p>Davora can sometimes use its general knowledge to give fast, in-depth answers.</p>
@@ -4206,15 +4201,12 @@ export default function Davora() {
                     </div>
                   </div>
 
-                  <div className="settings-section">
+                  <div className="settings-section personalization-custom-instructions">
                     <label>Custom instructions</label>
-                    <textarea
-                      className="custom-instructions-input premium"
-                      rows={3}
+                    <textarea className="custom-instructions-input premium" rows={4}
                       value={prefs.customInstructions}
                       onChange={(e) => setPrefs({ ...prefs, customInstructions: e.target.value })}
-                      placeholder="Additional behavior, style, and tone preferences"
-                    />
+                      placeholder="Tell Davora how you want it to respond" />
                   </div>
 
                   <div className="settings-section border-top" style={{ paddingTop: '24px' }}>
