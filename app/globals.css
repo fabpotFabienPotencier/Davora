@@ -4511,15 +4511,15 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
 /* Mobile composer polish: compact ChatGPT-inspired pill while preserving Davora branding. */
 @media (max-width: 768px) {
   .input-wrapper {
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 6px 12px calc(6px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .input-area {
     flex-direction: row;
     align-items: center;
     gap: 2px;
-    min-height: 68px;
-    padding: 7px 9px;
+    min-height: 56px !important;
+    padding: 4px 7px !important;
     border-width: 1px;
     border-radius: 34px;
     background: var(--input-bg);
@@ -4533,7 +4533,7 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
 
   .input-bottom-row {
     align-items: center !important;
-    gap: 2px;
+    gap: 0;
     min-width: 0;
   }
 
@@ -4544,9 +4544,9 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
   }
 
   .attach-btn {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
     margin: 0;
     padding: 0;
     color: var(--text-primary);
@@ -4559,9 +4559,9 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
   }
 
   .auto-resize-textarea {
-    min-height: 44px;
-    max-height: 160px;
-    padding: 10px 6px;
+    min-height: 40px;
+    max-height: 140px;
+    padding: 8px 4px;
     font-size: 16px;
     line-height: 1.45;
     overflow-wrap: anywhere;
@@ -4573,8 +4573,8 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
 
   .input-right-actions {
     align-items: center;
-    gap: 6px;
-    margin: 0 0 0 2px;
+    gap: 3px;
+    margin: 0 0 0 1px;
     flex-shrink: 0;
   }
 
@@ -4598,8 +4598,8 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
   }
 
   .mic-btn svg {
-    width: 23px;
-    height: 23px;
+    width: 21px;
+    height: 21px;
     stroke-width: 2.1;
   }
 
