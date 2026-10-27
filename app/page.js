@@ -674,19 +674,20 @@ export default function Davora() {
           await new Promise(r => setTimeout(r, 600));
         }
 
-        // If support check was inconclusive, probe products directly to verify store connectivity
-        if (!isBillingSupported) {
-          try {
-            const probe = await NativePurchases.getProducts({
-              productIdentifiers: [productId],
-              productType: subType
-            });
-            if (probe?.products && probe.products.length > 0) {
-              isBillingSupported = true;
-            }
-          } catch (probeErr) {
-            console.warn("Product probe check error:", probeErr);
+        // 2. Query product details directly from Google Play to obtain live IDs, pricing, and offer tokens
+        let liveProduct = null;
+        try {
+          const probe = await NativePurchases.getProducts({
+            productIdentifiers: [productId],
+            productType: subType
+          });
+          console.info("[Davora billing] getProducts returned:", probe);
+          if (probe?.products && probe.products.length > 0) {
+            liveProduct = probe.products[0];
+            isBillingSupported = true;
           }
+        } catch (probeErr) {
+          console.warn("[Davora billing] Initial getProducts failed:", probeErr);
         }
 
         if (!isBillingSupported) {
@@ -694,94 +695,81 @@ export default function Davora() {
           return;
         }
 
-        // The base plan ID is confirmed in Play Console for all three subscriptions.
-        // Do not pre-query the same SKU here: purchaseProduct performs its own native
-        // ProductDetails query. Keeping this flow to one query avoids back-to-back
-        // BillingClient product queries before launching the purchase sheet.
-        let billingResult = null;
-        let purchaseErr = null;
+        // 3. Launch purchase flow with live parameters returned by Google Play
+        const discoveredPlanId = liveProduct?.identifier || "monthly";
+        const discoveredOfferToken = liveProduct?.offerToken || liveProduct?.offer_token;
 
-        // Strategy 1: Backwards-compatible purchase without planIdentifier (since Backwards Compatible is Enabled in Play Console)
-        try {
-          console.info("[Davora billing] Strategy 1: Attempting purchase without planIdentifier (Backwards Compatible mode)...");
-          billingResult = await NativePurchases.purchaseProduct({
+        const purchaseAttempts = [
+          // Attempt 1: Product ID with discovered Base Plan ID and offerToken
+          {
+            productIdentifier: productId,
+            planIdentifier: discoveredPlanId,
+            offerToken: discoveredOfferToken,
+            productType: subType
+          },
+          // Attempt 2: Product ID with discovered Base Plan ID
+          {
+            productIdentifier: productId,
+            planIdentifier: discoveredPlanId,
+            productType: subType
+          },
+          // Attempt 3: Inverted parameters (some plugin versions map base plan to productIdentifier)
+          {
+            productIdentifier: discoveredPlanId,
+            planIdentifier: productId,
+            offerToken: discoveredOfferToken,
+            productType: subType
+          },
+          // Attempt 4: Product ID with offerToken only
+          {
+            productIdentifier: productId,
+            offerToken: discoveredOfferToken,
+            productType: subType
+          },
+          // Attempt 5: Product ID only (default backwards-compatible plan)
+          {
             productIdentifier: productId,
             productType: subType
-          });
-        } catch (e1) {
-          purchaseErr = e1;
-          console.warn("[Davora billing] Strategy 1 failed:", e1);
-        }
-
-        // Strategy 2: If Strategy 1 failed, try with planIdentifier: 'monthly'
-        if (!billingResult) {
-          try {
-            console.info("[Davora billing] Strategy 2: Attempting purchase with planIdentifier: 'monthly'...");
-            billingResult = await NativePurchases.purchaseProduct({
-              productIdentifier: productId,
-              planIdentifier: "monthly",
-              productType: subType
-            });
-          } catch (e2) {
-            purchaseErr = e2;
-            console.warn("[Davora billing] Strategy 2 failed:", e2);
+          },
+          // Attempt 6: Discovered identifier only
+          {
+            productIdentifier: discoveredPlanId,
+            productType: subType
           }
-        }
+        ];
 
-        // Strategy 3: Minimal purchase with productIdentifier only
-        if (!billingResult) {
-          try {
-            console.info("[Davora billing] Strategy 3: Attempting minimal purchase with productIdentifier only...");
-            billingResult = await NativePurchases.purchaseProduct({
-              productIdentifier: productId
-            });
-          } catch (e3) {
-            purchaseErr = e3;
-            console.warn("[Davora billing] Strategy 3 failed:", e3);
+        let billingResult = null;
+        let lastPurchaseErr = null;
+
+        for (const params of purchaseAttempts) {
+          // Remove null/undefined properties
+          const cleanParams = {};
+          for (const [k, v] of Object.entries(params)) {
+            if (v !== undefined && v !== null && v !== "") {
+              cleanParams[k] = v;
+            }
           }
-        }
 
-        // Strategy 4: If all direct attempts failed, probe getProducts to inspect exact structure
-        if (!billingResult) {
           try {
-            const probe = await NativePurchases.getProducts({
-              productIdentifiers: [productId],
-              productType: subType
-            });
-            console.info("[Davora billing] Probe products:", probe);
-
-            if (probe?.products && probe.products.length > 0) {
-              const p = probe.products[0];
-              const pDetails = `ID: ${p.identifier || p.id}, Price: ${p.priceString || p.price}`;
-
-              // If the returned product identifier is different, attempt purchase with it
-              if (p.identifier && p.identifier !== productId) {
-                console.info("[Davora billing] Strategy 4: Attempting purchase with returned identifier:", p.identifier);
-                try {
-                  billingResult = await NativePurchases.purchaseProduct({
-                    productIdentifier: p.identifier,
-                    productType: subType
-                  });
-                } catch (e4) {
-                  console.warn("[Davora billing] Strategy 4 failed:", e4);
-                }
-              }
-
-              if (!billingResult) {
-                showNotification(`Google Play returned: [${pDetails}]. Please try again in a few moments.`);
-                return;
-              }
-            } else {
-              showNotification(`Google Play: '${productId}' not returned by store. Check tester status or wait for Google Play sync.`);
+            console.info("[Davora billing] Launching purchaseProduct with:", cleanParams);
+            billingResult = await NativePurchases.purchaseProduct(cleanParams);
+            if (billingResult) {
+              console.info("[Davora billing] purchaseProduct succeeded with:", cleanParams);
+              break;
+            }
+          } catch (err) {
+            lastPurchaseErr = err;
+            console.warn("[Davora billing] Attempt failed with:", cleanParams, err);
+            const errLower = String(err?.message || err).toLowerCase();
+            if (errLower.includes("cancel") || errLower.includes("user_canceled")) {
+              showNotification("Subscription checkout cancelled.");
               return;
             }
-          } catch (probeErr) {
-            console.warn("Product diagnostic probe error:", probeErr);
           }
         }
 
-        if (!billingResult && purchaseErr) {
-          throw purchaseErr;
+        if (!billingResult && lastPurchaseErr) {
+          throw lastPurchaseErr;
         }
         const token = billingResult?.purchaseToken || billingResult?.transactionId;
 
