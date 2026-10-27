@@ -696,32 +696,45 @@ export default function Davora() {
           return;
         }
 
-        // 2. Query product details to fetch active base plan ID
-        let planId = undefined;
+        // 2. Query product details and resolve the Google Play base-plan ID.
+        // In @capgo/native-purchases v6, Android subscription Product.identifier is the base-plan ID.
+        let planId = "";
         try {
           const productsRes = await NativePurchases.getProducts({
             productIdentifiers: [productId],
             productType: subType
           });
-          const productList = productsRes?.products || [];
-          if (productList.length > 0) {
-            const prod = productList[0];
-            planId = prod?.plans?.[0]?.planIdentifier || prod?.defaultPlanId || prod?.subscriptionOfferDetails?.[0]?.basePlanId;
+          const productList = Array.isArray(productsRes?.products) ? productsRes.products : [];
+          const productWithPlan = productList.find((prod) =>
+            typeof prod?.identifier === "string" && prod.identifier.trim()
+          );
+          if (productWithPlan) {
+            planId =
+              productWithPlan.identifier.trim() ||
+              productWithPlan?.plans?.[0]?.planIdentifier ||
+              productWithPlan?.defaultPlanId ||
+              productWithPlan?.subscriptionOfferDetails?.[0]?.basePlanId ||
+              "";
           }
         } catch (queryErr) {
-          console.warn("Could not query product details, proceeding with default plan:", queryErr);
+          console.error("Could not query Google Play subscription details:", queryErr);
+          showNotification("Could not load subscription details from Google Play. Please try again.");
+          return;
         }
 
-        // 3. Launch native Google Play Billing sheet
-        const purchaseParams = {
-          productId: productId,
-          productIdentifier: productId,
-          productType: subType,
-          quantity: 1
-        };
-        if (planId) {
-          purchaseParams.planIdentifier = planId;
+        // Never call purchaseProduct for an Android subscription without a base-plan ID.
+        if (!planId) {
+          console.error("Google Play returned no base-plan identifier for subscription:", productId);
+          showNotification("Subscription details are unavailable. Please try again later.");
+          return;
         }
+
+        // 3. Launch native Google Play Billing with the required base-plan ID.
+        const purchaseParams = {
+          productIdentifier: productId,
+          planIdentifier: planId,
+          productType: subType
+        };
 
         const billingResult = await NativePurchases.purchaseProduct(purchaseParams);
         const token = billingResult?.purchaseToken || billingResult?.transactionId;
