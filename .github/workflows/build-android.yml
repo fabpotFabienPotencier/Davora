@@ -64,15 +64,28 @@ jobs:
         cd android
         chmod +x gradlew
         ./gradlew assembleDebug
+        ./gradlew assembleRelease
         ./gradlew bundleDebug
         ./gradlew bundleRelease
 
-    - name: Sign Release AAB Bundle
+    - name: Sign Release Binaries (AAB & APK)
       run: |
         echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 --decode > android/davora.keystore
         AAB_FILE=$(find android/app/build/outputs/bundle/release/ -name "*.aab" | head -n 1)
         echo "Found AAB file: $AAB_FILE"
         jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore android/davora.keystore "$AAB_FILE" ${{ secrets.ANDROID_ALIAS }} -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} -keypass ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+        RELEASE_APK=$(find android/app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
+        if [ -n "$RELEASE_APK" ] && [ -f "$RELEASE_APK" ]; then
+          echo "Found Release APK: $RELEASE_APK"
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore android/davora.keystore "$RELEASE_APK" ${{ secrets.ANDROID_ALIAS }} -storepass ${{ secrets.ANDROID_KEYSTORE_PASSWORD }} -keypass ${{ secrets.ANDROID_KEY_PASSWORD }}
+        fi
+
+    - name: Upload Signed Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: davora-android-release-apk
+        path: android/app/build/outputs/apk/release/*.apk
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4

@@ -726,6 +726,26 @@ export default function Davora() {
             code: purchaseErr?.code ?? null,
             details: purchaseErr
           });
+
+          // If product not found, perform a diagnostic probe with getProducts to pinpoint the exact failure
+          const errMessage = String(purchaseErr?.message || purchaseErr).toLowerCase();
+          if (errMessage.includes("not found")) {
+            try {
+              const probe = await NativePurchases.getProducts({
+                productIdentifiers: [productId],
+                productType: subType
+              });
+              if (!probe?.products || probe.products.length === 0) {
+                showNotification(`Google Play: '${productId}' not returned by store. Check: 1) App installed from Play Store test link? 2) Tester accepted invite? 3) Subscription Active in Play Console?`);
+                return;
+              } else {
+                showNotification(`Google Play: Product '${productId}' found, but Base Plan '${planId}' was not found. Please verify the Base Plan ID in Play Console matches '${planId}'.`);
+                return;
+              }
+            } catch (probeErr) {
+              console.warn("Product diagnostic probe error:", probeErr);
+            }
+          }
           throw purchaseErr;
         }
         const token = billingResult?.purchaseToken || billingResult?.transactionId;
