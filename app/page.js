@@ -769,7 +769,27 @@ export default function Davora() {
         }
 
         if (!billingResult && lastPurchaseErr) {
-          throw lastPurchaseErr;
+          const errLower = String(lastPurchaseErr?.message || lastPurchaseErr).toLowerCase();
+          if (errLower.includes("already") || errLower.includes("owned") || errLower.includes("subscribed") || errLower.includes("item_already_owned")) {
+            console.info("[Davora billing] Subscription already active on Google Play, recovering token...");
+            try {
+              if (typeof NativePurchases.restorePurchases === 'function') {
+                await NativePurchases.restorePurchases();
+              }
+              if (typeof NativePurchases.getPurchases === 'function') {
+                const existing = await NativePurchases.getPurchases({ productType: subType });
+                const matched = existing?.purchases?.find(p => p.productIdentifier === productId || (p.purchaseToken && p.isActive !== false));
+                if (matched?.purchaseToken) {
+                  billingResult = matched;
+                }
+              }
+            } catch (restoreErr) {
+              console.warn("[Davora billing] Existing purchase recovery notice:", restoreErr);
+            }
+          }
+          if (!billingResult) {
+            throw lastPurchaseErr;
+          }
         }
         const token = billingResult?.purchaseToken || billingResult?.transactionId;
 
