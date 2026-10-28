@@ -4681,3 +4681,28 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
   .personalization-select-row { min-height: 60px; padding: 15px 18px; font-size: .95rem; }
   .personalization-options { position: fixed; top: auto; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 18px; width: auto; max-height: 58vh; border-radius: 22px; }
 }
+
+/* Mobile floating composer: let conversation messages scroll behind the input pill. */
+@media (max-width: 768px) {
+  .main-content {
+    min-height: 0;
+  }
+
+  .chat-box {
+    min-height: 0;
+    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .chat-box.keyboard-open {
+    padding-bottom: calc(112px + var(--kb-inset, 0px) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .input-wrapper {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 15;
+  }
+}
