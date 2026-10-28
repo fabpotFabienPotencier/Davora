@@ -1494,7 +1494,7 @@ export default function Davora() {
     // as the structured payload fields, so the AI receives them as actionable instructions.
     const personalizationInstructions = [
       'Response style preferences (follow these unless they conflict with safety or the user\'s request):',
-      `Base style and tone: ${prefs.baseStyle || 'Default'}.`,
+      `Base style and tone: ${prefs.baseStyle && prefs.baseStyle !== 'Default' ? prefs.baseStyle : 'Use Davora’s normal balanced style and tone'}.`,
       `Warmth: ${prefs.characteristicsWarm === 'More' ? 'Use a friendlier, more personable tone.' : prefs.characteristicsWarm === 'Less' ? 'Use a more professional, factual tone.' : 'Keep warmth balanced and natural.'}`,
       `Enthusiasm: ${prefs.characteristicsEnthusiastic === 'More' ? 'Use more energy and excitement.' : prefs.characteristicsEnthusiastic === 'Less' ? 'Use a calmer, more neutral tone.' : 'Keep energy balanced.'}`,
       `Headers and lists: ${prefs.characteristicsHeaders === 'More' ? 'Use clear headings, bullets, and lists when helpful.' : prefs.characteristicsHeaders === 'Less' ? 'Prefer natural paragraphs over headings and lists.' : 'Use balanced formatting only when it improves clarity.'}`,
