@@ -2954,6 +2954,7 @@ body.light-theme .user-expand-toggle-btn:hover {
     justify-content: space-between;
     align-items: center;
     padding: 16px;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
     border-bottom: 1px solid var(--border-color);
     background: var(--bg-primary);
     position: sticky;
