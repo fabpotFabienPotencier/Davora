@@ -1671,8 +1671,8 @@ export default function Davora() {
             setIsTyping(false);
             let msg = "Usage limit reached.";
             if (quotaData.quota_error === "UNAUTHORIZED") msg = "Authentication failed. Please log in.";
-            else if (quotaData.quota_error === "IMAGE_LIMIT") msg = `Free image limit reached. Wait ${quotaData.wait_hours} hours or upgrade.`;
-            else if (quotaData.quota_error === "CHAT_LIMIT") msg = `Free chat limit reached. Wait ${quotaData.wait_hours} hours or upgrade.`;
+            else if (quotaData.quota_error === "IMAGE_LIMIT") msg = `Daily image limit reached for your plan. Wait ${quotaData.wait_hours} hours or upgrade.`;
+            else if (quotaData.quota_error === "CHAT_LIMIT") msg = `Daily message limit reached for your plan. Wait ${quotaData.wait_hours} hours or upgrade.`;
 
             showNotification(msg);
             if (quotaData.quota_error.includes("LIMIT")) {
@@ -3012,11 +3012,13 @@ export default function Davora() {
                 </div>
                 <div className="popover-user-info">
                   <span className="user-name">{userEmail.split('@')[0] || "User"}</span>
-                  <span className="user-plan">Free</span>
+                  <span className="user-plan">{subscriptionPlan.replace("Davora ", "")}</span>
                 </div>
               </div>
               <div className="popover-menu">
-                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setActiveModal('upgrade'); }}><Sparkles size={16} /> Upgrade plan</button>
+                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setActiveModal('upgrade'); }}>
+                  <Sparkles size={16} /> {(!subscriptionPlan || subscriptionPlan.includes("Free")) ? "Upgrade plan" : "Manage subscription"}
+                </button>
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Fingerprint size={16} /> Personalization</button>
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Account'); setMobileSettingsView('pane'); }}><User size={16} /> Profile</button>
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); setMobileSettingsView('menu'); }}><Settings size={16} /> Settings</button>
@@ -4460,7 +4462,9 @@ export default function Davora() {
                       <label>Plan</label>
                       <p>{subscriptionPlan}</p>
                     </div>
-                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={() => setSettingsTab('Billing')}>Upgrade</button>
+                    <button className="settings-nav-btn" style={{ padding: '8px 16px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '24px' }} onClick={() => setSettingsTab('Billing')}>
+                      {(!subscriptionPlan || subscriptionPlan.includes("Free")) ? "Upgrade" : "Manage Plan"}
+                    </button>
                   </div>
                   <div className="settings-row border-top" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '16px' }}>
                     <div className="settings-info" style={{ width: '100%' }}>
