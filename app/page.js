@@ -1499,8 +1499,8 @@ export default function Davora() {
       `Enthusiasm: ${prefs.characteristicsEnthusiastic === 'More' ? 'Use more energy and excitement.' : prefs.characteristicsEnthusiastic === 'Less' ? 'Use a calmer, more neutral tone.' : 'Keep energy balanced.'}`,
       `Headers and lists: ${prefs.characteristicsHeaders === 'More' ? 'Use clear headings, bullets, and lists when helpful.' : prefs.characteristicsHeaders === 'Less' ? 'Prefer natural paragraphs over headings and lists.' : 'Use balanced formatting only when it improves clarity.'}`,
       `Emoji: ${prefs.characteristicsEmoji === 'More' ? 'Use emojis more often when appropriate.' : prefs.characteristicsEmoji === 'Less' ? 'Avoid emojis unless they are useful or requested.' : 'Use emojis sparingly and naturally.'}`
-    ].join('\\n');
-    const base = [prefs.customInstructions || '', personalizationInstructions].filter(Boolean).join('\\n\\n');
+    ].join('\n');
+    const base = [prefs.customInstructions || '', personalizationInstructions].filter(Boolean).join('\n\n');
     const session = sessions.find(x => x.id === sessionId) || (sessionsRef.current || []).find(x => x.id === sessionId);
     const projId = session && session.project_id;
     if (!projId) return base;
