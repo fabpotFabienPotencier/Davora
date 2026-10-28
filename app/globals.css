@@ -4682,13 +4682,16 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
   .personalization-options { position: fixed; top: auto; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 18px; width: auto; max-height: 58vh; border-radius: 22px; }
 }
 
-/* Mobile floating composer: let conversation messages scroll behind the input pill. */
+/* Mobile floating composer: keep the chat viewport bounded and overlay the composer. */
 @media (max-width: 768px) {
   .main-content {
     min-height: 0;
+    overflow: hidden;
   }
 
   .chat-box {
+    flex: 1 1 auto;
+    height: auto;
     min-height: 0;
     padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
   }
