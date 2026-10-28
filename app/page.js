@@ -1490,7 +1490,17 @@ export default function Davora() {
   // Chats inside a project follow that project's instructions and see its text files.
   // Chats outside a project get exactly the user's own custom instructions, as before.
   const buildCustomInstructions = (sessionId) => {
-    const base = prefs.customInstructions || '';
+    // Send personalization choices through the existing custom-instructions channel as well
+    // as the structured payload fields, so the AI receives them as actionable instructions.
+    const personalizationInstructions = [
+      'Response style preferences (follow these unless they conflict with safety or the user\'s request):',
+      `Base style and tone: ${prefs.baseStyle || 'Default'}.`,
+      `Warmth: ${prefs.characteristicsWarm === 'More' ? 'Use a friendlier, more personable tone.' : prefs.characteristicsWarm === 'Less' ? 'Use a more professional, factual tone.' : 'Keep warmth balanced and natural.'}`,
+      `Enthusiasm: ${prefs.characteristicsEnthusiastic === 'More' ? 'Use more energy and excitement.' : prefs.characteristicsEnthusiastic === 'Less' ? 'Use a calmer, more neutral tone.' : 'Keep energy balanced.'}`,
+      `Headers and lists: ${prefs.characteristicsHeaders === 'More' ? 'Use clear headings, bullets, and lists when helpful.' : prefs.characteristicsHeaders === 'Less' ? 'Prefer natural paragraphs over headings and lists.' : 'Use balanced formatting only when it improves clarity.'}`,
+      `Emoji: ${prefs.characteristicsEmoji === 'More' ? 'Use emojis more often when appropriate.' : prefs.characteristicsEmoji === 'Less' ? 'Avoid emojis unless they are useful or requested.' : 'Use emojis sparingly and naturally.'}`
+    ].join('\\n');
+    const base = [prefs.customInstructions || '', personalizationInstructions].filter(Boolean).join('\\n\\n');
     const session = sessions.find(x => x.id === sessionId) || (sessionsRef.current || []).find(x => x.id === sessionId);
     const projId = session && session.project_id;
     if (!projId) return base;
