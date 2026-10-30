@@ -238,6 +238,11 @@ export default function Davora() {
   const [proPrice, setProPrice] = useState("7");
   const [premiumPrice, setPremiumPrice] = useState("15");
   const [subscriptionPlan, setSubscriptionPlan] = useState("Davora Free");
+  const [freeFeatures, setFreeFeatures] = useState([
+    "2 chats per day",
+    "1 image generation per week",
+    "Standard model speed"
+  ]);
   const [logoUrl, setLogoUrl] = useState(null);
 
   // Modals inputs
@@ -1052,6 +1057,9 @@ export default function Davora() {
               setBasicPrice(cfg.basic_price || "3");
               setProPrice(cfg.pro_price || "7");
               setPremiumPrice(cfg.premium_price || "15");
+              if (cfg.free_features && Array.isArray(cfg.free_features) && cfg.free_features.length > 0) {
+                setFreeFeatures(cfg.free_features);
+              }
               if (cfg.logo_url) {
                 setLogoUrl(cfg.logo_url);
                 localStorage.setItem('davora_logo_url', cfg.logo_url);
@@ -1670,9 +1678,13 @@ export default function Davora() {
           if (quotaData.quota_error) {
             setIsTyping(false);
             let msg = "Usage limit reached.";
+            const waitStr = (quotaData.wait_hours && quotaData.wait_hours >= 24)
+              ? `${Math.ceil(quotaData.wait_hours / 24)} days`
+              : `${quotaData.wait_hours} hours`;
+
             if (quotaData.quota_error === "UNAUTHORIZED") msg = "Authentication failed. Please log in.";
-            else if (quotaData.quota_error === "IMAGE_LIMIT") msg = `Daily image limit reached for your plan. Wait ${quotaData.wait_hours} hours or upgrade.`;
-            else if (quotaData.quota_error === "CHAT_LIMIT") msg = `Daily message limit reached for your plan. Wait ${quotaData.wait_hours} hours or upgrade.`;
+            else if (quotaData.quota_error === "IMAGE_LIMIT") msg = `Image limit reached for your plan. Resets in ${waitStr} or upgrade.`;
+            else if (quotaData.quota_error === "CHAT_LIMIT") msg = `Chat limit reached for your plan. Resets in ${waitStr} or upgrade.`;
 
             showNotification(msg);
             if (quotaData.quota_error.includes("LIMIT")) {
@@ -4664,18 +4676,12 @@ export default function Davora() {
                           </button>
                           <p className="pricing-feature-header">Included features</p>
                           <ul className="pricing-feature-list">
-                            <li className="pricing-feature-item">
-                              <Check size={14} className="pricing-feature-check" />
-                              <span>20–30 chats / day</span>
-                            </li>
-                            <li className="pricing-feature-item">
-                              <Check size={14} className="pricing-feature-check" />
-                              <span>4 image generations / day</span>
-                            </li>
-                            <li className="pricing-feature-item">
-                              <Check size={14} className="pricing-feature-check" />
-                              <span>Standard model speed</span>
-                            </li>
+                            {freeFeatures.map((feat, idx) => (
+                              <li key={idx} className="pricing-feature-item">
+                                <Check size={14} className="pricing-feature-check" />
+                                <span>{feat}</span>
+                              </li>
+                            ))}
                           </ul>
                         </div>
                       </div>
@@ -5594,18 +5600,12 @@ export default function Davora() {
                         </button>
                         <p className="pricing-feature-header">Included features</p>
                         <ul className="pricing-feature-list">
-                          <li className="pricing-feature-item">
-                            <Check size={14} className="pricing-feature-check" />
-                            <span>20–30 chats / day</span>
-                          </li>
-                          <li className="pricing-feature-item">
-                            <Check size={14} className="pricing-feature-check" />
-                            <span>4 image generations / day</span>
-                          </li>
-                          <li className="pricing-feature-item">
-                            <Check size={14} className="pricing-feature-check" />
-                            <span>Standard model speed</span>
-                          </li>
+                          {freeFeatures.map((feat, idx) => (
+                            <li key={idx} className="pricing-feature-item">
+                              <Check size={14} className="pricing-feature-check" />
+                              <span>{feat}</span>
+                            </li>
+                          ))}
                         </ul>
                       </div>
                     </div>
