@@ -5265,7 +5265,7 @@ export default function Davora() {
                               const isNativeMobile = typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
 
                               if (isNativeMobile) {
-                                const { NativeBiometric } = await import('@pantrist/capacitor-native-biometric');
+                                const { NativeBiometric } = await import('@capgo/capacitor-native-biometric');
                                 const check = await NativeBiometric.isAvailable();
                                 if (!check || !check.isAvailable) {
                                   showNotification("Biometric authentication (fingerprint/face) is not enrolled or available on this device.");
@@ -5328,7 +5328,7 @@ export default function Davora() {
                             const isNativeMobile = typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
                             if (isNativeMobile) {
                               try {
-                                const { NativeBiometric } = await import('@pantrist/capacitor-native-biometric');
+                                const { NativeBiometric } = await import('@capgo/capacitor-native-biometric');
                                 await NativeBiometric.deleteCredentials({ server: "chat.davora.xyz" });
                               } catch (delErr) {}
                             }

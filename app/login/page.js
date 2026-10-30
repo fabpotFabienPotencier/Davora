@@ -204,7 +204,7 @@ export default function Login() {
       const isNativeMobile = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
       if (isNativeMobile) {
         try {
-          const { NativeBiometric } = await import('@pantrist/capacitor-native-biometric');
+          const { NativeBiometric } = await import('@capgo/capacitor-native-biometric');
           const available = await NativeBiometric.isAvailable();
           if (available && available.isAvailable) {
             const token = localStorage.getItem('davora_biometric_token');
@@ -228,7 +228,7 @@ export default function Login() {
       let token = localStorage.getItem('davora_biometric_token');
 
       if (isNativeMobile) {
-        const { NativeBiometric } = await import('@pantrist/capacitor-native-biometric');
+        const { NativeBiometric } = await import('@capgo/capacitor-native-biometric');
         await NativeBiometric.verifyIdentity({
           reason: "Unlock Davora with your biometric identity",
           title: "Biometric Unlock",
