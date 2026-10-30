@@ -89,6 +89,9 @@ export default function Davora() {
   const touchStartRef = useRef({ x: 0, y: 0 });
   const sidebarTouchStartRef = useRef({ x: 0, y: 0 });
   const [pinnedSessionIds, setPinnedSessionIds] = useState([]);
+  const [isAppLocked, setIsAppLocked] = useState(false);
+  const isBiometricVerifyingRef = useRef(false);
+  const lastHiddenTimeRef = useRef(0);
 
   // Voice, Edit, TTS, and Rating states
   const [isListening, setIsListening] = useState(false);
@@ -1024,7 +1027,13 @@ export default function Davora() {
           if (metaResult.status === 'fulfilled' && metaResult.value.ok) {
             try {
               const meta = await metaResult.value.json();
-              try { setPrefs(prev => ({ ...prev, ...JSON.parse(meta.prefs) })); } catch (e) { }
+              try {
+                const parsed = JSON.parse(meta.prefs);
+                setPrefs(prev => ({ ...prev, ...parsed }));
+                if (parsed.biometricLogin) {
+                  localStorage.setItem('davora_biometric_enabled', 'true');
+                }
+              } catch (e) { }
               try { setCanvasArtifacts(JSON.parse(meta.canvas)); } catch (e) { }
               try { setPinnedSessionIds(JSON.parse(meta.pins)); } catch (e) { }
               try { setRatings(JSON.parse(meta.ratings)); } catch (e) { }
@@ -1981,6 +1990,95 @@ export default function Davora() {
     setupPushNotifications();
   }, [prefs.pushNotifications]);
 
+  const triggerBiometricUnlock = async () => {
+    if (isBiometricVerifyingRef.current) return;
+    isBiometricVerifyingRef.current = true;
+
+    try {
+      const isNativeMobile = typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      if (isNativeMobile) {
+        const { NativeBiometric } = await import('@capgo/capacitor-native-biometric');
+        const check = await NativeBiometric.isAvailable();
+        if (!check || !check.isAvailable) {
+          setIsAppLocked(false);
+          isBiometricVerifyingRef.current = false;
+          return;
+        }
+
+        await NativeBiometric.verifyIdentity({
+          reason: "Unlock Davora with your biometric identity",
+          title: "Davora Locked",
+          subtitle: "Confirm your identity",
+          description: "Scan your fingerprint or face to open your workspace"
+        });
+
+        setIsAppLocked(false);
+      } else {
+        setIsAppLocked(false);
+      }
+    } catch (err) {
+      console.warn("Biometric verification canceled or failed:", err);
+      // Keep isAppLocked = true so the user can tap "Unlock with Biometrics" button
+    } finally {
+      setTimeout(() => {
+        isBiometricVerifyingRef.current = false;
+      }, 500);
+    }
+  };
+
+  // Biometric App Lock on cold start and when returning from background / closing app
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const isBiometricActive = localStorage.getItem('davora_biometric_enabled') === 'true';
+    const token = localStorage.getItem('davora_token');
+
+    // On cold start: immediately lock and prompt if biometric lock is active
+    if (isBiometricActive && token) {
+      setIsAppLocked(true);
+      setTimeout(() => {
+        triggerBiometricUnlock();
+      }, 350);
+    }
+
+    const handleVisibilityChange = () => {
+      const active = localStorage.getItem('davora_biometric_enabled') === 'true' || prefs.biometricLogin;
+      const userToken = localStorage.getItem('davora_token');
+
+      if (document.visibilityState === 'hidden') {
+        lastHiddenTimeRef.current = Date.now();
+      } else if (document.visibilityState === 'visible') {
+        const timeInBackground = Date.now() - (lastHiddenTimeRef.current || 0);
+        // If app was placed in background for more than 1.5 seconds, re-lock
+        if (active && userToken && timeInBackground > 1500 && !isBiometricVerifyingRef.current) {
+          setIsAppLocked(true);
+          setTimeout(() => {
+            triggerBiometricUnlock();
+          }, 350);
+        }
+      }
+    };
+
+    const handleResume = () => {
+      const active = localStorage.getItem('davora_biometric_enabled') === 'true' || prefs.biometricLogin;
+      const userToken = localStorage.getItem('davora_token');
+      if (active && userToken && !isBiometricVerifyingRef.current) {
+        setIsAppLocked(true);
+        setTimeout(() => {
+          triggerBiometricUnlock();
+        }, 350);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('resume', handleResume);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('resume', handleResume);
+    };
+  }, [prefs.biometricLogin]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedVersions = localStorage.getItem('davora_canvas_versions');
@@ -2680,22 +2778,61 @@ export default function Davora() {
       } else {
         try {
           const { SpeechRecognition } = await import('@capacitor-community/speech-recognition');
-          const hasPerm = await SpeechRecognition.hasPermission();
-          if (!hasPerm.permission) {
-            const req = await SpeechRecognition.requestPermission();
-            if (!req.permission) {
-              showNotification("Microphone permission was denied.");
-              return;
+
+          // Check device speech recognition availability
+          try {
+            if (typeof SpeechRecognition.available === 'function') {
+              const avail = await SpeechRecognition.available();
+              if (avail && !avail.available) {
+                showNotification("Speech recognition is not available on this device.");
+                return;
+              }
             }
+          } catch (availErr) {
+            console.warn("Speech availability check skipped:", availErr);
+          }
+
+          // Capacitor 6 runtime permission check & request
+          let hasPermission = false;
+          try {
+            if (typeof SpeechRecognition.checkPermissions === 'function') {
+              let perm = await SpeechRecognition.checkPermissions();
+              if (perm && perm.speechRecognition === 'granted') {
+                hasPermission = true;
+              } else if (typeof SpeechRecognition.requestPermissions === 'function') {
+                perm = await SpeechRecognition.requestPermissions();
+                hasPermission = perm && perm.speechRecognition === 'granted';
+              }
+            } else if (typeof SpeechRecognition.requestPermissions === 'function') {
+              const perm = await SpeechRecognition.requestPermissions();
+              hasPermission = perm && perm.speechRecognition === 'granted';
+            } else {
+              hasPermission = true;
+            }
+          } catch (permErr) {
+            console.warn("Speech permission check error, proceeding to start:", permErr);
+            hasPermission = true;
+          }
+
+          if (!hasPermission) {
+            showNotification("Microphone permission was denied.");
+            return;
           }
 
           setIsListening(true);
           setInput("");
 
           await SpeechRecognition.removeAllListeners();
+
           await SpeechRecognition.addListener('partialResults', (data) => {
             if (data && data.matches && data.matches.length > 0) {
               setInput(data.matches[0]);
+            }
+          });
+
+          await SpeechRecognition.addListener('listeningState', (state) => {
+            if (state && (state.status === 'stopped' || state.listening === false)) {
+              setIsListening(false);
             }
           });
 
@@ -5289,6 +5426,7 @@ export default function Davora() {
                                 });
 
                                 localStorage.setItem('davora_biometric_token', currentToken);
+                                localStorage.setItem('davora_biometric_enabled', 'true');
                                 setPrefs({ ...prefs, biometricLogin: true });
                                 showNotification("Biometrics enabled successfully!");
                                 return;
@@ -5319,6 +5457,7 @@ export default function Davora() {
                               if (credential) {
                                 const currentToken = localStorage.getItem('davora_token') || '';
                                 localStorage.setItem('davora_biometric_token', currentToken);
+                                localStorage.setItem('davora_biometric_enabled', 'true');
                                 setPrefs({ ...prefs, biometricLogin: true });
                                 showNotification("Biometrics enabled successfully!");
                               }
@@ -5335,7 +5474,9 @@ export default function Davora() {
                               } catch (delErr) {}
                             }
                             localStorage.removeItem('davora_biometric_token');
+                            localStorage.removeItem('davora_biometric_enabled');
                             setPrefs({ ...prefs, biometricLogin: false });
+                            setIsAppLocked(false);
                             showNotification("Biometrics disabled.");
                           }
                         }}
@@ -6274,6 +6415,98 @@ export default function Davora() {
               objectFit: 'contain'
             }}
           />
+        </div>
+      )}
+
+      {/* Biometric App Lock Screen */}
+      {isAppLocked && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'var(--bg-main, #0b0d14)',
+            zIndex: 999999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            textAlign: 'center',
+            backdropFilter: 'blur(24px)',
+          }}
+        >
+          <div
+            style={{
+              width: '84px',
+              height: '84px',
+              borderRadius: '26px',
+              background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 12px 36px rgba(99, 102, 241, 0.45)',
+              marginBottom: '28px',
+            }}
+          >
+            <Fingerprint size={46} color="#ffffff" strokeWidth={1.8} />
+          </div>
+
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-main, #ffffff)', marginBottom: '8px', letterSpacing: '-0.02em' }}>
+            Davora is Locked
+          </h2>
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-muted, #94a3b8)', maxWidth: '340px', marginBottom: '36px', lineHeight: 1.5 }}>
+            Touch the fingerprint sensor or use Face ID to securely access your workspace.
+          </p>
+
+          <button
+            type="button"
+            onClick={triggerBiometricUnlock}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              background: '#6366f1',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '14px',
+              padding: '14px 32px',
+              fontSize: '1.05rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 4px 18px rgba(99, 102, 241, 0.4)',
+              marginBottom: '20px',
+            }}
+          >
+            <Fingerprint size={22} /> Unlock with Biometrics
+          </button>
+
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/logout', {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' }
+                });
+              } catch (e) {}
+              localStorage.clear();
+              document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;";
+              const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+              window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+            }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-muted, #94a3b8)',
+              fontSize: '0.88rem',
+              cursor: 'pointer',
+              padding: '8px 16px',
+            }}
+          >
+            Sign out of account
+          </button>
         </div>
       )}
 
