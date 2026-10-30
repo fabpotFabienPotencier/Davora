@@ -4879,3 +4879,142 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
   50% { transform: scale(1.08); opacity: 0.85; border-color: rgba(99, 102, 241, 0.4); }
   100% { transform: scale(0.95); opacity: 0.4; }
 }
+
+
+/* ============================================================
+   ChatGPT dark-mode visual refresh (pure styling override)
+   Pure black bg, charcoal cards, pill search, subtle dividers
+   ============================================================ */
+:root {
+  --bg-primary: #000000;
+  --bg-secondary: #2C2C2E;
+  --bg-tertiary: #3a3a3c;
+  --text-primary: #F5F5F5;
+  --text-secondary: #A0A0A0;
+  --border-color: #3a3a3c;
+}
+
+/* Cards — large rounded charcoal */
+.personalization-card,
+.chat-menu-card,
+.pricing-card-clean,
+.davora-lock-card,
+.canvas-artifact-card,
+.generated-artwork-card,
+.settings-group,
+.settings-card,
+.settings-pane > .settings-section,
+.settings-pane > section {
+  background: #2C2C2E !important;
+  border-radius: 24px !important;
+  border: none !important;
+  overflow: hidden;
+}
+
+/* Modals / popovers / bottom sheets */
+.modal-content,
+.popover-menu,
+.profile-editor-sheet,
+.chat-menu-popover {
+  background: #1c1c1e !important;
+  border-radius: 24px !important;
+  border: 1px solid #3a3a3c !important;
+  overflow: hidden;
+}
+@media (max-width: 768px) {
+  .modal-content,
+  .popover-menu,
+  .profile-editor-sheet {
+    border-radius: 24px 24px 0 0 !important;
+  }
+}
+
+/* Settings rows — clean horizontal layout with subtle dividers */
+.settings-row,
+.popover-item,
+.chat-menu-item,
+.personalization-select-row {
+  padding: 14px 16px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.settings-row:last-child,
+.popover-item:last-child,
+.chat-menu-item:last-child,
+.personalization-select-row:last-child {
+  border-bottom: none !important;
+}
+
+/* Inputs — rounded, pill for search */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+textarea,
+.premium-input-field,
+.custom-instructions-input,
+.cmd-input,
+.find-in-chat-input,
+.rename-input {
+  border-radius: 12px !important;
+  background: #2C2C2E !important;
+  border: 1px solid #3a3a3c !important;
+  color: #F5F5F5 !important;
+}
+/* Pill-shaped search bar */
+.settings-search-input,
+.search-settings-input,
+.settings-search-bar input,
+input[placeholder*="earch"] {
+  border-radius: 999px !important;
+  padding-left: 40px !important;
+}
+
+/* Buttons — pill / rounded */
+.settings-nav-btn,
+.icon-action-btn,
+.manage-btn {
+  border-radius: 12px !important;
+}
+button[class*="upgrade"],
+button[class*="Upgrade"],
+.pill-btn,
+.header-pill {
+  border-radius: 999px !important;
+}
+
+/* Section labels — small gray */
+.settings-section > h3,
+.personalization-card-title,
+.settings-group-label {
+  color: #A0A0A0 !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em !important;
+  margin-left: 8px !important;
+}
+
+/* Smooth subtle transitions */
+.settings-row,
+.popover-item,
+button,
+a {
+  transition: background-color 0.15s ease, opacity 0.15s ease !important;
+}
+
+/* Secondary text */
+.setting-hint,
+.settings-info p,
+p[class*="hint"] {
+  color: #A0A0A0 !important;
+}
+
+/* Dividers */
+.popover-divider,
+.chat-menu-divider,
+.plus-menu-divider {
+  background: #3a3a3c !important;
+  height: 1px !important;
+  margin: 8px 16px !important;
+}
