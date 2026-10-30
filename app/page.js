@@ -4480,33 +4480,8 @@ export default function Davora() {
                   <button className="settings-nav-btn settings-order-parental" onClick={() => { setSettingsTab('Parental controls'); setMobileSettingsView('pane'); }}><Users size={24} strokeWidth={2.2} /> Parental controls</button>
                 </div>
                 <div className="settings-nav-group settings-appearance-group">
-                  <div className="settings-dropdown-wrap">
-                    <button className="settings-nav-btn settings-appearance-trigger" onClick={() => setSettingsDropdown(d => d === 'appearance' ? null : 'appearance')} aria-expanded={settingsDropdown === 'appearance'}><Sun size={24} strokeWidth={2.2} /> Appearance <span className="settings-nav-value">{prefs.theme === 'light' ? 'Light' : prefs.theme === 'amoled' ? 'OLED' : 'Dark'}</span><ChevronDown size={18} /></button>
-                    {settingsDropdown === 'appearance' && (
-                      <div className="settings-dropdown-compact">
-                        {[{label:'Light',value:'light'},{label:'Dark',value:'dark'},{label:'OLED',value:'amoled'}].map(opt => (
-                          <button key={opt.value} className="settings-dropdown-item" onClick={() => { setPrefs(prev => ({...prev, theme: opt.value})); setSettingsDropdown(null); }}>
-                            {opt.label}
-                            {prefs.theme === opt.value && <span className="settings-dropdown-check">✓</span>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="settings-dropdown-wrap">
-                    <button className="settings-nav-btn settings-accent-trigger" onClick={() => setSettingsDropdown(d => d === 'accent' ? null : 'accent')} aria-expanded={settingsDropdown === 'accent'}><Palette size={24} strokeWidth={2.2} /> Accent color <span className="settings-nav-value">{(prefs.accentColor || 'default').replace(/^./, c => c.toUpperCase())}</span><ChevronDown size={18} /></button>
-                    {settingsDropdown === 'accent' && (
-                      <div className="settings-dropdown-compact">
-                        {[{label:'Default',value:'default',color:'#ffffff'},{label:'Blue',value:'blue',color:'#3b82f6'},{label:'Green',value:'green',color:'#22c55e'},{label:'Purple',value:'purple',color:'#a855f7'},{label:'Orange',value:'orange',color:'#f97316'},{label:'Pink',value:'pink',color:'#ec4899'}].map(opt => (
-                          <button key={opt.value} className="settings-dropdown-item" onClick={() => { setPrefs(prev => ({...prev, accentColor: opt.value})); setSettingsDropdown(null); }}>
-                            <span className="settings-dropdown-swatch" style={{background: opt.color}} />
-                            {opt.label}
-                            {(prefs.accentColor || 'default') === opt.value && <span className="settings-dropdown-check">✓</span>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <button className="settings-nav-btn settings-appearance-trigger" onClick={() => setSettingsDropdown(d => d === 'appearance' ? null : 'appearance')} aria-expanded={settingsAppearanceOpen}><Sun size={24} strokeWidth={2.2} /> Appearance <span className="settings-nav-value">{prefs.theme === 'light' ? 'Light' : prefs.theme === 'amoled' ? 'OLED' : 'Dark'}</span><ChevronDown size={18} /></button>
+                  <button className="settings-nav-btn settings-accent-trigger" onClick={() => setSettingsDropdown(d => d === 'accent' ? null : 'accent')} aria-expanded={settingsAccentOpen}><Palette size={24} strokeWidth={2.2} /> Accent color <span className="settings-nav-value">{(prefs.accentColor || 'default').replace(/^./, c => c.toUpperCase())}</span><ChevronDown size={18} /></button>
                 </div>
                 <div className="settings-nav-group">
                   <button className="settings-nav-btn settings-order-general" onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }}><Settings size={24} strokeWidth={2.2} /> General</button>
@@ -4525,7 +4500,36 @@ export default function Davora() {
               </div>
             </div>
 
-            {settingsDropdown && <div className="settings-dropdown-backdrop" onClick={() => setSettingsDropdown(null)} />}
+
+            {settingsDropdown && (
+              <div className="settings-dropdown-overlay" onClick={() => setSettingsDropdown(null)}>
+                <div className="settings-dropdown-card" onClick={e => e.stopPropagation()}>
+                  {settingsDropdown === 'appearance' && (
+                    <>
+                      <div className="settings-dropdown-title">Appearance</div>
+                      {[{label:'Light',value:'light'},{label:'Dark',value:'dark'},{label:'OLED',value:'amoled'}].map(opt => (
+                        <button key={opt.value} className="settings-dropdown-item" onClick={() => { setPrefs(prev => ({...prev, theme: opt.value})); setSettingsDropdown(null); }}>
+                          {opt.label}
+                          {prefs.theme === opt.value && <span className="settings-dropdown-check">✓</span>}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                  {settingsDropdown === 'accent' && (
+                    <>
+                      <div className="settings-dropdown-title">Accent color</div>
+                      {[{label:'Default',value:'default',color:'#ffffff'},{label:'Blue',value:'blue',color:'#3b82f6'},{label:'Green',value:'green',color:'#22c55e'},{label:'Purple',value:'purple',color:'#a855f7'},{label:'Orange',value:'orange',color:'#f97316'},{label:'Pink',value:'pink',color:'#ec4899'}].map(opt => (
+                        <button key={opt.value} className="settings-dropdown-item" onClick={() => { setPrefs(prev => ({...prev, accentColor: opt.value})); setSettingsDropdown(null); }}>
+                          <span className="settings-dropdown-swatch" style={{background: opt.color}} />
+                          {opt.label}
+                          {(prefs.accentColor || 'default') === opt.value && <span className="settings-dropdown-check">✓</span>}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="settings-body">
               <div className="settings-header-desktop hide-on-mobile">
