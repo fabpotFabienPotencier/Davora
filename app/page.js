@@ -6421,14 +6421,14 @@ export default function Davora() {
       {/* Executive Biometric App Lock Screen */}
       {isAppLocked && (
         <div className="davora-lock-screen">
-          {/* Top Brand Bar */}
-          <div className="davora-lock-top-brand">
-            <ShieldCheck size={15} color="#818cf8" strokeWidth={2.2} />
-            <span>Encrypted Workspace</span>
-          </div>
+          <div className="davora-lock-card">
+            {/* Top Security Badge */}
+            <div className="davora-lock-badge">
+              <ShieldCheck size={14} color="#818cf8" strokeWidth={2.2} />
+              <span>Encrypted Session</span>
+            </div>
 
-          {/* Central Biometric Interactive Sensor & Prompt */}
-          <div className="davora-lock-center">
+            {/* Central Biometric Interactive Sensor */}
             <div
               className="davora-lock-sensor-wrap"
               onClick={triggerBiometricUnlock}
@@ -6455,10 +6455,7 @@ export default function Davora() {
               <Fingerprint size={18} color="#818cf8" strokeWidth={2} />
               <span>Verify Biometrics</span>
             </button>
-          </div>
 
-          {/* Safe-Area Footer */}
-          <div className="davora-lock-footer">
             <button
               type="button"
               className="davora-lock-signout-btn"
