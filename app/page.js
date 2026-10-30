@@ -1881,40 +1881,104 @@ export default function Davora() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'Notification' in window && prefs.pushNotifications) {
-      Notification.requestPermission().then(async (permission) => {
-        if (permission === 'granted') {
-          try {
-            let fcmToken = localStorage.getItem('davora_fcm_token');
-            if (!fcmToken && window.PushNotifications) {
-              window.PushNotifications.addListener('registration', (token) => {
-                fcmToken = token.value;
-                localStorage.setItem('davora_fcm_token', fcmToken);
-              });
-              window.PushNotifications.register();
+    if (typeof window === 'undefined' || !prefs.pushNotifications) return;
+
+    const setupPushNotifications = async () => {
+      const isNativeMobile = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+
+      if (isNativeMobile) {
+        try {
+          const { PushNotifications } = await import('@capacitor/push-notifications');
+
+          // 1. Request native runtime permissions (Android 13+ POST_NOTIFICATIONS)
+          let permStatus = await PushNotifications.checkPermissions();
+          if (permStatus.receive === 'prompt' || permStatus.receive === 'prompt-with-rationale') {
+            permStatus = await PushNotifications.requestPermissions();
+          }
+
+          if (permStatus.receive !== 'granted') {
+            console.log("Push notification permission not granted:", permStatus);
+            return;
+          }
+
+          // 2. Create high-importance Android Notification Channel with sound & vibration
+          await PushNotifications.createChannel({
+            id: 'davora_default',
+            name: 'Davora Alerts',
+            description: 'Notifications and messages from Davora',
+            importance: 5,
+            visibility: 1,
+            vibration: true,
+            sound: 'default'
+          });
+
+          // 3. Set listeners
+          await PushNotifications.removeAllListeners();
+
+          await PushNotifications.addListener('registration', async (token) => {
+            console.log("Native FCM Registration token:", token.value);
+            localStorage.setItem('davora_fcm_token', token.value);
+            const userToken = localStorage.getItem('davora_token');
+            if (userToken && token.value) {
+              try {
+                await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/notifications/subscribe', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`,
+                    'ngrok-skip-browser-warning': 'true'
+                  },
+                  body: JSON.stringify({ token: token.value })
+                });
+              } catch (err) {
+                console.warn("Failed to subscribe FCM token to backend:", err);
+              }
             }
-            if (!fcmToken) {
-              fcmToken = 'web_push_' + Math.random().toString(36).substring(2, 15);
-              localStorage.setItem('davora_fcm_token', fcmToken);
+          });
+
+          await PushNotifications.addListener('registrationError', (error) => {
+            console.error("Push registration error:", error);
+          });
+
+          await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+            console.log("Push notification received in foreground:", notification);
+            if (notification.title || notification.body) {
+              showNotification(`${notification.title ? notification.title + ': ' : ''}${notification.body || ''}`);
             }
-            const token = localStorage.getItem('davora_token');
-            if (token && fcmToken) {
+          });
+
+          // 4. Trigger native FCM registration
+          await PushNotifications.register();
+        } catch (e) {
+          console.warn("Native Push Notifications setup failed:", e);
+        }
+      } else if ('Notification' in window) {
+        // Desktop Browser Web Push
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            const userToken = localStorage.getItem('davora_token');
+            const fcmToken = localStorage.getItem('davora_fcm_token') || ('web_push_' + Math.random().toString(36).substring(2, 15));
+            localStorage.setItem('davora_fcm_token', fcmToken);
+            if (userToken) {
               await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/notifications/subscribe', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`,
+                  'Authorization': `Bearer ${userToken}`,
                   'ngrok-skip-browser-warning': 'true'
                 },
                 body: JSON.stringify({ token: fcmToken })
               });
             }
-          } catch (e) {
-            console.warn("FCM Subscription error:", e);
           }
+        } catch (e) {
+          console.warn("Browser push registration error:", e);
         }
-      });
-    }
+      }
+    };
+
+    setupPushNotifications();
   }, [prefs.pushNotifications]);
 
   useEffect(() => {
@@ -2037,10 +2101,80 @@ export default function Davora() {
     } catch (err) {
       console.warn("Auto title generation error:", err);
     }
+  const handleNativeCamera = async () => {
+    setShowPlusMenu(false);
+    const isNativeMobile = typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+    if (isNativeMobile) {
+      try {
+        const { Camera, CameraSource, CameraResultType } = await import('@capacitor/camera');
+        const image = await Camera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.Uri,
+          source: CameraSource.Camera,
+        });
+        if (image && image.webPath) {
+          const res = await fetch(image.webPath);
+          const blob = await res.blob();
+          const fileName = `camera_${Date.now()}.${image.format || 'jpg'}`;
+          const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+          handleFileSelect([file]);
+        }
+      } catch (err) {
+        if (!err?.message?.includes('User cancelled') && !err?.message?.includes('cancelled')) {
+          console.error("Camera error:", err);
+          showNotification("Camera: " + (err.message || "Failed to open camera"));
+        }
+      }
+    } else {
+      setTimeout(() => {
+        if (cameraInputRef.current) {
+          cameraInputRef.current.value = "";
+          cameraInputRef.current.click();
+        }
+      }, 50);
+    }
+  };
+
+  const handleNativePhotoPicker = async () => {
+    setShowPlusMenu(false);
+    const isNativeMobile = typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+    if (isNativeMobile) {
+      try {
+        const { Camera } = await import('@capacitor/camera');
+        const result = await Camera.pickImages({
+          quality: 90,
+          limit: 5,
+        });
+        if (result && result.photos && result.photos.length > 0) {
+          const pickedFiles = [];
+          for (let i = 0; i < result.photos.length; i++) {
+            const photo = result.photos[i];
+            const res = await fetch(photo.webPath);
+            const blob = await res.blob();
+            const fileName = `photo_${Date.now()}_${i}.${photo.format || 'jpg'}`;
+            pickedFiles.push(new File([blob], fileName, { type: blob.type || 'image/jpeg' }));
+          }
+          handleFileSelect(pickedFiles);
+        }
+      } catch (err) {
+        if (!err?.message?.includes('User cancelled') && !err?.message?.includes('cancelled')) {
+          console.error("Photo picker error:", err);
+          showNotification("Photos: " + (err.message || "Failed to pick photos"));
+        }
+      }
+    } else {
+      setTimeout(() => {
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+          fileInputRef.current.click();
+        }
+      }, 50);
+    }
   };
 
   const handleFileSelect = async (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.isArray(e) ? e : Array.from(e?.target?.files || []);
     if (!files.length) return;
 
     if (attachments.length + files.length > 5) {
@@ -2530,6 +2664,56 @@ export default function Davora() {
   };
 
   const toggleVoice = async () => {
+    const isNativeMobile = typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+
+    if (isNativeMobile) {
+      if (isListening) {
+        try {
+          const { SpeechRecognition } = await import('@capacitor-community/speech-recognition');
+          await SpeechRecognition.stop();
+        } catch (e) {
+          console.error("Stop speech error:", e);
+        }
+        setIsListening(false);
+      } else {
+        try {
+          const { SpeechRecognition } = await import('@capacitor-community/speech-recognition');
+          const hasPerm = await SpeechRecognition.hasPermission();
+          if (!hasPerm.permission) {
+            const req = await SpeechRecognition.requestPermission();
+            if (!req.permission) {
+              showNotification("Microphone permission was denied.");
+              return;
+            }
+          }
+
+          setIsListening(true);
+          setInput("");
+
+          await SpeechRecognition.removeAllListeners();
+          await SpeechRecognition.addListener('partialResults', (data) => {
+            if (data && data.matches && data.matches.length > 0) {
+              setInput(data.matches[0]);
+            }
+          });
+
+          await SpeechRecognition.start({
+            language: "en-US",
+            maxResults: 2,
+            prompt: "Listening to your voice...",
+            partialResults: true,
+            popup: false,
+          });
+        } catch (err) {
+          console.error("Native speech recognition start error:", err);
+          showNotification("Microphone error: " + (err.message || "Could not start speech recognition"));
+          setIsListening(false);
+        }
+      }
+      return;
+    }
+
+    // Web Browser fallback
     if (!recognitionRef.current) {
       showNotification("Voice input not supported in this browser.");
       return;
@@ -2547,8 +2731,6 @@ export default function Davora() {
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            // Crucial: Stop the tracks immediately so the microphone isn't locked!
-            // SpeechRecognition needs exclusive access to the microphone on mobile WebViews.
             stream.getTracks().forEach(track => track.stop());
           } catch (micErr) {
             console.warn("getUserMedia failed, trying speech recognition anyway...", micErr);
@@ -3906,17 +4088,16 @@ export default function Davora() {
                       <button
                         type="button"
                         className="plus-menu-item"
-                        onClick={() => {
-                          setShowPlusMenu(false);
-                          setTimeout(() => {
-                            if (cameraInputRef.current) {
-                              cameraInputRef.current.value = "";
-                              cameraInputRef.current.click();
-                            }
-                          }, 50);
-                        }}
+                        onClick={handleNativeCamera}
                       >
                         <Camera size={18} /> Camera
+                      </button>
+                      <button
+                        type="button"
+                        className="plus-menu-item"
+                        onClick={handleNativePhotoPicker}
+                      >
+                        <Image size={18} /> Photos & Gallery
                       </button>
                       <button
                         type="button"
@@ -3931,7 +4112,7 @@ export default function Davora() {
                           }, 50);
                         }}
                       >
-                        <Paperclip size={18} /> Add photos & files
+                        <Paperclip size={18} /> Documents & Files
                       </button>
                       <div className="plus-menu-divider"></div>
                       <button type="button" className={`plus-menu-item ${inputMode === 'image' ? 'active' : ''}`} onClick={() => { setInputMode(prev => prev === 'image' ? 'instant' : 'image'); setShowPlusMenu(false); inputRef.current?.focus(); }}>
@@ -5081,6 +5262,37 @@ export default function Davora() {
                           const active = e.target.checked;
                           if (active) {
                             try {
+                              const isNativeMobile = typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+
+                              if (isNativeMobile) {
+                                const { NativeBiometric } = await import('@pantrist/capacitor-native-biometric');
+                                const check = await NativeBiometric.isAvailable();
+                                if (!check || !check.isAvailable) {
+                                  showNotification("Biometric authentication (fingerprint/face) is not enrolled or available on this device.");
+                                  return;
+                                }
+
+                                await NativeBiometric.verifyIdentity({
+                                  reason: "Authenticate with biometrics to secure your Davora workspace",
+                                  title: "Biometric Verification",
+                                  subtitle: "Confirm your identity",
+                                  description: "Scan your fingerprint or face to enable biometric unlock"
+                                });
+
+                                const currentToken = localStorage.getItem('davora_token') || '';
+                                await NativeBiometric.setCredentials({
+                                  username: userEmail || "davora_user",
+                                  password: currentToken,
+                                  server: "chat.davora.xyz"
+                                });
+
+                                localStorage.setItem('davora_biometric_token', currentToken);
+                                setPrefs({ ...prefs, biometricLogin: true });
+                                showNotification("Biometrics enabled successfully!");
+                                return;
+                              }
+
+                              // Desktop Web Browser fallback
                               if (!window.PublicKeyCredential) {
                                 showNotification("Biometrics not supported on this device/browser.");
                                 return;
@@ -5113,6 +5325,13 @@ export default function Davora() {
                               showNotification("Biometric verification canceled or failed.");
                             }
                           } else {
+                            const isNativeMobile = typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+                            if (isNativeMobile) {
+                              try {
+                                const { NativeBiometric } = await import('@pantrist/capacitor-native-biometric');
+                                await NativeBiometric.deleteCredentials({ server: "chat.davora.xyz" });
+                              } catch (delErr) {}
+                            }
                             localStorage.removeItem('davora_biometric_token');
                             setPrefs({ ...prefs, biometricLogin: false });
                             showNotification("Biometrics disabled.");

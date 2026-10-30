@@ -10,5 +10,11 @@
       "*.davora.xyz",
       "davora.xyz"
     ]
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"],
+      "iconColor": "#6366f1"
+    }
   }
 }

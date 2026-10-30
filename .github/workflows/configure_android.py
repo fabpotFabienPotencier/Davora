@@ -72,6 +72,11 @@ def main():
             content = re.sub(r'(dependencies\s*\{)', r'\1' + dep_block, content, count=1)
             print("Added Play Billing 8.0.0 dependencies to app/build.gradle")
         
+        # Ensure Google Services plugin is applied for Firebase Cloud Messaging
+        if "com.google.gms.google-services" not in content:
+            content += "\ntry {\n    apply plugin: 'com.google.gms.google-services'\n} catch (Exception e) {\n    logger.warn('google-services plugin could not be applied: ' + e.getMessage())\n}\n"
+            print("Applied com.google.gms.google-services to app/build.gradle")
+
         with open(app_gradle_path, "w", encoding="utf-8") as f:
             f.write(content)
         print(f"Updated {app_gradle_path}")
@@ -106,6 +111,16 @@ def main():
         
         root_content = re.sub(r"classpath\s+['\"]com\.android\.tools\.build:gradle:[^'\"]+['\"]",
                               "classpath 'com.android.tools.build:gradle:8.5.0'", root_content)
+
+        # Ensure Google Services classpath is present in root build.gradle
+        if "com.google.gms:google-services" not in root_content:
+            root_content = re.sub(
+                r"(dependencies\s*\{)",
+                r"\1\n        classpath 'com.google.gms:google-services:4.4.2'",
+                root_content,
+                count=1
+            )
+            print("Added Google Services classpath to root build.gradle")
         
         resolution_strategy = """
 allprojects {
@@ -157,7 +172,7 @@ allprojects {
             f.write(prop_line)
         print("Created gradle.properties with android.suppressUnsupportedCompileSdk=36")
 
-    # 6. Ensure Manifest permissions
+    # 6. Ensure Manifest permissions and notification metadata
     manifest_path = "android/app/src/main/AndroidManifest.xml"
     if os.path.exists(manifest_path):
         with open(manifest_path, "r", encoding="utf-8") as f:
@@ -165,18 +180,55 @@ allprojects {
         
         perms = [
             '<uses-permission android:name="android.permission.RECORD_AUDIO" />',
+            '<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />',
+            '<uses-permission android:name="android.permission.CAMERA" />',
+            '<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />',
+            '<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />',
             '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />',
+            '<uses-permission android:name="android.permission.USE_BIOMETRIC" />',
             '<uses-permission android:name="com.android.vending.BILLING" />'
         ]
         to_add = [p for p in perms if p not in manifest_content]
         if to_add:
             insert_str = "    " + "\n    ".join(to_add) + "\n"
             manifest_content = manifest_content.replace("<application", insert_str + "<application")
-            with open(manifest_path, "w", encoding="utf-8") as f:
-                f.write(manifest_content)
-            print("Added permissions (including Google Play Billing) to AndroidManifest.xml")
+            print("Added permissions to AndroidManifest.xml")
+
+        # Notification silhouette icon and brand accent color metadata
+        meta_tags = [
+            '<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_stat_davora" />',
+            '<meta-data android:name="com.google.firebase.messaging.default_notification_color" android:resource="@color/davora_brand" />'
+        ]
+        meta_to_add = [m for m in meta_tags if m not in manifest_content]
+        if meta_to_add:
+            meta_insert = "        " + "\n        ".join(meta_to_add) + "\n    "
+            manifest_content = manifest_content.replace("</application>", meta_insert + "</application>")
+            print("Added notification metadata to AndroidManifest.xml")
+
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            f.write(manifest_content)
+        print(f"Updated {manifest_path}")
     else:
         print(f"Warning: {manifest_path} not found")
+
+    # 7. Ensure brand color resource in res/values/colors.xml
+    colors_path = "android/app/src/main/res/values/colors.xml"
+    if os.path.exists(colors_path):
+        with open(colors_path, "r", encoding="utf-8") as f:
+            colors_content = f.read()
+        if "davora_brand" not in colors_content:
+            colors_content = colors_content.replace(
+                "</resources>",
+                '    <color name="davora_brand">#6366f1</color>\n</resources>'
+            )
+            with open(colors_path, "w", encoding="utf-8") as f:
+                f.write(colors_content)
+            print("Added davora_brand color to colors.xml")
+    else:
+        os.makedirs(os.path.dirname(colors_path), exist_ok=True)
+        with open(colors_path, "w", encoding="utf-8") as f:
+            f.write('<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="davora_brand">#6366f1</color>\n</resources>\n')
+        print("Created colors.xml with davora_brand color")
 
     # 7. Patch @capgo/native-purchases for Play Billing 8 compatibility
     patch_native_purchases()

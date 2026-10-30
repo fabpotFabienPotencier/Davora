@@ -199,52 +199,91 @@ export default function Login() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.PublicKeyCredential && localStorage.getItem('davora_biometric_token')) {
-      setHasBiometrics(true);
-    }
+    const checkBiometric = async () => {
+      if (typeof window === 'undefined') return;
+      const isNativeMobile = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      if (isNativeMobile) {
+        try {
+          const { NativeBiometric } = await import('@pantrist/capacitor-native-biometric');
+          const available = await NativeBiometric.isAvailable();
+          if (available && available.isAvailable) {
+            const token = localStorage.getItem('davora_biometric_token');
+            if (token) setHasBiometrics(true);
+          }
+        } catch (e) {
+          console.warn("NativeBiometric check error:", e);
+        }
+      } else if (window.PublicKeyCredential && localStorage.getItem('davora_biometric_token')) {
+        setHasBiometrics(true);
+      }
+    };
+    checkBiometric();
   }, []);
 
   const handleBiometricLogin = async () => {
     setError('');
     setIsLoading(true);
     try {
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-      const options = {
-        publicKey: {
-          challenge,
-          rp: { name: "Davora Workspace" },
-          allowCredentials: [],
-          userVerification: "required",
-          timeout: 60000
-        }
-      };
-      const assertion = await navigator.credentials.get(options);
-      if (assertion) {
-        const token = localStorage.getItem('davora_biometric_token');
-        if (token) {
-          localStorage.setItem('davora_token', token);
-          const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'ngrok-skip-browser-warning': 'true'
-            }
-          });
-          if (res.ok) {
-            if (window.Capacitor || window.location.hostname === 'localhost') {
-              router.push('/');
-            } else {
-              const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-              window.location.href = `${window.location.protocol}//chat.${baseDomain}`;
-            }
-            return;
+      const isNativeMobile = typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      let token = localStorage.getItem('davora_biometric_token');
+
+      if (isNativeMobile) {
+        const { NativeBiometric } = await import('@pantrist/capacitor-native-biometric');
+        await NativeBiometric.verifyIdentity({
+          reason: "Unlock Davora with your biometric identity",
+          title: "Biometric Unlock",
+          subtitle: "Davora Workspace",
+          description: "Use your fingerprint or face to sign in"
+        });
+        try {
+          const creds = await NativeBiometric.getCredentials({ server: "chat.davora.xyz" });
+          if (creds && creds.password) {
+            token = creds.password;
           }
+        } catch (credErr) {
+          console.warn("Using stored biometric token fallback", credErr);
         }
-        setError("Biometric session expired. Please log in with password.");
+      } else {
+        // Desktop WebAuthn fallback
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+        const options = {
+          publicKey: {
+            challenge,
+            rp: { name: "Davora Workspace" },
+            allowCredentials: [],
+            userVerification: "required",
+            timeout: 60000
+          }
+        };
+        const assertion = await navigator.credentials.get(options);
+        if (!assertion) {
+          throw new Error("Biometric verification cancelled.");
+        }
       }
+
+      if (token) {
+        localStorage.setItem('davora_token', token);
+        const res = await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/sessions', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'ngrok-skip-browser-warning': 'true'
+          }
+        });
+        if (res.ok) {
+          if (window.Capacitor || window.location.hostname === 'localhost') {
+            router.push('/');
+          } else {
+            const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+            window.location.href = `${window.location.protocol}//chat.${baseDomain}`;
+          }
+          return;
+        }
+      }
+      setError("Biometric session expired. Please log in with password.");
     } catch (err) {
       console.error("Biometric login failed:", err);
-      setError("Biometric verification failed.");
+      setError("Biometric verification failed or was cancelled.");
     } finally {
       setIsLoading(false);
     }
