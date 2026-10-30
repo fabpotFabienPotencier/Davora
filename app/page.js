@@ -6418,95 +6418,66 @@ export default function Davora() {
         </div>
       )}
 
-      {/* Biometric App Lock Screen */}
+      {/* Executive Biometric App Lock Screen */}
       {isAppLocked && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            width: '100vw',
-            height: '100vh',
-            background: 'var(--bg-main, #0b0d14)',
-            zIndex: 999999,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '24px',
-            textAlign: 'center',
-            backdropFilter: 'blur(24px)',
-          }}
-        >
-          <div
-            style={{
-              width: '84px',
-              height: '84px',
-              borderRadius: '26px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 12px 36px rgba(99, 102, 241, 0.45)',
-              marginBottom: '28px',
-            }}
-          >
-            <Fingerprint size={46} color="#ffffff" strokeWidth={1.8} />
+        <div className="davora-lock-screen">
+          {/* Top Brand Bar */}
+          <div className="davora-lock-top-brand">
+            <ShieldCheck size={15} color="#818cf8" strokeWidth={2.2} />
+            <span>Encrypted Workspace</span>
           </div>
 
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-main, #ffffff)', marginBottom: '8px', letterSpacing: '-0.02em' }}>
-            Davora is Locked
-          </h2>
-          <p style={{ fontSize: '0.95rem', color: 'var(--text-muted, #94a3b8)', maxWidth: '340px', marginBottom: '36px', lineHeight: 1.5 }}>
-            Touch the fingerprint sensor or use Face ID to securely access your workspace.
-          </p>
+          {/* Central Biometric Interactive Sensor & Prompt */}
+          <div className="davora-lock-center">
+            <div
+              className="davora-lock-sensor-wrap"
+              onClick={triggerBiometricUnlock}
+              title="Tap to authenticate"
+              role="button"
+              aria-label="Tap to unlock with fingerprint"
+            >
+              <div className="davora-lock-sensor-halo"></div>
+              <div className="davora-lock-sensor-circle">
+                <Fingerprint size={42} color="#c7d2fe" strokeWidth={1.5} />
+              </div>
+            </div>
 
-          <button
-            type="button"
-            onClick={triggerBiometricUnlock}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '10px',
-              background: '#6366f1',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '14px',
-              padding: '14px 32px',
-              fontSize: '1.05rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              boxShadow: '0 4px 18px rgba(99, 102, 241, 0.4)',
-              marginBottom: '20px',
-            }}
-          >
-            <Fingerprint size={22} /> Unlock with Biometrics
-          </button>
+            <h2 className="davora-lock-title">Davora Locked</h2>
+            <p className="davora-lock-desc">
+              Touch the fingerprint sensor or use Face ID to continue
+            </p>
 
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/logout', {
-                  method: 'POST',
-                  headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' }
-                });
-              } catch (e) {}
-              localStorage.clear();
-              document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;";
-              const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
-              window.location.href = `${window.location.protocol}//login.${baseDomain}`;
-            }}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-muted, #94a3b8)',
-              fontSize: '0.88rem',
-              cursor: 'pointer',
-              padding: '8px 16px',
-            }}
-          >
-            Sign out of account
-          </button>
+            <button
+              type="button"
+              className="davora-lock-action-btn"
+              onClick={triggerBiometricUnlock}
+            >
+              <Fingerprint size={18} color="#818cf8" strokeWidth={2} />
+              <span>Verify Biometrics</span>
+            </button>
+          </div>
+
+          {/* Safe-Area Footer */}
+          <div className="davora-lock-footer">
+            <button
+              type="button"
+              className="davora-lock-signout-btn"
+              onClick={async () => {
+                try {
+                  await fetch((process.env.NEXT_PUBLIC_API_URL || 'https://api.davora.xyz') + '/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${(localStorage.getItem('davora_token') || '')}`, 'ngrok-skip-browser-warning': 'true' }
+                  });
+                } catch (e) {}
+                localStorage.clear();
+                document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;";
+                const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, '');
+                window.location.href = `${window.location.protocol}//login.${baseDomain}`;
+              }}
+            >
+              Sign out of account
+            </button>
+          </div>
         </div>
       )}
 
