@@ -2101,6 +2101,8 @@ export default function Davora() {
     } catch (err) {
       console.warn("Auto title generation error:", err);
     }
+  };
+
   const handleNativeCamera = async () => {
     setShowPlusMenu(false);
     const isNativeMobile = typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
