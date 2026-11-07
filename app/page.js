@@ -4857,7 +4857,7 @@ export default function Davora() {
                     </div>
                   </div>
                   <div className="settings-row border-top" style={{ paddingTop: '24px' }}>
-                    <button onClick={() => { document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;"; const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="danger-btn" style={{ background: 'transparent', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', width: '100%' }}>Log out</button>
+                    <button onClick={() => { document.cookie = "davora_auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.davora.xyz;"; const baseDomain = window.location.host.replace(/^(chat\.|login\.|signup\.|www\.)/, ''); window.location.href = `${window.location.protocol}//login.${baseDomain}`; }} className="danger-btn" style={{ background: '#2C2C2E', color: '#ef4444', border: 'none', width: '100%', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><LogOut size={16} /> Log out</button>
                   </div>
                 </div>
               )}
