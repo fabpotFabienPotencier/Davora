@@ -4975,7 +4975,7 @@ input[type="text"], input[type="password"], input[type="email"] {
 .settings-dropdown-wrap { position: relative; }
 .settings-float-backdrop { position: fixed; inset: 0; z-index: 1500; background: transparent; }
 .settings-float-popup {
-  position: absolute; top: calc(100% + 8px); left: auto; right: 0; width: 220px;
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0;
   background: #303030 !important; border: 1px solid #444444 !important;
   border-radius: 28px !important; z-index: 1600; overflow: hidden !important;
   box-shadow: 0 12px 32px rgba(0,0,0,0.6); display: flex; flex-direction: column;
