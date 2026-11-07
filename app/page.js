@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProjectsPage, { ProjectIcon } from "./ProjectsPage";
 import {
-  Send, User, Bot, Loader2, Copy, Check,
+  Send, User, Bot, Loader2, Copy, Check, Smile,
   PlusCircle, Download, Square, ArrowDown,
   Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, ChevronUp, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
@@ -3352,7 +3352,7 @@ export default function Davora() {
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setActiveModal('upgrade'); }}>
                   <Sparkles size={16} /> {(!subscriptionPlan || subscriptionPlan.includes("Free")) ? "Upgrade plan" : "Manage subscription"}
                 </button>
-                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Fingerprint size={16} /> Personalization</button>
+                <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Smile size={16} /> Personalization</button>
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('Account'); setMobileSettingsView('pane'); }}><User size={16} /> Profile</button>
                 <button className="popover-item" onClick={() => { setShowProfileMenu(false); setShowSettings(true); setSettingsTab('General'); setMobileSettingsView('menu'); }}><Settings size={16} /> Settings</button>
                 <div className="popover-divider"></div>
@@ -4468,7 +4468,7 @@ export default function Davora() {
               </div>
               <div className="settings-nav">
                 <div className="settings-nav-group">
-                  <button className="settings-nav-btn settings-order-personalization" onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Fingerprint size={24} strokeWidth={2.2} /> Personalization</button>
+                  <button className="settings-nav-btn settings-order-personalization" onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Smile size={24} strokeWidth={2.2} /> Personalization</button>
                   <button className="settings-nav-btn settings-order-voice" onClick={() => { setSettingsTab('Voice'); setMobileSettingsView('pane'); }}><Mic size={24} strokeWidth={2.2} /> Voice</button>
                   <button className="settings-nav-btn settings-order-tasks" onClick={() => { setSettingsTab('Tasks'); setMobileSettingsView('pane'); }}><Activity size={24} strokeWidth={2.2} /> Scheduled Tasks</button>
                 </div>
