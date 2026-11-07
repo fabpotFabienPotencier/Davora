@@ -4479,26 +4479,10 @@ export default function Davora() {
                   <button className="settings-nav-btn settings-order-parental" onClick={() => { setSettingsTab('Parental controls'); setMobileSettingsView('pane'); }}><Users size={24} strokeWidth={2.2} /> Parental controls<ChevronRight size={16} className="settings-nav-chevron" /></button>
                 </div>
                 <div className="settings-nav-group settings-appearance-group">
-                  <div className="settings-dropdown-wrap">
-                    <button className="settings-nav-btn settings-appearance-trigger" onClick={() => setSettingsAppearanceOpen(v => !v)} aria-expanded={settingsAppearanceOpen}><Sun size={24} strokeWidth={2.2} /> Appearance <span className="settings-nav-value">{prefs.theme === 'light' ? 'Light' : prefs.theme === 'amoled' ? 'OLED' : 'Dark'}</span><ChevronDown size={18} className="dropdown-chevron" /></button>
-                    {settingsAppearanceOpen && (
-                      <div className="settings-float-popup">
-                        {[{label:'Light',value:'light'},{label:'Dark',value:'dark'},{label:'OLED',value:'amoled'}].map(option => (
-                          <button key={option.value} className={prefs.theme === option.value ? 'selected' : ''} onClick={() => { setPrefs(prev => ({...prev, theme: option.value})); setSettingsAppearanceOpen(false); }}>{option.label}{prefs.theme === option.value && <span className="float-popup-check">✓</span>}</button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="settings-dropdown-wrap">
-                    <button className="settings-nav-btn settings-accent-trigger" onClick={() => setSettingsAccentOpen(v => !v)} aria-expanded={settingsAccentOpen}><Palette size={24} strokeWidth={2.2} /> Accent color <span className="settings-nav-value">{(prefs.accentColor || 'default').replace(/^./, c => c.toUpperCase())}</span><ChevronDown size={18} className="dropdown-chevron" /></button>
-                    {settingsAccentOpen && (
-                      <div className="settings-float-popup">
-                        {[{label:'Default',value:'default',color:'#ffffff'},{label:'Blue',value:'blue',color:'#3b82f6'},{label:'Green',value:'green',color:'#22c55e'},{label:'Purple',value:'purple',color:'#a855f7'},{label:'Orange',value:'orange',color:'#f97316'},{label:'Pink',value:'pink',color:'#ec4899'}].map(option => (
-                          <button key={option.value} aria-label={option.label} title={option.label} className={(prefs.accentColor || 'default') === option.value ? 'selected' : ''} onClick={() => { setPrefs(prev => ({...prev, accentColor: option.value})); setSettingsAccentOpen(false); }}><span style={{background:option.color}} className="float-popup-swatch" />{option.label}{(prefs.accentColor || 'default') === option.value && <span className="float-popup-check">✓</span>}</button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <button className="settings-nav-btn settings-appearance-trigger" onClick={() => setSettingsAppearanceOpen(v => !v)} aria-expanded={settingsAppearanceOpen}><Sun size={24} strokeWidth={2.2} /> Appearance <span className="settings-nav-value">{prefs.theme === 'light' ? 'Light' : prefs.theme === 'amoled' ? 'OLED' : 'Dark'}</span><ChevronDown size={18} className="dropdown-chevron" /></button>
+                  {settingsAppearanceOpen && <div className="settings-inline-options">{[{label:'Light',value:'light'},{label:'Dark',value:'dark'},{label:'OLED',value:'amoled'}].map(option => <button key={option.value} className={prefs.theme === option.value ? 'selected' : ''} onClick={() => setPrefs(prev => ({...prev, theme: option.value}))}>{option.label}</button>)}</div>}
+                  <button className="settings-nav-btn settings-accent-trigger" onClick={() => setSettingsAccentOpen(v => !v)} aria-expanded={settingsAccentOpen}><Palette size={24} strokeWidth={2.2} /> Accent color <span className="settings-nav-value">{(prefs.accentColor || 'default').replace(/^./, c => c.toUpperCase())}</span><ChevronDown size={18} className="dropdown-chevron" /></button>
+                  {settingsAccentOpen && <div className="settings-accent-options">{[{label:'Default',value:'default',color:'currentColor'},{label:'Blue',value:'blue',color:'#3b82f6'},{label:'Green',value:'green',color:'#22c55e'},{label:'Purple',value:'purple',color:'#a855f7'},{label:'Orange',value:'orange',color:'#f97316'},{label:'Pink',value:'pink',color:'#ec4899'}].map(option => <button key={option.value} aria-label={option.label} title={option.label} className={(prefs.accentColor || 'default') === option.value ? 'selected' : ''} onClick={() => setPrefs(prev => ({...prev, accentColor: option.value}))}><span style={{background:option.color}} />{option.label}</button>)}</div>}
                 </div>
                 <div className="settings-nav-group">
                   <button className="settings-nav-btn settings-order-general" onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }}><Settings size={24} strokeWidth={2.2} /> General<ChevronRight size={16} className="settings-nav-chevron" /></button>
@@ -4516,8 +4500,6 @@ export default function Davora() {
                 {settingsSearchQuery && <button className="settings-search-clear" aria-label="Clear search" onClick={() => setSettingsSearchQuery('')}><X size={18} /></button>}
               </div>
             </div>
-
-            {(settingsAppearanceOpen || settingsAccentOpen) && <div className="settings-float-backdrop" onClick={() => { setSettingsAppearanceOpen(false); setSettingsAccentOpen(false); }} />}
 
             <div className="settings-body">
               <div className="settings-header-desktop hide-on-mobile">

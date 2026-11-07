@@ -4969,24 +4969,3 @@ input[type="text"], input[type="password"], input[type="email"] {
   box-shadow: 0 12px 32px rgba(0,0,0,0.5) !important;
 }
 
-
-
-/* Floating dropdown popups (Appearance / Accent color) */
-.settings-dropdown-wrap { position: relative; }
-.settings-float-backdrop { position: fixed; inset: 0; z-index: 1500; background: transparent; }
-.settings-float-popup {
-  position: absolute; top: calc(100% + 8px); left: 0; right: 0;
-  background: #303030 !important; border: 1px solid #444444 !important;
-  border-radius: 28px !important; z-index: 1600; overflow: hidden !important;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.6); display: flex; flex-direction: column;
-}
-.settings-float-popup button {
-  display: flex; align-items: center; gap: 10px; width: 100%;
-  padding: 14px 18px; background: transparent; border: none;
-  color: #FFFFFF; font-size: 1rem; cursor: pointer; text-align: left;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-.settings-float-popup button:last-child { border-bottom: none; }
-.settings-float-popup button:active { background: rgba(255,255,255,0.08); }
-.float-popup-check { margin-left: auto; color: #a855f7; font-weight: 700; }
-.float-popup-swatch { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); flex-shrink: 0; }
