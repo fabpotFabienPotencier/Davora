@@ -4948,3 +4948,47 @@ input[type="text"], input[type="password"], input[type="email"] {
   stroke-width: 2.5;
   flex-shrink: 0;
 }
+
+
+/* ============================================================
+   ChatGPT-style rounded dropdown menus (28px radius, charcoal)
+   Applies to all dropdowns/popovers/menus consistently.
+   ============================================================ */
+.settings-inline-options,
+.settings-accent-options,
+.profile-popover,
+.popover-menu,
+.chat-menu-card,
+.chat-menu-popover,
+.plus-menu-dropdown,
+.personalization-select-menu,
+.settings-dropdown-compact {
+  border-radius: 28px !important;
+  background: #303030 !important;
+  border: 1px solid #444444 !important;
+  overflow: hidden !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5) !important;
+}
+
+/* Ensure inner items/selected states don't overflow rounded edges */
+.settings-inline-options button,
+.settings-accent-options button,
+.popover-item,
+.chat-menu-item,
+.plus-menu-item {
+  border-radius: 0 !important;
+}
+.settings-inline-options button:first-child,
+.settings-accent-options button:first-child,
+.popover-item:first-child,
+.chat-menu-item:first-child,
+.plus-menu-item:first-child {
+  border-radius: 28px 28px 0 0 !important;
+}
+.settings-inline-options button:last-child,
+.settings-accent-options button:last-child,
+.popover-item:last-child,
+.chat-menu-item:last-child,
+.plus-menu-item:last-child {
+  border-radius: 0 0 28px 28px !important;
+}
