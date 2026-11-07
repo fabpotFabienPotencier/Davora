@@ -4969,3 +4969,18 @@ input[type="text"], input[type="password"], input[type="email"] {
   box-shadow: 0 12px 32px rgba(0,0,0,0.5) !important;
 }
 
+
+
+/* Search pill: inner input must be borderless, seamless inside outer pill */
+.settings-search-pill input,
+.settings-search-pill input:focus,
+.settings-search-pill input:active {
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: #FFFFFF !important;
+}
+.settings-search-pill input::placeholder { color: #A0A0A0 !important; }
+.settings-search-pill { align-items: center; }
+.settings-search-pill svg { color: #A0A0A0; flex-shrink: 0; }
