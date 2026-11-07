@@ -4932,3 +4932,11 @@ input[type="text"], input[type="password"], input[type="email"] {
 
 /* Keep royal purple accent; never blue */
 * { --accent-blue-fallback: #a855f7; }
+
+
+/* Navigable settings row chevrons (subtle, minimal) */
+.settings-nav-btn { display: flex; align-items: center; gap: 12px; }
+.settings-nav-chevron {
+  margin-left: auto; color: #A0A0A0; opacity: 0.65;
+  flex-shrink: 0; stroke-width: 2.5;
+}

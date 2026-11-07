@@ -4468,15 +4468,15 @@ export default function Davora() {
               </div>
               <div className="settings-nav">
                 <div className="settings-nav-group">
-                  <button className="settings-nav-btn settings-order-personalization" onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Smile size={24} strokeWidth={2.2} /> Personalization</button>
-                  <button className="settings-nav-btn settings-order-voice" onClick={() => { setSettingsTab('Voice'); setMobileSettingsView('pane'); }}><Mic size={24} strokeWidth={2.2} /> Voice</button>
-                  <button className="settings-nav-btn settings-order-tasks" onClick={() => { setSettingsTab('Tasks'); setMobileSettingsView('pane'); }}><Activity size={24} strokeWidth={2.2} /> Scheduled Tasks</button>
+                  <button className="settings-nav-btn settings-order-personalization" onClick={() => { setSettingsTab('Personalization'); setMobileSettingsView('pane'); }}><Smile size={24} strokeWidth={2.2} /> Personalization<ChevronRight size={16} className="settings-nav-chevron" /></button>
+                  <button className="settings-nav-btn settings-order-voice" onClick={() => { setSettingsTab('Voice'); setMobileSettingsView('pane'); }}><Mic size={24} strokeWidth={2.2} /> Voice<ChevronRight size={16} className="settings-nav-chevron" /></button>
+                  <button className="settings-nav-btn settings-order-tasks" onClick={() => { setSettingsTab('Tasks'); setMobileSettingsView('pane'); }}><Activity size={24} strokeWidth={2.2} /> Scheduled Tasks<ChevronRight size={16} className="settings-nav-chevron" /></button>
                 </div>
                 <div className="settings-nav-group">
-                  <button className="settings-nav-btn settings-order-account" onClick={() => { setSettingsTab('Account'); setMobileSettingsView('pane'); }}><User size={24} strokeWidth={2.2} /> Account</button>
-                  <button className="settings-nav-btn settings-order-billing" onClick={() => { setSettingsTab('Billing'); setMobileSettingsView('pane'); }}><CreditCard size={24} strokeWidth={2.2} /> Billing</button>
-                  <button className="settings-nav-btn settings-order-trusted" onClick={() => { setSettingsTab('Trusted contact'); setMobileSettingsView('pane'); }}><UserPlus size={24} strokeWidth={2.2} /> Trusted contact</button>
-                  <button className="settings-nav-btn settings-order-parental" onClick={() => { setSettingsTab('Parental controls'); setMobileSettingsView('pane'); }}><Users size={24} strokeWidth={2.2} /> Parental controls</button>
+                  <button className="settings-nav-btn settings-order-account" onClick={() => { setSettingsTab('Account'); setMobileSettingsView('pane'); }}><User size={24} strokeWidth={2.2} /> Account<ChevronRight size={16} className="settings-nav-chevron" /></button>
+                  <button className="settings-nav-btn settings-order-billing" onClick={() => { setSettingsTab('Billing'); setMobileSettingsView('pane'); }}><CreditCard size={24} strokeWidth={2.2} /> Billing<ChevronRight size={16} className="settings-nav-chevron" /></button>
+                  <button className="settings-nav-btn settings-order-trusted" onClick={() => { setSettingsTab('Trusted contact'); setMobileSettingsView('pane'); }}><UserPlus size={24} strokeWidth={2.2} /> Trusted contact<ChevronRight size={16} className="settings-nav-chevron" /></button>
+                  <button className="settings-nav-btn settings-order-parental" onClick={() => { setSettingsTab('Parental controls'); setMobileSettingsView('pane'); }}><Users size={24} strokeWidth={2.2} /> Parental controls<ChevronRight size={16} className="settings-nav-chevron" /></button>
                 </div>
                 <div className="settings-nav-group settings-appearance-group">
                   <button className="settings-nav-btn settings-appearance-trigger" onClick={() => setSettingsAppearanceOpen(v => !v)} aria-expanded={settingsAppearanceOpen}><Sun size={24} strokeWidth={2.2} /> Appearance <span className="settings-nav-value">{prefs.theme === 'light' ? 'Light' : prefs.theme === 'amoled' ? 'OLED' : 'Dark'}</span><ChevronDown size={18} /></button>
@@ -4485,13 +4485,13 @@ export default function Davora() {
                   {settingsAccentOpen && <div className="settings-accent-options">{[{label:'Default',value:'default',color:'currentColor'},{label:'Blue',value:'blue',color:'#3b82f6'},{label:'Green',value:'green',color:'#22c55e'},{label:'Purple',value:'purple',color:'#a855f7'},{label:'Orange',value:'orange',color:'#f97316'},{label:'Pink',value:'pink',color:'#ec4899'}].map(option => <button key={option.value} aria-label={option.label} title={option.label} className={(prefs.accentColor || 'default') === option.value ? 'selected' : ''} onClick={() => setPrefs(prev => ({...prev, accentColor: option.value}))}><span style={{background:option.color}} />{option.label}</button>)}</div>}
                 </div>
                 <div className="settings-nav-group">
-                  <button className="settings-nav-btn settings-order-general" onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }}><Settings size={24} strokeWidth={2.2} /> General</button>
-                  <button className="settings-nav-btn settings-order-notifications" onClick={() => { setSettingsTab('Notifications'); setMobileSettingsView('pane'); }}><Bell size={24} strokeWidth={2.2} /> Notifications</button>
-                  <button className="settings-nav-btn settings-order-safety" onClick={() => { setSettingsTab('Safety'); setMobileSettingsView('pane'); }}><Shield size={24} strokeWidth={2.2} /> Safety</button>
-                  <button className="settings-nav-btn settings-order-security" onClick={() => { setSettingsTab('Security'); setMobileSettingsView('pane'); }}><Settings size={24} strokeWidth={2.2} /> Security and login</button>
-                  <button className="settings-nav-btn settings-order-storage" onClick={() => { setSettingsTab('Storage'); setMobileSettingsView('pane'); }}><HardDrive size={24} strokeWidth={2.2} /> Storage</button>
-                  <button className="settings-nav-btn settings-order-reports" onClick={() => { setSettingsTab('Reports'); setMobileSettingsView('pane'); }}><Shield size={24} strokeWidth={2.2} /> Bug Reports</button>
-                  <button className="settings-nav-btn settings-order-developer" onClick={() => { setSettingsTab('Developer'); setMobileSettingsView('pane'); }}><Key size={24} strokeWidth={2.2} /> Developer keys</button>
+                  <button className="settings-nav-btn settings-order-general" onClick={() => { setSettingsTab('General'); setMobileSettingsView('pane'); }}><Settings size={24} strokeWidth={2.2} /> General<ChevronRight size={16} className="settings-nav-chevron" /></button>
+                  <button className="settings-nav-btn settings-order-notifications" onClick={() => { setSettingsTab('Notifications'); setMobileSettingsView('pane'); }}><Bell size={24} strokeWidth={2.2} /> Notifications<ChevronRight size={16} className="settings-nav-chevron" /></button>
+                  <button className="settings-nav-btn settings-order-safety" onClick={() => { setSettingsTab('Safety'); setMobileSettingsView('pane'); }}><Shield size={24} strokeWidth={2.2} /> Safety<ChevronRight size={16} className="settings-nav-chevron" /></button>
+                  <button className="settings-nav-btn settings-order-security" onClick={() => { setSettingsTab('Security'); setMobileSettingsView('pane'); }}><Settings size={24} strokeWidth={2.2} /> Security and login<ChevronRight size={16} className="settings-nav-chevron" /></button>
+                  <button className="settings-nav-btn settings-order-storage" onClick={() => { setSettingsTab('Storage'); setMobileSettingsView('pane'); }}><HardDrive size={24} strokeWidth={2.2} /> Storage<ChevronRight size={16} className="settings-nav-chevron" /></button>
+                  <button className="settings-nav-btn settings-order-reports" onClick={() => { setSettingsTab('Reports'); setMobileSettingsView('pane'); }}><Shield size={24} strokeWidth={2.2} /> Bug Reports<ChevronRight size={16} className="settings-nav-chevron" /></button>
+                  <button className="settings-nav-btn settings-order-developer" onClick={() => { setSettingsTab('Developer'); setMobileSettingsView('pane'); }}><Key size={24} strokeWidth={2.2} /> Developer keys<ChevronRight size={16} className="settings-nav-chevron" /></button>
                 </div>
               </div>
               <div className="settings-search-pill">
