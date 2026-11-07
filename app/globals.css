@@ -4879,3 +4879,56 @@ body.light-theme { --input-bg: #f2f2f2; --input-border: rgba(0,0,0,.10); --input
   50% { transform: scale(1.08); opacity: 0.85; border-color: rgba(99, 102, 241, 0.4); }
   100% { transform: scale(0.95); opacity: 0.4; }
 }
+
+
+/* ============================================================
+   ChatGPT-inspired Dark Charcoal UI (premium, minimal)
+   Bg #000 / Cards #303030 / Borders #444444 / Text #FFF / Secondary #A0A0A0
+   Royal-purple brand accent preserved. No blue introduced.
+   ============================================================ */
+:root {
+  --bg-secondary: #303030;
+  --bg-sidebar: #0a0a0a;
+  --text-secondary: #A0A0A0;
+  --border-color: #444444;
+  --modal-bg: #303030;
+  --input-bg: #303030;
+  --user-bubble: #303030;
+  --surface-bg: #303030;
+  --code-bg: #262626;
+  --inline-code-bg: #262626;
+  --dropdown-hover-bg: rgba(255,255,255,0.08);
+}
+
+/* Settings & modal surfaces */
+.settings-nav-group,
+.settings-pane section,
+.personalization-card,
+.settings-dropdown-compact,
+.bottom-sheet,
+.modal-content {
+  background: #303030 !important;
+  border: 1px solid #444444 !important;
+  border-radius: 16px !important;
+}
+
+/* Input pill */
+.input-pill,
+.chat-input,
+.settings-search-pill input,
+input[type="text"], input[type="password"], input[type="email"] {
+  background: #303030 !important;
+  border: 1px solid #444444 !important;
+  color: #FFFFFF !important;
+}
+
+/* Secondary text & dividers */
+.settings-nav-value,
+.hint-text,
+.muted,
+.secondary-text { color: #A0A0A0 !important; }
+
+.divider, hr { border-color: #444444 !important; }
+
+/* Keep royal purple accent; never blue */
+* { --accent-blue-fallback: #a855f7; }
