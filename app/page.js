@@ -1363,7 +1363,7 @@ export default function Davora() {
     };
     const accent = accentMap[prefs.accentColor];
     if (!accent) {
-      ['--accent-color','--accent-hover','--accent-text','--send-btn-active-bg','--send-btn-active-color','--send-btn-active-border'].forEach(key => document.body.style.removeProperty(key));
+      ['--accent-color','--accent-hover','--accent-text','--send-btn-active-bg','--send-btn-active-color','--send-btn-active-border','--user-bubble','--user-bubble-text'].forEach(key => document.body.style.removeProperty(key));
     } else {
       document.body.style.setProperty('--accent-color', accent[0]);
       document.body.style.setProperty('--accent-hover', accent[1]);
@@ -1371,6 +1371,8 @@ export default function Davora() {
       document.body.style.setProperty('--send-btn-active-bg', accent[0]);
       document.body.style.setProperty('--send-btn-active-color', accent[2]);
       document.body.style.setProperty('--send-btn-active-border', accent[0]);
+      document.body.style.setProperty('--user-bubble', accent[0]);
+      document.body.style.setProperty('--user-bubble-text', accent[2]);
     }
   }, [prefs.accentColor]);
 
@@ -3417,8 +3419,8 @@ export default function Davora() {
                 <button
                   onClick={() => setActiveModal("upgrade")}
                   style={{
-                    background: 'var(--accent-color)',
-                    color: 'var(--accent-text)',
+                    background: '#FFFFFF',
+                    color: '#000000',
                     border: 'none',
                     padding: '6px 14px',
                     borderRadius: '20px',
