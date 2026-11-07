@@ -4970,25 +4970,3 @@ input[type="text"], input[type="password"], input[type="email"] {
   box-shadow: 0 12px 32px rgba(0,0,0,0.5) !important;
 }
 
-/* Ensure inner items/selected states don't overflow rounded edges */
-.settings-inline-options button,
-.settings-accent-options button,
-.popover-item,
-.chat-menu-item,
-.plus-menu-item {
-  border-radius: 0 !important;
-}
-.settings-inline-options button:first-child,
-.settings-accent-options button:first-child,
-.popover-item:first-child,
-.chat-menu-item:first-child,
-.plus-menu-item:first-child {
-  border-radius: 28px 28px 0 0 !important;
-}
-.settings-inline-options button:last-child,
-.settings-accent-options button:last-child,
-.popover-item:last-child,
-.chat-menu-item:last-child,
-.plus-menu-item:last-child {
-  border-radius: 0 0 28px 28px !important;
-}
