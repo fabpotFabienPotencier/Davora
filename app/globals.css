@@ -3054,9 +3054,9 @@ body.light-theme .user-expand-toggle-btn:hover {
 
 /* Incognito Theme */
 .app-layout.incognito-theme {
-  --bg-primary: #0b0f19;
+  --bg-primary: #000000;
   --bg-secondary: #111827;
-  --bg-sidebar: #0b0f19;
+  --bg-sidebar: #000000;
   --text-primary: #f9fafb;
   --text-secondary: #9ca3af;
   --border-color: #1f2937;
@@ -3068,12 +3068,12 @@ body.light-theme .user-expand-toggle-btn:hover {
   --modal-bg: #111827;
   --code-bg: #030712;
   --inline-code-bg: #1f2937;
-  --header-bg: rgba(11, 15, 25, 0.85);
+  --header-bg: rgba(0, 0, 0, 0.85);
   --ai-avatar-bg: #374151;
   --ai-avatar-color: #ffffff;
   --surface-bg: rgba(255, 255, 255, 0.05);
-  --ambient-overlay: rgba(3, 7, 18, 0.4);
-  --ambient-header: rgba(11, 15, 25, 0.85);
+  --ambient-overlay: rgba(0, 0, 0, 0.4);
+  --ambient-header: rgba(0, 0, 0, 0.85);
 }
 
 .app-layout.incognito-theme .temporary-chat-toggle.active {
