@@ -5026,15 +5026,17 @@ button.toggle-sidebar-btn span { color: #FFFFFF !important; }
 
 /* Floating chat composer — messages scroll behind (ChatGPT mobile style) */
 .input-wrapper {
-  position: fixed !important;
+  position: absolute !important;
   bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  background: rgba(0, 0, 0, 0.82) !important;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   z-index: 40 !important;
+  pointer-events: auto;
 }
+.main-content { position: relative; }
 .chat-box {
   padding-bottom: 110px !important;
 }
