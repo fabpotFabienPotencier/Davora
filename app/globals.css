@@ -5022,3 +5022,19 @@ button.toggle-sidebar-btn {
 }
 button.toggle-sidebar-btn svg,
 button.toggle-sidebar-btn span { color: #FFFFFF !important; }
+
+
+/* Floating chat composer — messages scroll behind (ChatGPT mobile style) */
+.input-wrapper {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  background: rgba(0, 0, 0, 0.82) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 40 !important;
+}
+.chat-box {
+  padding-bottom: 110px !important;
+}
