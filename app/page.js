@@ -6,7 +6,7 @@ import ProjectsPage, { ProjectIcon } from "./ProjectsPage";
 import {
   Send, User, Bot, Loader2, Copy, Check, Smile,
   PlusCircle, Download, Square, ArrowDown,
-  Mic, RefreshCw, Edit2, Volume2, VolumeX, ChevronDown, ChevronUp, Clock,
+  Mic, RefreshCw, Edit2, SquarePen, Volume2, VolumeX, ChevronDown, ChevronUp, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
   Search, Pencil, Share, Forward, Bookmark, Compass, Folder, Archive, Activity, Database, Globe,
@@ -3464,15 +3464,15 @@ export default function Davora() {
                 <Ghost size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
               </button>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '2px', background: '#303030', border: '1px solid #444444', borderRadius: '28px', padding: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#303030', border: '1px solid #444444', borderRadius: '999px', padding: '6px 12px' }}>
                 <button
                   className="icon-action-btn"
                   onClick={startNewChat}
                   disabled={isTyping}
                   title="New chat"
-                  style={{ padding: '8px', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#FFFFFF' }}
+                  style={{ padding: '4px', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#FFFFFF' }}
                 >
-                  <Edit2 size={18} />
+                  <SquarePen size={20} />
                 </button>
                 <div className="active-chat-menu-wrapper" style={{ position: 'relative' }}>
                   <button
@@ -3481,7 +3481,7 @@ export default function Davora() {
                     title="More actions"
                     style={{ padding: '8px', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#FFFFFF' }}
                   >
-                    <MoreVertical size={18} />
+                    <MoreVertical size={20} />
                   </button>
 
                   {showActiveChatMenu && (
