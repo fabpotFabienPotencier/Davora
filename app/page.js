@@ -3469,7 +3469,7 @@ export default function Davora() {
                 <Ghost size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
               </button>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#303030', border: '1px solid #444444', borderRadius: '999px', padding: '6px 12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#2C2C2E', border: 'none', borderRadius: '999px', padding: '8px 14px' }}>
                 <button
                   className="icon-action-btn"
                   onClick={startNewChat}
