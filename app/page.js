@@ -3412,7 +3412,7 @@ export default function Davora() {
             <button onClick={() => setSidebarOpen(v => !v)} className="icon-action-btn toggle-sidebar-btn" title={sidebarOpen ? "Close Sidebar" : "Open Sidebar"}>
               <span className={`hamburger-wrap ${sidebarOpen ? 'is-open' : ''}`} style={{ display: 'inline-flex', transition: 'transform 0.3s ease', transform: sidebarOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
                 {sidebarOpen ? <X size={20} /> : (
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+                <svg width="30" height="30" viewBox="0 0 28 28" fill="none" aria-hidden="true">
                   <line x1="5" y1="11" x2="23" y2="11" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
                   <line x1="5" y1="18" x2="16" y2="18" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
                 </svg>
