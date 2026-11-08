@@ -5004,3 +5004,21 @@ button.send-btn.chat-send-btn:active {
   justify-content: center;
   cursor: pointer;
 }
+
+
+/* Force menu button: solid dark grey circle, no border */
+button.icon-action-btn.toggle-sidebar-btn,
+button.toggle-sidebar-btn {
+  background: #2C2C2E !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 50% !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+button.toggle-sidebar-btn svg,
+button.toggle-sidebar-btn span { color: #FFFFFF !important; }
