@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProjectsPage, { ProjectIcon } from "./ProjectsPage";
 import {
-  Send, User, Bot, Loader2, Copy, Check, Smile,
+  Send, User, Bot, ArrowUp, AudioLines, Loader2, Copy, Check, Smile,
   PlusCircle, Download, Square, ArrowDown,
   Mic, RefreshCw, Edit2, SquarePen, Volume2, VolumeX, ChevronDown, ChevronUp, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
@@ -4369,8 +4369,8 @@ export default function Davora() {
                       <Square size={16} fill="currentColor" />
                     </button>
                   ) : (
-                    <button type="submit" disabled={!input.trim() && attachments.length === 0} className="send-btn" title="Send message">
-                      <Send size={18} />
+                    <button type="submit" disabled={!input.trim() && attachments.length === 0} className="send-btn chat-send-btn" title={input.trim() || attachments.length ? "Send message" : "Voice"}>
+                      {input.trim() || attachments.length ? <ArrowUp size={18} strokeWidth={2.5} /> : <AudioLines size={18} strokeWidth={2.5} />}
                     </button>
                   )}
                 </div>

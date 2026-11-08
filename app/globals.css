@@ -4984,3 +4984,23 @@ input[type="text"], input[type="password"], input[type="email"] {
 .settings-search-pill input::placeholder { color: #A0A0A0 !important; }
 .settings-search-pill { align-items: center; }
 .settings-search-pill svg { color: #A0A0A0; flex-shrink: 0; }
+
+
+/* Chat send button — strictly black & white, no accent */
+button.send-btn.chat-send-btn,
+button.send-btn.chat-send-btn:disabled,
+button.send-btn.chat-send-btn:hover,
+button.send-btn.chat-send-btn:active {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+  border: none !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
