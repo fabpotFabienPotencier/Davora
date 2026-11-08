@@ -3412,7 +3412,7 @@ export default function Davora() {
             <button onClick={() => setSidebarOpen(v => !v)} className="icon-action-btn toggle-sidebar-btn" title={sidebarOpen ? "Close Sidebar" : "Open Sidebar"}>
               <span className={`hamburger-wrap ${sidebarOpen ? 'is-open' : ''}`} style={{ display: 'inline-flex', transition: 'transform 0.3s ease', transform: sidebarOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
                 {sidebarOpen ? <X size={20} /> : (
-                <svg width="30" height="30" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+                <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true">
                   <line x1="5" y1="11" x2="23" y2="11" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
                   <line x1="5" y1="18" x2="16" y2="18" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
                 </svg>
@@ -3469,7 +3469,7 @@ export default function Davora() {
                 <Ghost size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
               </button>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#2C2C2E', border: 'none', borderRadius: '999px', padding: '8px 14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#2C2C2E', border: 'none', borderRadius: '999px', padding: '6px 12px' }}>
                 <button
                   className="icon-action-btn"
                   onClick={startNewChat}
@@ -3477,7 +3477,7 @@ export default function Davora() {
                   title="New chat"
                   style={{ padding: '4px', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#FFFFFF' }}
                 >
-                  <SquarePen size={20} />
+                  <SquarePen size={18} />
                 </button>
                 <div className="active-chat-menu-wrapper" style={{ position: 'relative' }}>
                   <button
@@ -3486,7 +3486,7 @@ export default function Davora() {
                     title="More actions"
                     style={{ padding: '8px', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#FFFFFF' }}
                   >
-                    <MoreVertical size={20} />
+                    <MoreVertical size={18} />
                   </button>
 
                   {showActiveChatMenu && (
