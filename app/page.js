@@ -6,7 +6,7 @@ import ProjectsPage, { ProjectIcon } from "./ProjectsPage";
 import {
   Send, User, Bot, ArrowUp, AudioLines, Loader2, Copy, Check, Smile,
   PlusCircle, Download, Square, ArrowDown,
-  Mic, RefreshCw, Edit2, SquarePen, Volume2, VolumeX, ChevronDown, ChevronUp, Clock,
+  Mic, RefreshCw, Edit2, SquarePen, Equal, Volume2, VolumeX, ChevronDown, ChevronUp, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
   Search, Pencil, Share, Forward, Bookmark, Compass, Folder, Archive, Activity, Database, Globe,
@@ -3409,11 +3409,11 @@ export default function Davora() {
         {/* Header */}
         <header className="header">
           <div className="logo-section">
-            {!sidebarOpen && (
-              <button onClick={() => setSidebarOpen(true)} className="icon-action-btn toggle-sidebar-btn" title="Open Sidebar">
-                <PanelLeft size={20} />
-              </button>
-            )}
+            <button onClick={() => setSidebarOpen(v => !v)} className="icon-action-btn toggle-sidebar-btn" title={sidebarOpen ? "Close Sidebar" : "Open Sidebar"}>
+              <span className={`hamburger-wrap ${sidebarOpen ? 'is-open' : ''}`} style={{ display: 'inline-flex', transition: 'transform 0.3s ease', transform: sidebarOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                {sidebarOpen ? <X size={20} /> : <Equal size={20} />}
+              </span>
+            </button>
             <div className="subscription-indicator-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {(!subscriptionPlan || subscriptionPlan.includes("Free")) ? (
                 <button
