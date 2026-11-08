@@ -11,7 +11,7 @@ import {
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
   Search, Pencil, Share, Forward, Bookmark, Compass, Folder, Archive, Activity, Database, Globe,
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight, ShieldCheck,
-  VenetianMask, Pin, MoreHorizontal, CalendarClock, AtSign, TriangleAlert, Ghost,
+  VenetianMask, Pin, MoreHorizontal, MoreVertical, CalendarClock, AtSign, TriangleAlert, Ghost,
   Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint,
   Bell, Grid, CreditCard, HardDrive, Users, UserPlus, Key, FolderPlus, Link2, Link2Off, Type, LogOut,
   FileText, FileCode, FileSpreadsheet, Camera, Palette
@@ -3464,15 +3464,24 @@ export default function Davora() {
                 <Ghost size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
               </button>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2px', background: '#303030', border: '1px solid #444444', borderRadius: '28px', padding: '4px' }}>
+                <button
+                  className="icon-action-btn"
+                  onClick={startNewChat}
+                  disabled={isTyping}
+                  title="New chat"
+                  style={{ padding: '8px', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#FFFFFF' }}
+                >
+                  <Edit2 size={18} />
+                </button>
                 <div className="active-chat-menu-wrapper" style={{ position: 'relative' }}>
                   <button
                     className="icon-action-btn"
                     onClick={() => { setProjectSectionOpen(false); setShowActiveChatMenu(!showActiveChatMenu); }}
                     title="More actions"
-                    style={{ padding: '8px', borderRadius: '8px', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    style={{ padding: '8px', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#FFFFFF' }}
                   >
-                    <MoreHorizontal size={18} />
+                    <MoreVertical size={18} />
                   </button>
 
                   {showActiveChatMenu && (
