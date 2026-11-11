@@ -68,6 +68,16 @@ jobs:
         ./gradlew bundleDebug
         ./gradlew bundleRelease
 
+    - name: Verify no restricted media permissions
+      run: |
+        M=$(find android/app/build -path "*merged_manifests/release*" -name AndroidManifest.xml | head -n 1)
+        echo "Checking: $M"
+        [ -n "$M" ] || { echo "Merged manifest not found"; exit 1; }
+        if grep -E "READ_MEDIA_IMAGES|READ_MEDIA_VIDEO|READ_EXTERNAL_STORAGE" "$M"; then
+          echo "Restricted media permission still present"; exit 1
+        fi
+        echo "OK: no restricted media permissions"
+
     - name: Sign Release Binaries (AAB & APK)
       run: |
         echo "${{ secrets.ANDROID_SIGNING_KEY }}" | base64 --decode > android/davora.keystore

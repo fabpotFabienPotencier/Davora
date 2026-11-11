@@ -182,8 +182,6 @@ allprojects {
             '<uses-permission android:name="android.permission.RECORD_AUDIO" />',
             '<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />',
             '<uses-permission android:name="android.permission.CAMERA" />',
-            '<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />',
-            '<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />',
             '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />',
             '<uses-permission android:name="android.permission.USE_BIOMETRIC" />',
             '<uses-permission android:name="com.android.vending.BILLING" />'
@@ -193,6 +191,21 @@ allprojects {
             insert_str = "    " + "\n    ".join(to_add) + "\n"
             manifest_content = manifest_content.replace("<application", insert_str + "<application")
             print("Added permissions to AndroidManifest.xml")
+
+        # Strip restricted media permissions (Play Photo & Video policy), even if plugins merge them back in
+        if 'xmlns:tools=' not in manifest_content:
+            manifest_content = manifest_content.replace(
+                '<manifest ', '<manifest xmlns:tools="http://schemas.android.com/tools" ', 1)
+        strip = [
+            '<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove" />',
+            '<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:node="remove" />',
+            '<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove" />'
+        ]
+        strip_to_add = [x for x in strip if x not in manifest_content]
+        if strip_to_add:
+            manifest_content = manifest_content.replace(
+                "<application", "    " + "\n    ".join(strip_to_add) + "\n    <application", 1)
+            print("Stripped restricted media permissions from AndroidManifest.xml")
 
         # Notification silhouette icon and brand accent color metadata
         meta_tags = [
