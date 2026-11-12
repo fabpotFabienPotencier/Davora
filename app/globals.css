@@ -606,6 +606,7 @@ body {
 
 /* Header */
 .header {
+  --header-nav-control-size: clamp(68px, 22.4vw, 84px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2104,6 +2105,39 @@ body.light-theme .user-expand-toggle-btn:hover {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.header-chat-actions-capsule {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: calc(var(--header-nav-control-size) * 2.035714);
+  height: var(--header-nav-control-size);
+  padding: 0 calc(var(--header-nav-control-size) * 0.226);
+  gap: calc(var(--header-nav-control-size) * 0.12);
+  background: #303030;
+  border: 1px solid #4a4a4a;
+  border-radius: 999px;
+}
+
+.header-capsule-action-btn {
+  display: flex;
+  flex: 0 0 calc(var(--header-nav-control-size) * 0.5);
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--header-nav-control-size) * 0.5);
+  height: calc(var(--header-nav-control-size) * 0.67);
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #ffffff;
+}
+
+.header-capsule-action-btn svg {
+  width: calc(var(--header-nav-control-size) * 0.48);
+  height: calc(var(--header-nav-control-size) * 0.48);
 }
 
 .token-badge {
@@ -5010,11 +5044,11 @@ button.send-btn.chat-send-btn:active {
 button.icon-action-btn.toggle-sidebar-btn,
 button.toggle-sidebar-btn {
   background: #2C2C2E !important;
-  border: none !important;
+  border: 1px solid #494949 !important;
   box-shadow: none !important;
   border-radius: 50% !important;
-  width: 36px !important;
-  height: 36px !important;
+  width: var(--header-nav-control-size) !important;
+  height: var(--header-nav-control-size) !important;
   padding: 0 !important;
   display: flex !important;
   align-items: center !important;
@@ -5022,3 +5056,8 @@ button.toggle-sidebar-btn {
 }
 button.toggle-sidebar-btn svg,
 button.toggle-sidebar-btn span { color: #FFFFFF !important; }
+
+.header .toggle-sidebar-btn .hamburger-wrap > svg {
+  width: calc(var(--header-nav-control-size) * 0.52);
+  height: calc(var(--header-nav-control-size) * 0.52);
+}

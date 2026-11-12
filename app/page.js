@@ -3411,10 +3411,10 @@ export default function Davora() {
           <div className="logo-section">
             <button onClick={() => setSidebarOpen(v => !v)} className="icon-action-btn toggle-sidebar-btn" title={sidebarOpen ? "Close Sidebar" : "Open Sidebar"}>
               <span className={`hamburger-wrap ${sidebarOpen ? 'is-open' : ''}`} style={{ display: 'inline-flex', transition: 'transform 0.3s ease', transform: sidebarOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
-                {sidebarOpen ? <X size={20} /> : (
-                <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-                  <line x1="5" y1="11" x2="23" y2="11" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
-                  <line x1="5" y1="18" x2="16" y2="18" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
+                {sidebarOpen ? <X size={32} /> : (
+                <svg width="44" height="44" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+                  <line x1="7" y1="16" x2="37" y2="16" stroke="#FFFFFF" strokeWidth="5" strokeLinecap="round" />
+                  <line x1="7" y1="28" x2="25" y2="28" stroke="#FFFFFF" strokeWidth="5" strokeLinecap="round" />
                 </svg>
               )}
               </span>
@@ -3469,24 +3469,22 @@ export default function Davora() {
                 <Ghost size={14} /> <span className="hide-on-mobile">{isTemporary ? 'Incognito' : 'Standard'}</span>
               </button>
             ) : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#2C2C2E', border: 'none', borderRadius: '999px', padding: '6px 12px' }}>
+              <div className="header-chat-actions-capsule">
                 <button
-                  className="icon-action-btn"
+                  className="icon-action-btn header-capsule-action-btn"
                   onClick={startNewChat}
                   disabled={isTyping}
                   title="New chat"
-                  style={{ padding: '4px', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#FFFFFF' }}
                 >
-                  <SquarePen size={18} />
+                  <SquarePen size={40} strokeWidth={2.8} />
                 </button>
                 <div className="active-chat-menu-wrapper" style={{ position: 'relative' }}>
                   <button
-                    className="icon-action-btn"
+                    className="icon-action-btn header-capsule-action-btn"
                     onClick={() => { setProjectSectionOpen(false); setShowActiveChatMenu(!showActiveChatMenu); }}
                     title="More actions"
-                    style={{ padding: '8px', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', color: '#FFFFFF' }}
                   >
-                    <MoreVertical size={18} />
+                    <MoreVertical size={40} strokeWidth={3} />
                   </button>
 
                   {showActiveChatMenu && (
