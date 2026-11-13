@@ -2118,7 +2118,7 @@ body.light-theme .user-expand-toggle-btn:hover {
   justify-content: space-between;
   box-sizing: border-box;
   flex-shrink: 0;
-  width: calc(var(--header-nav-control-size) * 2.047619); /* 172 / 84 exact reference ratio */
+  width: calc(var(--header-nav-control-size) * 2.035714); /* exact 171 / 84 reference ratio */
   height: var(--header-nav-control-size);
   padding: 0 calc(var(--header-nav-control-size) * 0.226);
   gap: calc(var(--header-nav-control-size) * 0.12);
@@ -5100,4 +5100,12 @@ button.toggle-sidebar-btn span { color: #FFFFFF !important; }
 }
 @media (max-width: 400px) {
   .header-upgrade-pill { padding: 5px 10px !important; font-size: 0.72rem !important; }
+}
+
+
+/* Mobile header: exact reference dimensions — hamburger 84x84, capsule 171x84 */
+@media (max-width: 768px) {
+  .header {
+    --header-nav-control-size: 84px;
+  }
 }
