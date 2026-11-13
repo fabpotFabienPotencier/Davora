@@ -3419,36 +3419,6 @@ export default function Davora() {
               )}
               </span>
             </button>
-            <div className="subscription-indicator-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {(!subscriptionPlan || subscriptionPlan.includes("Free")) ? (
-                <button
-                  onClick={() => setActiveModal("upgrade")}
-                  style={{
-                    background: '#FFFFFF',
-                    color: '#000000',
-                    border: 'none',
-                    padding: '6px 14px',
-                    borderRadius: '20px',
-                    fontSize: '0.8rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    transition: 'opacity 0.2s'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.opacity = 0.9}
-                  onMouseLeave={(e) => e.currentTarget.style.opacity = 1}
-                >
-                  Upgrade
-                </button>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(99, 102, 241, 0.15)', color: '#6366f1', padding: '6px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600' }}>
-                  <ShieldCheck size={14} />
-                  <span>{subscriptionPlan}</span>
-                </div>
-              )}
-            </div>
           </div>
           <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {messages.length === 0 ? (
@@ -3490,6 +3460,24 @@ export default function Davora() {
                   {showActiveChatMenu && (
                     <div className="chat-menu-card" role="menu">
                       <div className="chat-menu-title">{(activeSession && activeSession.title) || 'Chat'}</div>
+                      {(!subscriptionPlan || subscriptionPlan.includes("Free")) ? (
+                        <button
+                          className="chat-menu-item"
+                          onClick={() => { closeChatMenu(); setActiveModal('upgrade'); }}
+                        >
+                          <Sparkles size={17} style={{ color: '#a855f7' }} />
+                          <span style={{ color: '#a855f7', fontWeight: 600 }}>Upgrade plan</span>
+                        </button>
+                      ) : (
+                        <button
+                          className="chat-menu-item"
+                          onClick={() => { closeChatMenu(); setActiveModal('upgrade'); }}
+                        >
+                          <ShieldCheck size={17} style={{ color: '#6366f1' }} />
+                          <span style={{ color: '#6366f1', fontWeight: 600 }}>{subscriptionPlan}</span>
+                        </button>
+                      )}
+                      <div className="chat-menu-divider" />
                       <button
                         className="chat-menu-item"
                         onClick={() => { closeChatMenu(); setActiveModal('share'); }}
