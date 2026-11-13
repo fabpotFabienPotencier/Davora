@@ -606,7 +606,7 @@ body {
 
 /* Header */
 .header {
-  --header-nav-control-size: clamp(38px, 10vw, 44px);
+  --header-nav-control-size: clamp(40px, 11vw, 48px); /* equivalent responsive scale for 84x84 hamburger / 172x84 capsule reference */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2118,7 +2118,7 @@ body.light-theme .user-expand-toggle-btn:hover {
   justify-content: space-between;
   box-sizing: border-box;
   flex-shrink: 0;
-  width: calc(var(--header-nav-control-size) * 2.035714);
+  width: calc(var(--header-nav-control-size) * 2.047619); /* 172 / 84 exact reference ratio */
   height: var(--header-nav-control-size);
   padding: 0 calc(var(--header-nav-control-size) * 0.226);
   gap: calc(var(--header-nav-control-size) * 0.12);
