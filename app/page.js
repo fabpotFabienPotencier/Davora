@@ -3456,7 +3456,7 @@ export default function Davora() {
                   disabled={isTyping}
                   title="New chat"
                 >
-                  <SquarePen size={40} strokeWidth={2.8} />
+                  <SquarePen size={20} strokeWidth={2.8} />
                 </button>
                 <div className="active-chat-menu-wrapper" style={{ position: 'relative' }}>
                   <button
@@ -3464,7 +3464,7 @@ export default function Davora() {
                     onClick={() => { setProjectSectionOpen(false); setShowActiveChatMenu(!showActiveChatMenu); }}
                     title="More actions"
                   >
-                    <MoreVertical size={40} strokeWidth={3} />
+                    <MoreVertical size={20} strokeWidth={3} />
                   </button>
 
                   {showActiveChatMenu && (
