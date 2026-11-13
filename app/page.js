@@ -3419,6 +3419,16 @@ export default function Davora() {
               )}
               </span>
             </button>
+            {(!subscriptionPlan || subscriptionPlan.includes("Free")) ? (
+              <button className="header-upgrade-pill" onClick={() => setActiveModal("upgrade")} title="Upgrade plan">
+                Upgrade
+              </button>
+            ) : (
+              <span className="header-plan-badge">
+                <ShieldCheck size={13} />
+                <span>{subscriptionPlan}</span>
+              </span>
+            )}
           </div>
           <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {messages.length === 0 ? (
