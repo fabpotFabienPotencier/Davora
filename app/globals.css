@@ -606,7 +606,7 @@ body {
 
 /* Header */
 .header {
-  --header-nav-control-size: clamp(40px, 11vw, 48px); /* equivalent responsive scale for 84x84 hamburger / 172x84 capsule reference */
+  --header-nav-control-size: clamp(40px, 10vw, 44px); /* equivalent responsive scale for 84x84 hamburger / 172x84 capsule reference */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5103,9 +5103,9 @@ button.toggle-sidebar-btn span { color: #FFFFFF !important; }
 }
 
 
-/* Mobile header: exact reference dimensions — hamburger 84x84, capsule 171x84 */
+/* Mobile header: ChatGPT-compact scale at exact 171:84 reference ratio (not literal screenshot px) */
 @media (max-width: 768px) {
   .header {
-    --header-nav-control-size: 84px;
+    --header-nav-control-size: clamp(40px, 10vw, 44px);
   }
 }
