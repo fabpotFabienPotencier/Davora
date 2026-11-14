@@ -12,7 +12,7 @@ import {
   Search, Pencil, Share, Forward, Bookmark, Compass, Folder, Archive, Activity, Database, Globe,
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight, ShieldCheck,
   VenetianMask, Pin, MoreHorizontal, MoreVertical, CalendarClock, AtSign, TriangleAlert, Ghost,
-  Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint,
+  Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint, Lock,
   Bell, Grid, CreditCard, HardDrive, Users, UserPlus, Key, FolderPlus, Link2, Link2Off, Type, LogOut,
   FileText, FileCode, FileSpreadsheet, Camera, Palette
 } from "lucide-react";
@@ -89,6 +89,8 @@ export default function Davora() {
   const touchStartRef = useRef({ x: 0, y: 0 });
   const sidebarTouchStartRef = useRef({ x: 0, y: 0 });
   const [pinnedSessionIds, setPinnedSessionIds] = useState([]);
+  const [lockedSessionIds, setLockedSessionIds] = useState([]);
+  const unlockedThisSessionRef = useRef(new Set());
   const [isAppLocked, setIsAppLocked] = useState(false);
   const isBiometricVerifyingRef = useRef(false);
   const lastHiddenTimeRef = useRef(0);
@@ -1414,6 +1416,19 @@ export default function Davora() {
     syncMetadata({ archived: JSON.stringify(archivedSessionIds) });
   }, [archivedSessionIds, isMetadataLoaded]);
 
+  // Locked chats: this-device only, intentionally not synced to the backend.
+  // Restore on mount.
+  useEffect(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('davora_locked') || '[]');
+      if (Array.isArray(local)) setLockedSessionIds(local);
+    } catch (e) { }
+  }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem('davora_locked', JSON.stringify(lockedSessionIds)); } catch (e) { }
+  }, [lockedSessionIds]);
+
   // Project icons + instructions: restore from this device first (the server value, if any, replaces it on load)
   useEffect(() => {
     try {
@@ -1462,6 +1477,60 @@ export default function Davora() {
   const togglePin = (e, id) => {
     e.stopPropagation();
     setPinnedSessionIds(prev => prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]);
+  };
+
+  const toggleLock = (e, id) => {
+    if (e) e.stopPropagation();
+    setLockedSessionIds(prev => {
+      const isCurrentlyLocked = prev.includes(id);
+      if (isCurrentlyLocked) {
+        // Unlocking from the menu still requires it to have been authenticated to get here, so just remove it.
+        return prev.filter(lid => lid !== id);
+      }
+      // Locking: forget any standing in-memory unlock and hide the chat immediately.
+      unlockedThisSessionRef.current.delete(id);
+      if (activeSessionId === id) setActiveSessionId(null);
+      return [...prev, id];
+    });
+  };
+
+  // Gate opening a locked chat behind device biometrics. On platforms without
+  // biometrics (web/desktop) it opens directly, same fallback the app-wide lock uses.
+  const openSession = async (id) => {
+    if (!lockedSessionIds.includes(id) || unlockedThisSessionRef.current.has(id)) {
+      setActiveSessionId(id);
+      if (window.innerWidth < 768) setSidebarOpen(false);
+      return;
+    }
+    const isNativeMobile = typeof window !== "undefined" && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+    if (!isNativeMobile) {
+      unlockedThisSessionRef.current.add(id);
+      setActiveSessionId(id);
+      if (window.innerWidth < 768) setSidebarOpen(false);
+      return;
+    }
+    try {
+      const { NativeBiometric } = await import('@capgo/capacitor-native-biometric');
+      const check = await NativeBiometric.isAvailable();
+      if (!check || !check.isAvailable) {
+        unlockedThisSessionRef.current.add(id);
+        setActiveSessionId(id);
+        if (window.innerWidth < 768) setSidebarOpen(false);
+        return;
+      }
+      await NativeBiometric.verifyIdentity({
+        reason: "Unlock this chat with your biometric identity",
+        title: "Chat Locked",
+        subtitle: "Confirm your identity",
+        description: "Scan your fingerprint or face to open this chat"
+      });
+      unlockedThisSessionRef.current.add(id);
+      setActiveSessionId(id);
+      if (window.innerWidth < 768) setSidebarOpen(false);
+    } catch (err) {
+      console.warn("Chat unlock canceled or failed:", err);
+      // Stay closed — don't open the chat if verification failed or was canceled.
+    }
   };
 
   // ---- Projects: create / save / delete from the Projects page ----
@@ -3294,7 +3363,7 @@ export default function Davora() {
             <div
               key={session.id}
               className={`history-item ${activeSessionId === session.id ? 'active' : ''}`}
-              onClick={() => { if (renamingId !== session.id) { setActiveSessionId(session.id); if (window.innerWidth < 768) setSidebarOpen(false); } }}
+              onClick={() => { if (renamingId !== session.id) openSession(session.id); }}
             >
               {renamingId === session.id ? (
                 <input
@@ -3306,10 +3375,13 @@ export default function Davora() {
                   onKeyDown={(e) => { if (e.key === 'Enter') saveRename(e, session.id); }}
                   className="rename-input"
                 />
+              ) : lockedSessionIds.includes(session.id) && !unlockedThisSessionRef.current.has(session.id) ? (
+                <span className="history-title" style={{ color: 'var(--text-tertiary, #8e8e93)', fontStyle: 'italic' }}>Locked chat</span>
               ) : (
                 <span className="history-title">{session.title}</span>
               )}
 
+              {lockedSessionIds.includes(session.id) && <Lock size={12} className="locked-indicator ml-1" style={{ color: 'var(--text-tertiary, #8e8e93)' }} />}
               {pinnedSessionIds.includes(session.id) && <Pin size={12} className="pinned-indicator text-purple-500 ml-1" />}
 
               {renamingId !== session.id && (
@@ -3501,6 +3573,13 @@ export default function Davora() {
                       >
                         <Pin size={17} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
                         <span>{pinnedSessionIds.includes(activeSessionId) ? 'Unpin' : 'Pin'}</span>
+                      </button>
+                      <button
+                        className="chat-menu-item"
+                        onClick={() => { toggleLock(null, activeSessionId); closeChatMenu(); }}
+                      >
+                        <Lock size={17} style={{ color: lockedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
+                        <span>{lockedSessionIds.includes(activeSessionId) ? 'Unlock chat' : 'Lock chat'}</span>
                       </button>
 
                       <button
