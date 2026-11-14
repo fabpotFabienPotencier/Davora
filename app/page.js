@@ -3547,7 +3547,7 @@ export default function Davora() {
                           className="chat-menu-item"
                           onClick={() => { closeChatMenu(); setActiveModal('upgrade'); }}
                         >
-                          <Sparkles size={17} style={{ color: '#a855f7' }} />
+                          <Sparkles size={20} style={{ color: '#a855f7' }} />
                           <span style={{ color: '#a855f7', fontWeight: 600 }}>Upgrade plan</span>
                         </button>
                       ) : (
@@ -3555,7 +3555,7 @@ export default function Davora() {
                           className="chat-menu-item"
                           onClick={() => { closeChatMenu(); setActiveModal('upgrade'); }}
                         >
-                          <ShieldCheck size={17} style={{ color: '#6366f1' }} />
+                          <ShieldCheck size={20} style={{ color: '#6366f1' }} />
                           <span style={{ color: '#6366f1', fontWeight: 600 }}>{subscriptionPlan}</span>
                         </button>
                       )}
@@ -3564,21 +3564,21 @@ export default function Davora() {
                         className="chat-menu-item"
                         onClick={() => { closeChatMenu(); setActiveModal('share'); }}
                       >
-                        <Forward size={17} />
+                        <Forward size={20} />
                         <span>Share</span>
                       </button>
                       <button
                         className="chat-menu-item"
                         onClick={(e) => { togglePin(e, activeSessionId); closeChatMenu(); }}
                       >
-                        <Pin size={17} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
+                        <Pin size={20} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
                         <span>{pinnedSessionIds.includes(activeSessionId) ? 'Unpin' : 'Pin'}</span>
                       </button>
                       <button
                         className="chat-menu-item"
                         onClick={() => { toggleLock(null, activeSessionId); closeChatMenu(); }}
                       >
-                        <Lock size={17} style={{ color: lockedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
+                        <Lock size={20} style={{ color: lockedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
                         <span>{lockedSessionIds.includes(activeSessionId) ? 'Unlock chat' : 'Lock chat'}</span>
                       </button>
 
@@ -3593,7 +3593,7 @@ export default function Davora() {
                         }}
                         aria-expanded={projectSectionOpen}
                       >
-                        <Folder size={17} />
+                        <Folder size={20} />
                         <span>Add to project</span>
                         <ChevronDown size={15} className="chat-menu-chevron" />
                       </button>
@@ -3606,7 +3606,7 @@ export default function Davora() {
                           if (inputRef.current) inputRef.current.blur();
                         }}
                       >
-                        <Search size={17} />
+                        <Search size={20} />
                         <span>Find in chat</span>
                       </button>
                       <button
@@ -3617,14 +3617,14 @@ export default function Davora() {
                           closeChatMenu();
                         }}
                       >
-                        <Archive size={15} style={{ margin: '0 1px' }} />
+                        <Archive size={20} />
                         <span>{archivedSessionIds.includes(activeSessionId) ? 'Unarchive' : 'Archive'}</span>
                       </button>
                       <button
                         className="chat-menu-item danger"
                         onClick={(e) => { deleteSession(e, activeSessionId); closeChatMenu(); }}
                       >
-                        <Trash2 size={17} />
+                        <Trash2 size={20} />
                         <span>Delete</span>
                       </button>
                     </div>
