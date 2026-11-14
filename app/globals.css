@@ -2567,6 +2567,11 @@ body.light-theme .user-expand-toggle-btn:hover {
   flex-shrink: 0;
 }
 
+/* Locked Chats */
+.locked-indicator {
+  flex-shrink: 0;
+}
+
 /* More Menu Dropdown */
 .more-menu-wrapper {
   position: relative;
