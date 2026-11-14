@@ -3139,14 +3139,14 @@ body.light-theme .user-expand-toggle-btn:hover {
   top: 100%;
   margin-top: 8px;
   width: max-content;
-  min-width: 176px;
-  max-width: min(260px, calc(100vw - 32px));
+  min-width: 232px;
+  max-width: min(280px, calc(100vw - 32px));
   max-height: calc(100vh - 140px);
   max-height: calc(100dvh - 140px);
   overflow-y: auto;
   overscroll-behavior: contain;
   box-sizing: border-box;
-  padding: 6px;
+  padding: 8px;
   background: #000000;
   border: 1px solid rgba(255, 255, 255, 0.18);
   color: #f5f5f5;
@@ -3168,7 +3168,7 @@ body.light-theme .chat-menu-card {
   box-sizing: border-box;
   width: 0;
   min-width: 100%;
-  padding: 8px 12px 4px;
+  padding: 8px 16px 6px;
   font-size: 0.8rem;
   color: var(--text-secondary);
   white-space: nowrap;
@@ -3179,12 +3179,12 @@ body.light-theme .chat-menu-card {
 .chat-menu-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 20px;
   width: 100%;
-  min-height: 44px;
-  padding: 0 12px;
+  min-height: 48px;
+  padding: 0 16px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: transparent;
   color: inherit;
   font-size: 0.95rem;
