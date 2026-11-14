@@ -606,7 +606,7 @@ body {
 
 /* Header */
 .header {
-  --header-nav-control-size: clamp(40px, 10vw, 44px); /* equivalent responsive scale for 84x84 hamburger / 172x84 capsule reference */
+  --header-nav-control-size: clamp(44px, 11vw, 48px); /* raised floor: 10vw bottoms out at 36-41px on real phone widths (360-412px), undershooting the 44px ChatGPT reference confirmed via controlled device screenshots */
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5106,6 +5106,6 @@ button.toggle-sidebar-btn span { color: #FFFFFF !important; }
 /* Mobile header: ChatGPT-compact scale at exact 171:84 reference ratio (not literal screenshot px) */
 @media (max-width: 768px) {
   .header {
-    --header-nav-control-size: clamp(40px, 10vw, 44px);
+    --header-nav-control-size: clamp(44px, 11vw, 48px);
   }
 }
