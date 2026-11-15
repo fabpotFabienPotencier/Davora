@@ -3135,7 +3135,7 @@ body.light-theme .user-expand-toggle-btn:hover {
 /* Active Chat Header Menu (ChatGPT-style card) */
 .chat-menu-card {
   position: absolute;
-  right: 0;
+  right: -11px;
   top: 0;
   width: max-content;
   min-width: 232px;
