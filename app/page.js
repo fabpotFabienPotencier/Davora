@@ -3542,43 +3542,25 @@ export default function Davora() {
                   {showActiveChatMenu && (
                     <div className="chat-menu-card" role="menu">
                       <div className="chat-menu-title">{(activeSession && activeSession.title) || 'Chat'}</div>
-                      {(!subscriptionPlan || subscriptionPlan.includes("Free")) ? (
-                        <button
-                          className="chat-menu-item"
-                          onClick={() => { closeChatMenu(); setActiveModal('upgrade'); }}
-                        >
-                          <Sparkles size={22} style={{ color: '#a855f7' }} />
-                          <span style={{ color: '#a855f7', fontWeight: 600 }}>Upgrade plan</span>
-                        </button>
-                      ) : (
-                        <button
-                          className="chat-menu-item"
-                          onClick={() => { closeChatMenu(); setActiveModal('upgrade'); }}
-                        >
-                          <ShieldCheck size={22} style={{ color: '#6366f1' }} />
-                          <span style={{ color: '#6366f1', fontWeight: 600 }}>{subscriptionPlan}</span>
-                        </button>
-                      )}
-                      <div className="chat-menu-divider" />
                       <button
                         className="chat-menu-item"
                         onClick={() => { closeChatMenu(); setActiveModal('share'); }}
                       >
-                        <Forward size={22} />
+                        <Forward size={22} strokeWidth={2.25} />
                         <span>Share</span>
                       </button>
                       <button
                         className="chat-menu-item"
                         onClick={(e) => { togglePin(e, activeSessionId); closeChatMenu(); }}
                       >
-                        <Pin size={22} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
+                        <Pin size={22} strokeWidth={2.25} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
                         <span>{pinnedSessionIds.includes(activeSessionId) ? 'Unpin' : 'Pin'}</span>
                       </button>
                       <button
                         className="chat-menu-item"
                         onClick={() => { toggleLock(null, activeSessionId); closeChatMenu(); }}
                       >
-                        <Lock size={22} style={{ color: lockedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
+                        <Lock size={22} strokeWidth={2.25} style={{ color: lockedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
                         <span>{lockedSessionIds.includes(activeSessionId) ? 'Unlock chat' : 'Lock chat'}</span>
                       </button>
 
@@ -3593,7 +3575,7 @@ export default function Davora() {
                         }}
                         aria-expanded={projectSectionOpen}
                       >
-                        <Folder size={22} />
+                        <Folder size={22} strokeWidth={2.25} />
                         <span>Add to project</span>
                         <ChevronDown size={15} className="chat-menu-chevron" />
                       </button>
@@ -3606,7 +3588,7 @@ export default function Davora() {
                           if (inputRef.current) inputRef.current.blur();
                         }}
                       >
-                        <Search size={22} />
+                        <Search size={22} strokeWidth={2.25} />
                         <span>Find in chat</span>
                       </button>
                       <button
@@ -3617,14 +3599,14 @@ export default function Davora() {
                           closeChatMenu();
                         }}
                       >
-                        <Archive size={22} />
+                        <Archive size={22} strokeWidth={2.25} />
                         <span>{archivedSessionIds.includes(activeSessionId) ? 'Unarchive' : 'Archive'}</span>
                       </button>
                       <button
                         className="chat-menu-item danger"
                         onClick={(e) => { deleteSession(e, activeSessionId); closeChatMenu(); }}
                       >
-                        <Trash2 size={22} />
+                        <Trash2 size={22} strokeWidth={2.25} />
                         <span>Delete</span>
                       </button>
                     </div>
