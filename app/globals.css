@@ -3137,6 +3137,7 @@ body.light-theme .user-expand-toggle-btn:hover {
   position: absolute;
   right: -11px;
   top: 0;
+  isolation: isolate;
   width: max-content;
   min-width: 232px;
   max-width: min(280px, calc(100vw - 32px));
