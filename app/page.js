@@ -3479,7 +3479,7 @@ export default function Davora() {
       <div className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
 
         {/* Header */}
-        <header className="header">
+        <header className={`header${showActiveChatMenu ? ' chat-menu-is-open' : ''}`}>
           <div className="logo-section">
             <button onClick={() => setSidebarOpen(v => !v)} className="icon-action-btn toggle-sidebar-btn" title={sidebarOpen ? "Close Sidebar" : "Open Sidebar"}>
               <span className={`hamburger-wrap ${sidebarOpen ? 'is-open' : ''}`} style={{ display: 'inline-flex', transition: 'transform 0.3s ease', transform: sidebarOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
