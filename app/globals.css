@@ -3246,13 +3246,14 @@ body.light-theme .chat-menu-item.danger {
   color: var(--text-secondary);
 }
 
-/* "Add to project" opens as its own floating card over a dimmed backdrop (ChatGPT-style) */
+/* "Add to project" opens as its own floating card. Invisible full-screen
+   tap-catcher only (closes the submenu on an outside tap) -- no dark
+   backdrop, per Dave's request to remove it entirely. */
 .chat-menu-dim {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.55);
-  animation: chatMenuDimIn 0.16s ease-out;
+  background: transparent;
 }
 
 .chat-menu-popover {
