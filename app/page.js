@@ -9,7 +9,7 @@ import {
   Mic, RefreshCw, Edit2, SquarePen, Equal, Volume2, VolumeX, ChevronDown, ChevronUp, Clock,
   ThumbsUp, ThumbsDown, Printer, Zap, Code, PenTool, Lightbulb,
   Settings, Sun, Moon, X, PanelLeftClose, PanelLeft, MessageSquare, Trash2, Paperclip,
-  Search, Pencil, Share, Forward, Bookmark, Compass, Folder, Archive, Activity, Database, Globe,
+  Search, Pencil, Share, Forward, Share2, Bookmark, Compass, Folder, Archive, Activity, Database, Globe,
   Shield, FolderKanban, Sparkles, List, ChevronLeft, ChevronRight, ShieldCheck,
   VenetianMask, Pin, MoreHorizontal, MoreVertical, CalendarClock, AtSign, TriangleAlert, Ghost,
   Terminal, BrainCircuit, SearchCheck, FileClock, Link, Plus, Telescope, Image, Fingerprint, Lock,
@@ -3546,7 +3546,7 @@ export default function Davora() {
                         className="chat-menu-item"
                         onClick={() => { closeChatMenu(); setActiveModal('share'); }}
                       >
-                        <Forward size={22} strokeWidth={2.25} />
+                        <Share2 size={22} strokeWidth={2.25} />
                         <span>Share</span>
                       </button>
                       <button
@@ -3575,7 +3575,7 @@ export default function Davora() {
                         }}
                         aria-expanded={projectSectionOpen}
                       >
-                        <Folder size={22} strokeWidth={2.25} />
+                        <FolderPlus size={22} strokeWidth={2.25} />
                         <span>Add to project</span>
                         <ChevronDown size={15} className="chat-menu-chevron" />
                       </button>
