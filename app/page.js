@@ -3553,7 +3553,7 @@ export default function Davora() {
                         className="chat-menu-item"
                         onClick={(e) => { togglePin(e, activeSessionId); closeChatMenu(); }}
                       >
-                        <Pin size={22} strokeWidth={2.25} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit' }} />
+                        <Pin size={22} strokeWidth={2.25} style={{ color: pinnedSessionIds.includes(activeSessionId) ? '#a855f7' : 'inherit', transform: 'rotate(-40deg)' }} />
                         <span>{pinnedSessionIds.includes(activeSessionId) ? 'Unpin' : 'Pin'}</span>
                       </button>
                       <button
